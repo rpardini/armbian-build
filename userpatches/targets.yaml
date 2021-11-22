@@ -1,0 +1,421 @@
+common-gha-configs:
+  rpardini-gha: &rpardini-gha
+    runners:
+      default: "ubuntu-latest" # or a ["tag", "list"]
+      by-name:
+        kernel: [ "self-hosted", "Linux", 'armbian', "artifact-kernel" ]
+      by-name-and-arch:
+        rootfs-arm64: [ "self-hosted", "Linux", 'armbian', "rootfs-arm64" ]
+        image-arm64: [ "self-hosted", "Linux", 'armbian', "image-arm64" ]
+        rootfs-armhf: [ "self-hosted", "Linux", 'armbian', "rootfs-armhf" ]
+        image-armhf: [ "self-hosted", "Linux", 'armbian', "image-armhf" ]
+        rootfs-riscv64: [ "self-hosted", "Linux", 'armbian', "rootfs-riscv64" ]
+        image-riscv64: [ "self-hosted", "Linux", 'armbian', "image-riscv64" ]
+
+lists:
+
+  rpardini-physical-boards: &rpardini-physical-boards
+    #- { BOARD: rock-5b, BRANCH: edge, RELEASE: trixie }
+    # Actual Physical boards
+    #- { BOARD: odroidn2, BRANCH: edge }
+    #- { BOARD: odroidhc4, BRANCH: edge }
+    #- { BOARD: odroidn2l, BRANCH: edge }
+    - { BOARD: radxa-zero2, BRANCH: edge }
+    - { BOARD: radxa-zero2, BRANCH: current }
+    #- { BOARD: radxa-zero2, BRANCH: current, RELEASE: bullseye }
+    #- { BOARD: radxa-zero, BRANCH: edge }
+    #- { BOARD: orangepi3b, BRANCH: legacy }
+    #- { BOARD: orangepi3b, BRANCH: edge }
+    - { BOARD: odroidm1, BRANCH: edge }
+    #- { BOARD: bigtreetech-cb2, BRANCH: edge }
+    # - { BOARD: tinkerboard-2, BRANCH: legacy }
+    #- { BOARD: rpi4b, BRANCH: current, RELEASE: bookworm }
+    #- { BOARD: rpi4b, BRANCH: edge, RELEASE: bookworm }
+    - { BOARD: rockpro64, BRANCH: edge }
+    - { BOARD: mixtile-edge2, BRANCH: edge }
+    - { BOARD: mixtile-edge2, BRANCH: current }
+    - { BOARD: mixtile-edge2, BRANCH: vendor }
+    #- { BOARD: tinker-edge-r, BRANCH: edge }
+    #- { BOARD: rockpro64, BRANCH: current }
+    #- { BOARD: oneplus5, BRANCH: edge }
+    #- { BOARD: phytium-d2000, BRANCH: legacy }
+    # - { BOARD: thinkpad-x13s, BRANCH: sc8280xp }
+    #- { BOARD: khadas-vim3l, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-oowow" }
+    #- { BOARD: khadas-vim3, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-oowow" }
+    #- { BOARD: khadas-vim4, BRANCH: legacy, ENABLE_EXTENSIONS: "image-output-oowow" }
+    #- { BOARD: khadas-vim1s, BRANCH: legacy, ENABLE_EXTENSIONS: "image-output-oowow" }
+    # NOT MINE
+    #- { BOARD: orangepizero2, BRANCH: legacy }
+    #- { BOARD: odroidxu4, BRANCH: current }
+    #- { BOARD: bananapicm4io, BRANCH: edge }
+    #- { BOARD: aml-s9xx-box, BRANCH: edge }
+    #- { BOARD: radxa-zero3, BRANCH: edge }
+    #- { BOARD: helios64, BRANCH: edge }
+    #- { BOARD: rock-5b, BRANCH: collabora, RELEASE: bookworm }
+    # - { BOARD: orangepi5, BRANCH: edge }
+    #- { BOARD: hikey960, BRANCH: edge } # PR https://github.com/armbian/build/pull/5660
+    #- { BOARD: hinlink-h28k, BRANCH: legacy } # PR https://github.com/armbian/build/pull/5747
+    #- { BOARD: tinkerboard, BRANCH: edge }
+    # very distant from being mine
+    # - { BOARD: star64, BRANCH: edge, RELEASE: sid } # only sid has proper riscv64 support in Debian?
+    #- { BOARD: helios64, BRANCH: current }
+    #- { BOARD: tritium-h3, BRANCH: edge }
+    #- { BOARD: tritium-h5, BRANCH: edge }
+    # - { BOARD: rk322x-box, BRANCH: edge, RELEASE: bookworm }
+    #- { BOARD: rk322x-box, BRANCH: current }
+    #- { BOARD: nanopiduo2, BRANCH: current, RELEASE: bullseye }
+    # - { BOARD: xiaomi-elish, BRANCH: sm8250, RELEASE: jammy }
+    # - { BOARD: oneplus5, BRANCH: edge, RELEASE: jammy }
+    - { BOARD: mekotronics-r58x-pro, BRANCH: legacy }
+    - { BOARD: mekotronics-r58x-pro, BRANCH: vendor }
+    #- { BOARD: mixtile-blade3, BRANCH: edge }
+    #- { BOARD: licheepi-4a, BRANCH: current, RELEASE: noble } # riscv64 sid was broken last time I tried, was it debootstrap crap?
+
+  rpardini-uboot-only-boards: &rpardini-uboot-only-boards
+    - { BOARD: mekotronics-r58x-pro, BRANCH: legacy }
+    - { BOARD: mekotronics-r58x-4g, BRANCH: legacy }
+    - { BOARD: mekotronics-r58x, BRANCH: legacy }
+    - { BOARD: mekotronics-r58-minipc, BRANCH: legacy }
+    - { BOARD: mixtile-blade3, BRANCH: legacy }
+    - { BOARD: odroidhc4, BRANCH: edge }
+    - { BOARD: khadas-vim3l, BRANCH: edge }
+    - { BOARD: khadas-vim3, BRANCH: edge }
+    - { BOARD: tinkerboard-2, BRANCH: edge }
+    - { BOARD: rockpro64, BRANCH: edge }
+    - { BOARD: odroidm1, BRANCH: edge }
+    - { BOARD: nanopi-r5c, BRANCH: edge } # not mine, but related to odroidm1
+    - { BOARD: nanopi-r5s, BRANCH: edge } # not mine, but related to odroidm1
+    - { BOARD: orangepi3b, BRANCH: edge } # patches live in Kwiboo's tree, needs manual intervention
+    - { BOARD: radxa-zero, BRANCH: edge }
+    - { BOARD: radxa-zero2, BRANCH: edge }
+    # pyelftools testing
+    - { BOARD: bananapir2pro, BRANCH: edge }
+    - { BOARD: orangepi5, BRANCH: edge }
+    - { BOARD: radxa-zero3, BRANCH: edge }
+    - { BOARD: rock-4se, BRANCH: edge }
+    - { BOARD: rock-5b, BRANCH: edge }
+    - { BOARD: nanopct6, BRANCH: edge }
+    - { BOARD: nanopct6-lts, BRANCH: edge }
+    - { BOARD: mixtile-edge2, BRANCH: edge }
+    - { BOARD: cm3588-nas, BRANCH: edge }
+    - { BOARD: rockpi-4cplus, BRANCH: edge }
+    - { BOARD: tinkerboard, BRANCH: current }
+
+    # for ja in mekotronics-r58x-pro mixtile-blade3; do echo $ja; ./compile.sh rewrite-uboot-patches BRANCH=legacy BOARD=$ja; done
+    # for ja in orangepi3b qemu-uboot-x86 odroidhc4 khadas-vim3l khadas-vim3 tinkerboard-2 rockpro64 odroidm1 radxa-zero radxa-zero2; do echo $ja; ./compile.sh rewrite-uboot-patches BRANCH=edge BOARD=$ja; done
+
+  rpardini-virtual-boards: &rpardini-virtual-boards
+    # UTM images, virtual
+    #- { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: image-output-utm }
+    #- { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: image-output-utm }
+    # Plain UEFI's, for physical machines
+    - { BOARD: uefi-arm64, BRANCH: edge }
+    - { BOARD: uefi-x86, BRANCH: edge }
+    # WSL2 UEFI's, for Windows WSL2
+    #- { BOARD: wsl2-arm64, BRANCH: edge } # edge is missing some hyper-v patches & configs
+    #- { BOARD: wsl2-x86, BRANCH: edge }
+    #- { BOARD: wsl2-arm64, BRANCH: current }
+    #- { BOARD: wsl2-x86, BRANCH: current }
+
+
+  desktop-boards: &desktop-boards # Gotta define RELEASE here
+    #- { BOARD: thinkpad-x13s, BRANCH: sc8280xp, RELEASE: lunar, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
+    - { BOARD: thinkpad-x13s, BRANCH: sc8280xp, RELEASE: trixie, DESKTOP_ENVIRONMENT: gnome }
+    #- { BOARD: thinkpad-x13s, BRANCH: jhovoldsc8280xp, RELEASE: lunar, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
+    #- { BOARD: khadas-vim3, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
+    #- { BOARD: khadas-vim3l, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
+    #- { BOARD: rock-5-cmio, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: rock-5b, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: rock-5a, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    # - { BOARD: mixtile-blade3, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: orangepi5, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: orangepi5-plus, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: mekotronics-r58x, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: mekotronics-r58x-4g, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    # - { BOARD: mekotronics-r58x-pro, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: mekotronics-r58-minipc, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: nanopi-r6s, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: uefi-x86, BRANCH: edge, RELEASE: jammy, ENABLE_EXTENSIONS: vmware-vm, DESKTOP_APPGROUPS_SELECTED: "none" }
+    #- { BOARD: khadas-edge2, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming,image-output-oowow" }
+    # - { BOARD: odroidm1, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    #- { BOARD: orangepi3b, BRANCH: legacy, RELEASE: trixie }
+
+  home-assistant-boards: &home-assistant-boards
+    - { BOARD: odroidhc4, BRANCH: current }
+    #- { BOARD: tinkerboard-2, BRANCH: edge }
+
+  cloud-rescues: &cloud-rescues
+    # rescue e2img's, for both ddk and edge, x86 and arm64
+    #- { BOARD: uefi-arm64, BRANCH: ddk, ENABLE_EXTENSIONS: uefi-rescue }
+    - { BOARD: uefi-arm64, BRANCH: edge,  ENABLE_EXTENSIONS: uefi-rescue }
+    #- { BOARD: uefi-x86, BRANCH: ddk, ENABLE_EXTENSIONS: uefi-rescue }
+    - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: uefi-rescue }
+
+  cloud-metadata: &cloud-metadata
+    # edge, x86 and arm64, with cloud-metadata-qcow2-initrd
+    - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" }
+    - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" }
+    - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    - { BOARD: uefi-x86, BRANCH: current, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    - { BOARD: uefi-x86, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    - { BOARD: uefi-arm64, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    #- { BOARD: uefi-x86, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    #- { BOARD: uefi-arm64, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    #- { BOARD: uefi-x86, BRANCH: current, ENABLE_EXTENSIONS: cloud-metadata-qcow2-initrd }
+    #- { BOARD: uefi-arm64, BRANCH: current, ENABLE_EXTENSIONS: cloud-metadata-qcow2-initrd }
+    # same stuff again, but for azure/VHD; "azure" implies cloud-metadata-qcow2-initrd
+    #- { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: azure }
+    #- { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: azure }
+
+targets:
+
+  some-userspace-rpardini:
+    configs: [ rpardini-generic ]
+    pipeline:
+      build-image: no # don't build images for this
+      only-artifacts: [ "armbian-base-files", "armbian-desktop", "rootfs" ] # only these artifacts
+      gha: *rpardini-gha
+    vars: # common vars, must exist.
+      USERSPACE_ONLY: "yes" # this does nothing, but some var must exist. might as well be this.
+      CLOUD_IMAGE: "no" # rpardini-specific cloud stuff due to rpardini-generic
+    items-from-inventory:
+      userspace: # creates items from userspace inventory automatically... 'eos' distributions are always skipped.
+        #skip-releases: [ "sid" ] # do NOT include these releases
+        only-releases: [ "bookworm", "jammy", "noble" ] # ONLY include these releases, "trixie"
+        # skip-desktops: [ "lxde" ] # do NOT include these desktops
+        only-desktops: [ "gnome", "kde-neon" ] # ONLY include these desktops, "xfce",
+        cli: yes # include normal CLI userspace
+        minimal: no # include minimal CLI userspace
+        cloud: yes # include cloud CLI userspace (rpardini's stuff, default is no)
+        desktops: yes # include desktops, one per desktop_variations below; 'eos' ones are always skipped
+        desktop_variations:
+          - [ browsers ] # browsers appgroup
+        arches: # wanted architectures, and their "example" BOARD and BRANCH.
+          arm64: [ { BOARD: "uefi-arm64", BRANCH: "current" } ]
+          amd64: [ { BOARD: "uefi-x86", BRANCH: "current" } ]
+
+  u-boot-only-for-some-boards:
+    enabled: yes
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+      build-image: no # don't build images for this target ("no" here is a boolean, not string)
+      only-artifacts: [ "uboot" ] # only build these artifacts for these targets. it's "uboot", not "u-boot"
+    vars:
+      BUILD_MINIMAL: "yes"
+      BUILD_DESKTOP: "no"
+      CLOUD_IMAGE: "no"
+      RELEASE: jammy
+    items: # list of reference-lists
+      - *rpardini-uboot-only-boards
+
+  all-uboots-that-is-really-a-lot-of-uboots:
+    enabled: no
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+      build-image: no # don't build images for this target ("no" here is a boolean, not string)
+      only-artifacts: [ "uboot" ] # only build these artifacts for these targets. it's "uboot", not "u-boot"
+    vars:
+      BUILD_MINIMAL: "yes"
+      BUILD_DESKTOP: "no"
+      CLOUD_IMAGE: "no"
+      RELEASE: jammy
+    items-from-inventory:
+      not-eos: yes # not-eos boards, all branches
+
+
+  cli-debian:
+    enabled: yes
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      RELEASE: bookworm
+      BUILD_MINIMAL: "no" # quoting "no" is the first lesson of YAML
+      CLOUD_IMAGE: "no"
+    items: # list of reference-lists
+      - *rpardini-physical-boards
+      - *rpardini-virtual-boards
+
+  cloud-rescues:
+    enabled: yes
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+    expand:
+      #ubuntu-stable:
+      #  RELEASE: jammy
+      debian-stable:
+        RELEASE: bookworm
+      #debian-testing:
+      #  RELEASE: trixie
+    items: *cloud-rescues
+
+  cloud-metadatas:
+    enabled: yes # keep, cloud-container-disk
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+      BUILD_DESKTOP: "no"
+    expand:
+      #ubuntu-stable:
+      #  RELEASE: jammy
+      debian-stable:
+        RELEASE: bookworm
+      #ubuntu-next-lts:
+      #  RELEASE: noble
+      #debian-testing:
+      #  RELEASE: trixie
+    items: *cloud-metadata
+
+  cloud-sbcs:
+    enabled: no
+    pipeline:
+      gha: *rpardini-gha
+      build-image: no # I just want packages for these, thanks. no images.
+    configs: [ rpardini-generic ]
+    vars:
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+      BUILD_DESKTOP: "no"
+      RELEASE: bookworm
+    items: *rpardini-physical-boards
+
+  home-assistant:
+    enabled: no
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "no"
+      BUILD_DESKTOP: "no"
+      RELEASE: bullseye # required for HA stuff.
+      ENABLE_EXTENSIONS: "ha"
+    items: *home-assistant-boards
+
+  desktop:
+    enabled: yes
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "no"
+      DESKTOP_ENVIRONMENT: "gnome"
+      BUILD_DESKTOP: "yes"
+      DESKTOP_ENVIRONMENT_CONFIG_NAME: "config_base"
+      DESKTOP_APPGROUPS_SELECTED: "browsers" # space or comma separated
+    items: *desktop-boards
+
+  kde-neon-jammy-desktop:
+    enabled: no
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      RELEASE: "jammy" # kde-neon is only available for jammy/LTS releases
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "no"
+      DESKTOP_ENVIRONMENT: "kde-neon"
+      BUILD_DESKTOP: "yes"
+      DESKTOP_ENVIRONMENT_CONFIG_NAME: "config_base"
+      DESKTOP_APPGROUPS_SELECTED: "" # space or comma separated
+    items:
+      - { BOARD: uefi-x86, BRANCH: edge }
+      - { BOARD: mekotronics-r58x-pro, BRANCH: vendor, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588" }
+
+  rk3588uefi:
+    enabled: no
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BRANCH: "vendor"
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "no"
+      RELEASE: "jammy"
+      DESKTOP_ENVIRONMENT: "kde-neon"
+      BUILD_DESKTOP: "yes"
+      DESKTOP_ENVIRONMENT_CONFIG_NAME: "config_base"
+      DESKTOP_APPGROUPS_SELECTED: "" # space or comma separated
+      ENABLE_EXTENSIONS: "amazingfated-rk3588,uefi-edk2-rk3588"
+    items:
+      - { BOARD: "hinlink-h88k" }
+      - { BOARD: "indiedroid-nova" }
+      #- { BOARD: "khadas-edge2" } # doesn't have vendor yet
+      - { BOARD: "mekotronics-r58-minipc" }
+      - { BOARD: "mekotronics-r58x" }
+      - { BOARD: "mekotronics-r58x-4g" }
+      - { BOARD: "mekotronics-r58x-pro" }
+      - { BOARD: "mixtile-blade3" }
+      - { BOARD: "nanopct6" }
+      - { BOARD: "nanopi-r6s" } # We've a missing nanopi-r6c board file
+      - { BOARD: "orangepi5" }
+      - { BOARD: "orangepi5-plus" }
+      - { BOARD: "rock-5a" }
+      - { BOARD: "rock-5b" }
+
+  rk3588uefi-cloud-vendor:
+    enabled: no
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BRANCH: "vendor"
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+      BUILD_DESKTOP: "no"
+      RELEASE: jammy
+      ENABLE_EXTENSIONS: "amazingfated-rk3588,uefi-edk2-rk3588,cloud-metadata"
+    items:
+      - { BOARD: "mekotronics-r58x-pro" }
+
+  k8s-cloud-edge-k8s-rawimg:
+    enabled: yes # keep, for sbcs tinkerbell
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BRANCH: "edge"
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+      BUILD_DESKTOP: "no"
+      RELEASE: bookworm
+      ENABLE_EXTENSIONS: "cloud-metadata,k8s"
+    items:
+      - { BOARD: "aml-t95z-plus" }
+      - { BOARD: "odroidhc4" }
+      - { BOARD: "odroidm1" }
+      - { BOARD: "odroidm1", BRANCH: "current" }
+      - { BOARD: "khadas-vim3l" }
+      - { BOARD: "nanopct6-lts" }
+      - { BOARD: "cm3588-nas" }
+      #- { BOARD: "nanopct6", BRANCH: "current" }
+      #- { BOARD: "cm3588-nas", BRANCH: "current" }
+      #- { BOARD: "rpi4b", BRANCH: "current" }
+
+  rk3588uefi-trixie-edge:
+    enabled: no
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BRANCH: "edge"
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+      BUILD_DESKTOP: "no"
+      RELEASE: trixie
+      ENABLE_EXTENSIONS: "uefi-edk2-rk3588"
+    items:
+      - { BOARD: rock-5b, BRANCH: edge, RELEASE: trixie }
+
+
