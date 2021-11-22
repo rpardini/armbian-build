@@ -1,0 +1,8 @@
+# Amlogic S912 octa core 3Gb RAM SoC eMMC chinese clone
+BOARD_NAME="T95Z Plus"                         #  (a q201 Chinese clone with internal amlogic ethernet 1gbit, complete with a chunk of metal inside to delay thermal throttling)
+BOOT_FDT_FILE="amlogic/meson-gxm-vega-s96.dtb" # This is actually patched by userpatches/kernel/meson64-current/eth-giga-fix-eth-phy.patch
+BOARDFAMILY="meson-gxm"                        # Identical to GXL - I use a separate family to avoid merge conflicts
+BOOTCONFIG="khadas-vim2_defconfig"
+KERNEL_TARGET="current,edge"
+FULL_DESKTOP="yes"
+BOOT_LOGO="desktop"
