@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ricardo Pardini <ricardo@pardini.net>
+Date: Tue, 6 Dec 2022 15:07:18 +0100
+Subject: Hijack gxm-vega-s96 to t95z
+
+A ugly hack. Please don't do this.
+---
+ arch/arm64/boot/dts/amlogic/meson-gxm-vega-s96.dts | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxm-vega-s96.dts b/arch/arm64/boot/dts/amlogic/meson-gxm-vega-s96.dts
+index d3fdba4da9a6..135e38376908 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxm-vega-s96.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-gxm-vega-s96.dts
+@@ -12,7 +12,7 @@
+ 
+ / {
+ 	compatible = "tronsmart,vega-s96", "amlogic,s912", "amlogic,meson-gxm";
+-	model = "Tronsmart Vega S96";
++	model = "T95Z Plus 2Gb RAM 16Gb MMC 1gbit eth - Chinese q201-n1 clone";
+ 
+ };
+ 
+@@ -31,8 +31,8 @@ &ethmac {
+ 
+ &external_mdio {
+ 	external_phy: ethernet-phy@0 {
+-		/* Realtek RTL8211F (0x001cc916) */
+-		reg = <0>;
++		/* Amlogic eth phy */
++		reg = <1>;
+ 	};
+ };
+ 
+-- 
+Armbian
+
