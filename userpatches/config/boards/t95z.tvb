@@ -1,0 +1,17 @@
+# Amlogic S912 octa core 3Gb RAM SoC eMMC chinese clone
+BOARD_NAME="T95Z Plus"                          #  (a q201 Chinese clone with internal amlogic ethernet 1gbit, complete with a chunk of metal inside to delay thermal throttling)
+BOOT_FDT_FILE="amlogic/meson-gxm-t95z-plus.dtb" # From chewitt's patches
+BOARDFAMILY="meson-gxm"                         # Identical to GXL - I use a separate family to avoid merge conflicts
+BOOTCONFIG="khadas-vim2_defconfig"              # untrue. it does build this, but in the end uses a blob from Khadas VIM2 (precompiled). don't ask.
+KERNEL_TARGET="edge"
+FULL_DESKTOP="yes"
+BOOT_LOGO="desktop"
+
+# Newer u-boot
+BOOTBRANCH_BOARD="tag:v2023.04"
+BOOTPATCHDIR="v2023.04"
+
+# Use extlinux and u-boot-menu extension
+declare -g SRC_EXTLINUX="yes"
+declare -g SRC_CMDLINE="loglevel=7 splash=verbose console=ttyAML0,115200" # Those boards are serial-debug only; 'root=LABEL=armbi_root' ?
+enable_extension "u-boot-menu"                    # this generates the extlinux.conf
