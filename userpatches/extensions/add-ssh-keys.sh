@@ -1,0 +1,15 @@
+function extension_prepare_config__prepare_ssh_keys() {
+	display_alert "SSH Keys extension enabled" "${EXTENSION}" "info"
+}
+
+function pre_customize_image__005_add_ssh_keys() {
+	display_alert "Deploying SSH keys" "${EXTENSION}" "info"
+	mkdir -p "${SDCARD}/root/.ssh"
+	cat <<- EOD >> "${SDCARD}/root/.ssh/authorized_keys"
+		ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGAhF7pobuxW0ulzW5nEU2CiC9miWV350/F/+JfeDMXF lane
+		ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDABxEG/+1GqoIGva3BQIppLDnmkWuTziHkUmVsYPsAW0g5Q9mZawl2v8ehjnVff/A/eSZzWjmYX4MaqIRmKHS28kXznDu+c5yaxzlOiZNfh8qJOfwWVD7LuK/C7f6RX3NhpfVMGjO6gQ6kQrdRxSRqayZYcNzWH548y6+JSKDUrpj5CBQ4eSi7E5Qxe+LmRm8I7ukp4aZUBgGEG3S+rt0d6UjxUg8DLLN7hYnKmCUPWo3gDcIvqg2pRi4mV56plJ+qPBriaCJdpxf9IQXJ3lakE0cg5PUWcmHT8zY+2LjBCxKfeMU/lMCpR8sypYJvmwa+AAT+GXrto8/fbWIpVJrDDl/S7sWYi8WVndnR9UiC0bKEGcjvOjTKspohvSJxnE2Jum1jfxUs5Z9JE6yMDPEFSC1Je0sOj7kzNgkUo3lPk3z1VEYEh71G0J+affyCP7+1SIuTQrzjbMBswfMWhnZXmxiHyXpKKGyRljLpGhuycL4ujhKIANWrMgCw/3GBLaCKrNFmZjKBofIm6bqLqJyqPosWuymy7uxcSOjATCdYDmnX0MzsuZ9C9gqqQx0vB3wLWqmQwevOksJmFBkkPF9PEYIovpthtn5wVBEI7J630t94//W0bqFFOxS5JPhPnTLdfEYWDW85EGOYQK/8kyOZPWtaC/s73JDLoB0Xh9gaqQ== rp1
+		ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL4UDw0C+6G2J1Uyt6LKcrSMPKwB0crAB3OfA772Q0DW rp2
+		ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDmvWx3mbVeMTvvCIkwz3CqcH3wfge3poc21TxMWm6E4fIXTa3Fuv3P5LLMv8X/p/0Ydgy4F/qOQzhZYYeQgSuybzvnkf6uGrHPZ4A++EMV++BSivf2kENbnckbPZakgOCQNYxSN2yk7bfIo1IEU7bKOPLWh3KbTluMUho/eaoIEupW95ZL1GpcBNAYnwa9t/+OtaUai5Jz5MPrcfZWSaPfqB7POQeGVmcgKMJZrW3immiWaF3xKegN+BQiK4JCmgxN5nPpX+21ABJII7Zq6l+z1JfTqIHwMKeHvIfSh0BZTjkY/mmbUQCj3xpuMSdKDniXBzIxlq94r/xIFcatR1WxpvkEEQ+KGMEIxA+bUv5mBs7fKhLW+5VMDPLN0Iy1ddFM39CRp3QSUqlzV3gCZLe3FzUBFvThmHU3dd22iH7zFFJcF1qr+V/FKp0KHBFeYUbo1Kaq3bPvSU9n7hO9BM5hv5A98aruGQswh4+qT/XC5PL9ZIiZ3z47R6BTQDm/b1Q5q8DtT+QyedC6+J8lriUwPFpPgoyAegKBC6GQ9IZEZlj4nC08PMiZS42Hd0Sobmev/WtcXx+2temNe1ZhP99BMge16UMK1emvBCUy4GjM0SVIbmN0pRoo8fvcV/M9yd2uUAlGqC4+5X963MNWF3an84cIKSC1FrfzPKA45GfSwQ== rp3
+	EOD
+	chroot_sdcard chmod -v -R u+rw,o-rwx,g-rwx "/root/.ssh"
+}
