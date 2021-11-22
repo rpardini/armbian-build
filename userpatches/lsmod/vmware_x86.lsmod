@@ -1,0 +1,48 @@
+Module                  Size  Used by
+bfq                    77824  1
+vsock_loopback         16384  0
+intel_rapl_msr         20480  0
+vmw_vsock_virtio_transport_common    28672  1 vsock_loopback
+intel_rapl_common      24576  1 intel_rapl_msr
+kvm_intel             270336  0
+vmw_vsock_vmci_transport    32768  1
+vsock                  36864  5 vmw_vsock_virtio_transport_common,vsock_loopback,vmw_vsock_vmci_transport
+binfmt_misc            24576  1
+nls_iso8859_1          16384  1
+kvm                   737280  1 kvm_intel
+crct10dif_pclmul       16384  1
+ghash_clmulni_intel    16384  0
+aesni_intel           376832  0
+crypto_simd            16384  1 aesni_intel
+cryptd                 20480  2 crypto_simd,ghash_clmulni_intel
+rapl                   16384  0
+vmwgfx                311296  2
+ttm                    57344  1 vmwgfx
+drm_kms_helper        204800  1 vmwgfx
+vmw_balloon            24576  0
+cec                    45056  1 drm_kms_helper
+joydev                 28672  0
+input_leds             16384  0
+serio_raw              20480  0
+rc_core                49152  1 cec
+efi_pstore             16384  0
+fb_sys_fops            16384  1 drm_kms_helper
+syscopyarea            16384  1 drm_kms_helper
+sysfillrect            16384  1 drm_kms_helper
+sysimgblt              16384  1 drm_kms_helper
+vmw_vmci               61440  2 vmw_balloon,vmw_vsock_vmci_transport
+mac_hid                16384  0
+sch_fq_codel           20480  9
+drm                   409600  5 vmwgfx,drm_kms_helper,ttm
+sunrpc                446464  1
+ip_tables              32768  0
+x_tables               36864  1 ip_tables
+autofs4                40960  2
+crc32_pclmul           16384  0
+ahci                   45056  0
+psmouse               147456  0
+vmxnet3                57344  0
+vmw_pvscsi             28672  2
+libahci                28672  1 ahci
+i2c_piix4              28672  0
+pata_acpi              16384  0
