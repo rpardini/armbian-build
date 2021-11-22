@@ -8,7 +8,7 @@ charset = utf-8
 end_of_line = lf
 indent_style = tab
 indent_size = 8
-trim_trailing_whitespace = true
+trim_trailing_whitespace = false
 insert_final_newline = true
 
 [*.md]
@@ -20,9 +20,16 @@ insert_final_newline = false
 # C coding style based on Linux kernel.
 # https://www.kernel.org/doc/html/v5.0/process/coding-style.html
 
-[*.sh]
+[*.{sh,conf,wip,tvb,csc}]
 indent_style = tab
 indent_size = 4
+shell_variant = bash
+binary_next_line = false
+switch_case_indent = false
+space_redirects = false
+keep_padding = false
+function_next_line = false
+
 
 [*.c]
 indent_style = tab
@@ -31,3 +38,9 @@ indent_size = 8
 [*.h]
 indent_style = tab
 indent_size = 8
+
+[*.yaml]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = false
