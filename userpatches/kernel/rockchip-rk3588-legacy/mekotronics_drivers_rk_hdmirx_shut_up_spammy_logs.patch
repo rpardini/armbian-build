@@ -1,0 +1,37 @@
+From c9fe39a4bea7bc66c70d5ae37290035a6956f416 Mon Sep 17 00:00:00 2001
+From: Ricardo Pardini <ricardo@pardini.net>
+Date: Mon, 3 Apr 2023 23:03:50 +0200
+Subject: [PATCH] mekotronics: drivers: rk_hdmirx: shut up spammy logs
+
+---
+ drivers/media/platform/rockchip/hdmirx/rk_hdmirx.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/media/platform/rockchip/hdmirx/rk_hdmirx.c b/drivers/media/platform/rockchip/hdmirx/rk_hdmirx.c
+index 366648f30259b..144822304bb60 100644
+--- a/drivers/media/platform/rockchip/hdmirx/rk_hdmirx.c
++++ b/drivers/media/platform/rockchip/hdmirx/rk_hdmirx.c
+@@ -1516,10 +1516,10 @@ static int hdmirx_wait_lock_and_get_timing(struct rk_hdmirx_dev *hdmirx_dev)
+ 	}
+ 
+ 	if (i == WAIT_SIGNAL_LOCK_TIME) {
+-		v4l2_err(v4l2_dev, "%s signal not lock, tmds_clk_ratio:%d\n",
+-				__func__, hdmirx_dev->tmds_clk_ratio);
+-		v4l2_err(v4l2_dev, "%s mu_st:%#x, scdc_st:%#x, dma_st10:%#x\n",
+-				__func__, mu_status, scdc_status, dma_st10);
++		// spammy // v4l2_err(v4l2_dev, "%s signal not lock, tmds_clk_ratio:%d\n",
++		// spammy // 		__func__, hdmirx_dev->tmds_clk_ratio);
++		// spammy // v4l2_err(v4l2_dev, "%s mu_st:%#x, scdc_st:%#x, dma_st10:%#x\n",
++		// spammy // 		__func__, mu_status, scdc_status, dma_st10);
+ 
+ 		return -1;
+ 	}
+@@ -2619,7 +2619,7 @@ static irqreturn_t hdmirx_dma_irq_handler(int irq, void *dev_id)
+ 
+ static void hdmirx_audio_interrupts_setup(struct rk_hdmirx_dev *hdmirx_dev, bool en)
+ {
+-	dev_info(hdmirx_dev->dev, "%s: %d", __func__, en);
++	// spammy // dev_info(hdmirx_dev->dev, "%s: %d", __func__, en);
+ 	if (en) {
+ 		hdmirx_update_bits(hdmirx_dev, AVPUNIT_1_INT_MASK_N,
+ 				   DEFRAMER_VSYNC_THR_REACHED_MASK_N,
