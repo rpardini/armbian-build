@@ -11,7 +11,6 @@
 post_family_config__be_more_awesome() {
 	# @TODO: Please rename this function to reflect what it does, but preserve the "post_family_config__" prefix.
 	display_alert "Being awesome 1!" "${EXTENSION}" "info"
-	export PROGRESS_DISPLAY=verysilent # Example: export a variable. This one silences the built.
 }
 
 #### *Invoke function with user override*

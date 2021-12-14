@@ -8,14 +8,16 @@ function do_with_logging() {
 
 	# We now execute whatever was passed as parameters, in some different conditions:
 	# In both cases, writing to stderr will display to terminal.
-	if [[ "${SLOW_LOG}" == "yes" ]]; then
+	if [[ "${SLOW_LOG}" != "no" ]]; then
 		# If showing log, use tee, so we log to file AND show the log. stderr will flow to screen.
-		echo "Showing log for" "$@"
+		echo "<START $1> Showing log for" "$@"
 		"$@" | tee -a "${CURRENT_LOGFILE}"
+		echo "<END $1> Showing log for" "$@"
 	else
-		echo "NOT Showing log for" "$@"
+		echo "<START $1> NOT Showing log for" "$@"
 		# If not showing the log, just send stdout to logfile. stderr will flow to screen.
 		"$@" >> "${CURRENT_LOGFILE}"
+		echo "<END $1> NOT Showing log for" "$@"
 	fi
 }
 

@@ -17,7 +17,7 @@
 # post_debootstrap_tweaks
 
 install_common() {
-	display_alert "Applying common tweaks" "" "info"
+	display_alert "Applying common tweaks" "install_common" "info"
 
 	# install rootfs encryption related packages separate to not break packages cache
 	if [[ $CRYPTROOT_ENABLE == yes ]]; then
@@ -37,6 +37,7 @@ install_common() {
 	# required for initramfs-tools-core on Stretch since it ignores the / fstab entry
 	echo "/dev/mmcblk0p2 /usr $ROOTFS_TYPE defaults 0 2" >> "${SDCARD}"/etc/fstab
 
+	# @TODO: refacctor this into cryptroot extension
 	# adjust initramfs dropbear configuration
 	# needs to be done before kernel installation, else it won't be in the initrd image
 	if [[ $CRYPTROOT_ENABLE == yes && $CRYPTROOT_SSH_UNLOCK == yes ]]; then
@@ -116,6 +117,7 @@ install_common() {
 	# add the /dev/urandom path to the rng config file
 	echo "HRNGDEVICE=/dev/urandom" >> "${SDCARD}"/etc/default/rng-tools
 
+	# @TODO: security problem?
 	# ping needs privileged action to be able to create raw network socket
 	# this is working properly but not with (at least) Debian Buster
 	chroot "${SDCARD}" /bin/bash -c "chmod u+s /bin/ping"
@@ -130,10 +132,9 @@ install_common() {
 	# enable automated login to console(s)
 	mkdir -p "${SDCARD}"/etc/systemd/system/getty@.service.d/
 	mkdir -p "${SDCARD}"/etc/systemd/system/serial-getty@.service.d/
-	# @TODO: unhack, maybe just overwrite this override
+	# @TODO: check why there was a sleep 10s in ExecStartPre
 	cat <<- EOF > "${SDCARD}"/etc/systemd/system/serial-getty@.service.d/override.conf
 		[Service]
-		#ExecStartPre=/bin/sh -c 'exec /bin/sleep 10'
 		ExecStart=
 		ExecStart=-/sbin/agetty --noissue --autologin root %I \$TERM
 		Type=idle
@@ -155,7 +156,7 @@ install_common() {
 	# root user is already there. Copy bashrc there as well
 	cp "${SDCARD}"/etc/skel/.bashrc "${SDCARD}"/root
 
-	# display welcome message at first root login
+	# display welcome message at first root login @TODO: what reads this?
 	touch "${SDCARD}"/root/.not_logged_in_yet
 
 	if [[ ${DESKTOP_AUTOLOGIN} == yes ]]; then
@@ -167,7 +168,7 @@ install_common() {
 	local bootscript_src=${BOOTSCRIPT%%:*}
 	local bootscript_dst=${BOOTSCRIPT##*:}
 
-	# create extlinux config file
+	# create extlinux config file @TODO: refactor into extensions u-boot, extlinux
 	if [[ $SRC_EXTLINUX == yes ]]; then
 
 		mkdir -p $SDCARD/boot/extlinux
@@ -237,44 +238,50 @@ install_common() {
 		ff02::2     ip6-allrouters
 	EOF
 
-	cd $SRC
+	cd "${SRC}" || exit_with_error "cray-cray about ${SRC}"
 
 	# Prepare and export caching-related params common to all apt calls below, to maximize apt-cacher-ng usage
 	export APT_EXTRA_DIST_PARAMS=""
 	[[ $NO_APT_CACHER != yes ]] && APT_EXTRA_DIST_PARAMS="-o Acquire::http::Proxy=\"http://${APT_PROXY_ADDR:-localhost:3142}\" -o Acquire::http::Proxy::localhost=\"DIRECT\""
 
+	# LOGGING: we're running under the logger framework here.
+	# LOGGING: so we just log directly to stdout and let it handle it.
+	# LOGGING: redirect commands' stderr to stdout so it goes into the log, not screen.
+
 	display_alert "Updating" "package lists"
-	chroot "${SDCARD}" /bin/bash -c "apt-get ${APT_EXTRA_DIST_PARAMS} update" >> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+	chroot "${SDCARD}" /bin/bash -c "apt-get ${APT_EXTRA_DIST_PARAMS} update" 2>&1
 
 	display_alert "Temporarily disabling" "initramfs-tools hook for kernel"
-	chroot "${SDCARD}" /bin/bash -c "chmod -v -x /etc/kernel/postinst.d/initramfs-tools" >> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+	chroot "${SDCARD}" /bin/bash -c "chmod -v -x /etc/kernel/postinst.d/initramfs-tools" 2>&1
+
+	local apt_get_cmd="DEBIAN_FRONTEND=noninteractive  apt-get ${APT_EXTRA_DIST_PARAMS} -yqq"
 
 	# install family packages
 	if [[ -n ${PACKAGE_LIST_FAMILY} ]]; then
 		display_alert "Installing PACKAGE_LIST_FAMILY packages" "${PACKAGE_LIST_FAMILY}"
-		chroot "${SDCARD}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive  apt-get ${APT_EXTRA_DIST_PARAMS} -yqq --no-install-recommends install $PACKAGE_LIST_FAMILY" >> "${DEST}"/${LOG_SUBPATH}/install.log
+		chroot "${SDCARD}" /bin/bash -c "${apt_get_cmd} --no-install-recommends install $PACKAGE_LIST_FAMILY" 2>&1
 	fi
 
 	# install board packages
 	if [[ -n ${PACKAGE_LIST_BOARD} ]]; then
 		display_alert "Installing PACKAGE_LIST_BOARD packages" "${PACKAGE_LIST_BOARD}"
-		chroot "${SDCARD}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive  apt-get ${APT_EXTRA_DIST_PARAMS} -yqq --no-install-recommends install $PACKAGE_LIST_BOARD" >> "${DEST}"/${LOG_SUBPATH}/install.log || {
+		chroot "${SDCARD}" /bin/bash -c "${apt_get_cmd} --no-install-recommends install $PACKAGE_LIST_BOARD" 2>&1 || {
 			display_alert "Failed to install PACKAGE_LIST_BOARD" "${PACKAGE_LIST_BOARD}" "err"
-			exit 2
+			exit 2 # @TODO: why only here?
 		}
 	fi
 
 	# remove family packages
 	if [[ -n ${PACKAGE_LIST_FAMILY_REMOVE} ]]; then
 		display_alert "Removing PACKAGE_LIST_FAMILY_REMOVE packages" "${PACKAGE_LIST_FAMILY_REMOVE}"
-		chroot "${SDCARD}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive  apt-get ${APT_EXTRA_DIST_PARAMS} -yqq remove --auto-remove $PACKAGE_LIST_FAMILY_REMOVE" >> "${DEST}"/${LOG_SUBPATH}/install.log
+		chroot "${SDCARD}" /bin/bash -c "${apt_get_cmd} remove --auto-remove $PACKAGE_LIST_FAMILY_REMOVE" 2>&1
 	fi
 
 	# remove board packages
 	if [[ -n ${PACKAGE_LIST_BOARD_REMOVE} ]]; then
 		display_alert "Removing PACKAGE_LIST_BOARD_REMOVE packages" "${PACKAGE_LIST_BOARD_REMOVE}"
 		for PKG_REMOVE in ${PACKAGE_LIST_BOARD_REMOVE}; do
-			chroot "${SDCARD}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive apt-get ${APT_EXTRA_DIST_PARAMS} -yqq remove --auto-remove ${PKG_REMOVE}" >> "${DEST}"/${LOG_SUBPATH}/install.log
+			chroot "${SDCARD}" /bin/bash -c "${apt_get_cmd} remove --auto-remove ${PKG_REMOVE}" 2>&1
 		done
 	fi
 

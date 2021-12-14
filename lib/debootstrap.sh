@@ -9,17 +9,8 @@
 # This file is a part of the Armbian build script
 # https://github.com/armbian/build/
 
-# Functions:
 
-# debootstrap_ng
-# create_rootfs_cache
-# prepare_partitions
-# update_initramfs
-# create_image
-
-# debootstrap_ng
-#
-debootstrap_ng() {
+function build_rootfs_image() {
 	display_alert "Starting rootfs and image building process for" "${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL}" "info"
 
 	[[ $ROOTFS_TYPE != ext4 ]] && display_alert "Assuming $BOARD $BRANCH kernel supports $ROOTFS_TYPE" "" "wrn"
@@ -52,7 +43,7 @@ debootstrap_ng() {
 	[[ $use_tmpfs == yes ]] && mount -t tmpfs -o size=${phymem}M tmpfs $SDCARD
 
 	# stage: prepare basic rootfs: unpack cache or create from scratch
-	create_rootfs_cache
+	LOG_SECTION="rootfs" do_with_logging create_rootfs_cache
 
 	call_extension_method "pre_install_distribution_specific" "config_pre_install_distribution_specific" << 'PRE_INSTALL_DISTRIBUTION_SPECIFIC'
 *give config a chance to act before install_distribution_specific*
@@ -62,37 +53,37 @@ PRE_INSTALL_DISTRIBUTION_SPECIFIC
 	# stage: install kernel and u-boot packages
 	# install distribution and board specific applications
 
-	install_distribution_specific
-	install_common
+	LOG_SECTION="distro" do_with_logging install_distribution_specific
+	LOG_SECTION="common" do_with_logging install_common
 
 	# install locally built packages
-	[[ $EXTERNAL_NEW == compile ]] && chroot_installpackages_local
+	[[ $EXTERNAL_NEW == compile ]] && LOG_SECTION="packages_local" do_with_logging chroot_installpackages_local
 
 	# install from apt.armbian.com
-	[[ $EXTERNAL_NEW == prebuilt ]] && chroot_installpackages "yes"
+	[[ $EXTERNAL_NEW == prebuilt ]] && LOG_SECTION="packages_prebuilt" do_with_logging chroot_installpackages "yes"
 
 	# stage: user customization script
 	# NOTE: installing too many packages may fill tmpfs mount
-	customize_image
+	LOG_SECTION="custom" do_with_logging customize_image
 
 	# remove packages that are no longer needed. Since we have intrudoced uninstall feature, we might want to clean things that are no longer needed
 	display_alert "No longer needed packages" "purge" "info"
-	chroot $SDCARD /bin/bash -c "apt-get autoremove -y" > /dev/null 2>&1
+	LOG_SECTION="rootfs" do_with_logging chroot $SDCARD /bin/bash -c "apt-get autoremove -y" > /dev/null 2>&1
 
 	# create list of installed packages for debug purposes
 	chroot $SDCARD /bin/bash -c "dpkg --get-selections" | grep -v deinstall | awk '{print $1}' | cut -f1 -d':' > $DEST/${LOG_SUBPATH}/installed-packages-${RELEASE}$([[ ${BUILD_MINIMAL} == yes ]] && echo "-minimal")$([[ ${BUILD_DESKTOP} == yes ]] && echo "-desktop").list 2>&1
 
 	# clean up / prepare for making the image
 	umount_chroot "$SDCARD"
-	post_debootstrap_tweaks
+	LOG_SECTION="rootfs" post_debootstrap_tweaks
 
 	if [[ $ROOTFS_TYPE == fel ]]; then
 		FEL_ROOTFS=$SDCARD/
 		display_alert "Starting FEL boot" "$BOARD" "info"
 		source $SRC/lib/fel-load.sh
 	else
-		prepare_partitions
-		create_image
+		LOG_SECTION="partitioning" prepare_partitions
+		LOG_SECTION="image" create_image
 	fi
 
 	# stage: unmount tmpfs
