@@ -52,6 +52,8 @@ backtitle="Armbian building script, https://www.armbian.com | https://docs.armbi
 
 # Libraries include
 
+# shellcheck source=functions/logging.sh
+source "${SRC}"/lib/functions/logging.sh # Logging subsystem.
 # shellcheck source=debootstrap.sh
 source "${SRC}"/lib/debootstrap.sh # system specific install
 # shellcheck source=image-helpers.sh
