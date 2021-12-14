@@ -183,7 +183,7 @@ create_board_package() {
 		cat <<- EOF >> "${destination}"/DEBIAN/postinst
 			if [ true ]; then
 
-	    # this package recreate boot scripts
+				# this package recreate boot scripts
 		EOF
 	else
 		cat <<- EOF >> "${destination}"/DEBIAN/postinst

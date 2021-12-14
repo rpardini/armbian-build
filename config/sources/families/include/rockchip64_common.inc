@@ -270,8 +270,8 @@ family_tweaks_bsp() {
 		cat <<- EOF > "$destination"/etc/X11/xorg.conf.d/02-driver.conf
 			# set fbdev as default driver.
 			Section "Device"
-		         Identifier "NOGPU"
-		         Driver "fbdev"
+			         Identifier "NOGPU"
+			         Driver "fbdev"
 			EndSection
 		EOF
 	fi

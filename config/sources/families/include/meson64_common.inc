@@ -292,7 +292,7 @@ family_tweaks_bsp() {
 				    ## End glamor configuration
 				    
 				    EndSection
-	       
+				       
 				    Section "Screen"
 				        Identifier "Default Screen"
 				            SubSection "Display"
