@@ -17,18 +17,18 @@ PACKAGE_LIST_FAMILY="ethtool"
 RKBIN_DIR="$SRC/cache/sources/rkbin-tools"
 if [ "$(uname -m)" = "aarch64" ]; then
 	case "$(lsb_release -sc)" in
-	"bullseye"|"focal"|"hirsute"|"impish"|"jammy")
+		"bullseye" | "focal" | "hirsute" | "impish" | "jammy")
 			PKG_PREFIX="qemu-x86_64-static -L /usr/x86_64-linux-gnu "
-		;;
-	*)
-		PKG_PREFIX="qemu-x86_64 -L /usr/x86_64-linux-gnu "
-		;;
+			;;
+		*)
+			PKG_PREFIX="qemu-x86_64 -L /usr/x86_64-linux-gnu "
+			;;
 	esac
 else
 	PKG_PREFIX=""
 fi
 
-BOOT_SOC=`expr $BOOTCONFIG : '.*\(rk[[:digit:]]\+.*\)_.*'`
+BOOT_SOC=$(expr $BOOTCONFIG : '.*\(rk[[:digit:]]\+.*\)_.*')
 
 if [[ $BOOT_SOC == rk3399 ]]; then
 
@@ -86,7 +86,7 @@ case $BRANCH in
 		KERNELPATCHDIR='rockchip64-'$BRANCH
 		LINUXFAMILY=rockchip64
 		LINUXCONFIG='linux-rockchip64-'$BRANCH
-	;;
+		;;
 
 	edge)
 
@@ -95,12 +95,11 @@ case $BRANCH in
 		LINUXFAMILY=rockchip64
 		LINUXCONFIG='linux-rockchip64-'$BRANCH
 
-	;;
+		;;
 
 esac
 
-prepare_boot_configuration()
-{
+prepare_boot_configuration() {
 	if [[ $BOOT_SCENARIO == "blobless" ]]; then
 
 		UBOOT_TARGET_MAP="BL31=bl31.bin idbloader.img u-boot.itb;;idbloader.img u-boot.itb"
@@ -139,8 +138,7 @@ prepare_boot_configuration()
 	fi
 }
 
-uboot_custom_postprocess()
-{
+uboot_custom_postprocess() {
 
 	if [[ $BOOT_SCENARIO == "blobless" || $BOOT_SCENARIO == "tpl-spl-blob" ]]; then
 		:
@@ -169,22 +167,21 @@ uboot_custom_postprocess()
 	fi
 }
 
-write_uboot_platform()
-{
+write_uboot_platform() {
 	if [[ -f $1/rksd_loader.img ]]; then # legacy rk3399 loader
 
-		dd if=$1/rksd_loader.img of=$2 seek=64 conv=notrunc status=none >/dev/null 2>&1
+		dd if=$1/rksd_loader.img of=$2 seek=64 conv=notrunc status=none > /dev/null 2>&1
 
 	elif [[ -f $1/u-boot.itb ]]; then # $BOOT_SCENARIO == "blobless" || $BOOT_SCENARIO == "tpl-spl-blob"
 
-		dd if=$1/idbloader.img of=$2 seek=64 conv=notrunc status=none >/dev/null 2>&1
-		dd if=$1/u-boot.itb of=$2 seek=16384 conv=notrunc status=none >/dev/null 2>&1
+		dd if=$1/idbloader.img of=$2 seek=64 conv=notrunc status=none > /dev/null 2>&1
+		dd if=$1/u-boot.itb of=$2 seek=16384 conv=notrunc status=none > /dev/null 2>&1
 
 	elif [[ -f $1/uboot.img ]]; then # $BOOT_SCENARIO == "only-blobs"
 
-		dd if=$1/idbloader.bin of=$2 seek=64 conv=notrunc status=none >/dev/null 2>&1
-		dd if=$1/uboot.img of=$2 seek=16384 conv=notrunc status=none >/dev/null 2>&1
-		dd if=$1/trust.bin of=$2 seek=24576 conv=notrunc status=none >/dev/null 2>&1
+		dd if=$1/idbloader.bin of=$2 seek=64 conv=notrunc status=none > /dev/null 2>&1
+		dd if=$1/uboot.img of=$2 seek=16384 conv=notrunc status=none > /dev/null 2>&1
+		dd if=$1/trust.bin of=$2 seek=24576 conv=notrunc status=none > /dev/null 2>&1
 
 	else
 		echo "Unsupported u-boot processing configuration!"
@@ -193,11 +190,10 @@ write_uboot_platform()
 	fi
 }
 
-write_uboot_platform_mtd()
-{
+write_uboot_platform_mtd() {
 	if [[ -f $1/rkspi_loader.img ]]; then
 
-		dd if=$1/rkspi_loader.img of=$2 conv=notrunc status=none >/dev/null 2>&1
+		dd if=$1/rkspi_loader.img of=$2 conv=notrunc status=none > /dev/null 2>&1
 
 	else
 
@@ -207,24 +203,22 @@ write_uboot_platform_mtd()
 	fi
 }
 
-setup_write_uboot_platform()
-{
+setup_write_uboot_platform() {
 
 	if grep -q "ubootpart" /proc/cmdline; then
 
 		local tmp=$(cat /proc/cmdline)
 		tmp="${tmp##*ubootpart=}"
 		tmp="${tmp%% *}"
-		[[ -n $tmp ]] && local part=$(findfs PARTUUID=$tmp 2>/dev/null)
-		[[ -n $part ]] && local dev=$(lsblk -n -o PKNAME $part 2>/dev/null)
+		[[ -n $tmp ]] && local part=$(findfs PARTUUID=$tmp 2> /dev/null)
+		[[ -n $part ]] && local dev=$(lsblk -n -o PKNAME $part 2> /dev/null)
 		[[ -n $dev ]] && DEVICE="/dev/$dev"
 
 	fi
 
 }
 
-family_tweaks()
-{
+family_tweaks() {
 
 	if [[ $BOARD == z28pro ]]; then
 
@@ -257,8 +251,8 @@ family_tweaks()
 
 	if [[ $BOARD == pinebook-pro ]]; then
 
-                chroot $SDCARD /bin/bash -c "echo SuspendState=freeze >> /etc/systemd/sleep.conf"
-                chroot $SDCARD /bin/bash -c "echo HandlePowerKey=ignore >> /etc/systemd/login.d"
+		chroot $SDCARD /bin/bash -c "echo SuspendState=freeze >> /etc/systemd/sleep.conf"
+		chroot $SDCARD /bin/bash -c "echo HandlePowerKey=ignore >> /etc/systemd/login.d"
 	fi
 
 	if [[ $BOARD == station* ]]; then
@@ -269,18 +263,16 @@ family_tweaks()
 
 }
 
-
-family_tweaks_bsp()
-{
+family_tweaks_bsp() {
 
 	if [[ $BOOTCONFIG == *3328* ]] && [[ $BRANCH != legacy ]]; then
 		mkdir -p "$destination"/etc/X11/xorg.conf.d
-		cat <<-EOF > "$destination"/etc/X11/xorg.conf.d/02-driver.conf
-		# set fbdev as default driver.
-		Section "Device"
-	         Identifier "NOGPU"
-	         Driver "fbdev"
-		EndSection
+		cat <<- EOF > "$destination"/etc/X11/xorg.conf.d/02-driver.conf
+			# set fbdev as default driver.
+			Section "Device"
+		         Identifier "NOGPU"
+		         Driver "fbdev"
+			EndSection
 		EOF
 	fi
 
@@ -352,7 +344,7 @@ family_tweaks_bsp()
 
 		# special keys
 		mkdir -p "${destination}"/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/
-		cp $SRC/packages/bsp/pinebook-pro/pointers.xml  "${destination}"/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/
+		cp $SRC/packages/bsp/pinebook-pro/pointers.xml "${destination}"/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/
 
 		# touchpad and keyboard tweaks
 		mkdir -p "${destination}"/etc/X11/xorg.conf.d/
