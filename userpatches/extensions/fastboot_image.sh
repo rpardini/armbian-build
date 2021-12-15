@@ -67,7 +67,7 @@ config_post_umount_final_image__990_extract_pure_ext4_image_from_partitioned_loo
 	# this writes to ${DESTIMG} directly, since debootstrap.sh will move them later.
 	local dest_img_file_tmp="${DESTIMG}/${version}.fastboot.rootfs.img.nonsparse"
 	local dest_img_file_final="${DESTIMG}/${version}.fastboot.rootfs.img"
-	pv -N "[ .... ] dd" "${wanted_partition}" > "${dest_img_file_tmp}"
+	pv -N "[🥶] dd" "${wanted_partition}" > "${dest_img_file_tmp}"
 
 	non_sparse_size="$(du -h -s "${dest_img_file_tmp}" | tr "\t" " " | cut -d " " -f 1)" # Really?
 	display_alert "Converting to Android rootfs image sparse" "img2simg ${non_sparse_size}" "info"

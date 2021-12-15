@@ -51,7 +51,7 @@ config_post_umount_final_image__800_rootfs_e2img_inside_rootfs() {
 	display_alert "e2image sparse dump done" "sizes: apparent: ${apparent_size} actual: ${actual_size} imgsize: ${FIXED_IMAGE_SIZE}Mb" "info"
 
 	if [[ "${ROOTFS_IN_ROOTFS_EXPORT_ONLY}" != "yes" ]]; then
-		echo -n "[ .... ] Re-mounting..."
+		echo -n "[🐴] Re-mounting..."
 		mount "${ROOT_LOOP_DEV_PART}" "${MOUNT}" && sync
 
 		echo -n "Copying..."
