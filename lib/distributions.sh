@@ -16,18 +16,20 @@
 # install_distribution_specific
 # post_debootstrap_tweaks
 
+# LOGGING: we're running under the logger framework here.
+# LOGGING: so we just log directly to stdout and let it handle it.
+# LOGGING: redirect commands' stderr to stdout so it goes into the log, not screen.
 install_common() {
 	display_alert "Applying common tweaks" "install_common" "info"
 
 	# install rootfs encryption related packages separate to not break packages cache
+	# @TODO: terrible, this does not use apt-cacher, extract to extension and fix
 	if [[ $CRYPTROOT_ENABLE == yes ]]; then
 		display_alert "Installing rootfs encryption related packages" "cryptsetup" "info"
-		chroot "${SDCARD}" /bin/bash -c "apt-get -y -qq --no-install-recommends install cryptsetup" \
-			>> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+		chroot_sdcard_apt_get_install cryptsetup
 		if [[ $CRYPTROOT_SSH_UNLOCK == yes ]]; then
 			display_alert "Installing rootfs encryption related packages" "dropbear-initramfs" "info"
-			chroot "${SDCARD}" /bin/bash -c "apt-get -y -qq --no-install-recommends install dropbear-initramfs cryptsetup-initramfs" \
-				>> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+			chroot_sdcard_apt_get_install dropbear-initramfs cryptsetup-initramfs
 		fi
 
 	fi
@@ -120,11 +122,12 @@ install_common() {
 	# @TODO: security problem?
 	# ping needs privileged action to be able to create raw network socket
 	# this is working properly but not with (at least) Debian Buster
-	chroot "${SDCARD}" /bin/bash -c "chmod u+s /bin/ping"
+	chroot "${SDCARD}" /bin/bash -c "chmod u+s /bin/ping" 2>&1
 
 	# change time zone data
 	echo "${TZDATA}" > "${SDCARD}"/etc/timezone
-	chroot "${SDCARD}" /bin/bash -c "dpkg-reconfigure -f noninteractive tzdata >/dev/null 2>&1"
+	# @TODO: a more generic logging helper needed
+	chroot "${SDCARD}" /bin/bash -c "dpkg-reconfigure -f noninteractive tzdata" 2>&1
 
 	# set root password
 	chroot "${SDCARD}" /bin/bash -c "(echo $ROOTPWD;echo $ROOTPWD;) | passwd root >/dev/null 2>&1"
@@ -240,48 +243,43 @@ install_common() {
 
 	cd "${SRC}" || exit_with_error "cray-cray about ${SRC}"
 
-	# Prepare and export caching-related params common to all apt calls below, to maximize apt-cacher-ng usage
-	export APT_EXTRA_DIST_PARAMS=""
-	[[ $NO_APT_CACHER != yes ]] && APT_EXTRA_DIST_PARAMS="-o Acquire::http::Proxy=\"http://${APT_PROXY_ADDR:-localhost:3142}\" -o Acquire::http::Proxy::localhost=\"DIRECT\""
-
 	# LOGGING: we're running under the logger framework here.
 	# LOGGING: so we just log directly to stdout and let it handle it.
 	# LOGGING: redirect commands' stderr to stdout so it goes into the log, not screen.
 
 	display_alert "Updating" "package lists"
-	chroot "${SDCARD}" /bin/bash -c "apt-get ${APT_EXTRA_DIST_PARAMS} update" 2>&1
+	APT_OPTS="y" chroot_sdcard_apt_get update
 
 	display_alert "Temporarily disabling" "initramfs-tools hook for kernel"
 	chroot "${SDCARD}" /bin/bash -c "chmod -v -x /etc/kernel/postinst.d/initramfs-tools" 2>&1
 
-	local apt_get_cmd="DEBIAN_FRONTEND=noninteractive  apt-get ${APT_EXTRA_DIST_PARAMS} -yqq"
-
 	# install family packages
 	if [[ -n ${PACKAGE_LIST_FAMILY} ]]; then
 		display_alert "Installing PACKAGE_LIST_FAMILY packages" "${PACKAGE_LIST_FAMILY}"
-		chroot "${SDCARD}" /bin/bash -c "${apt_get_cmd} --no-install-recommends install $PACKAGE_LIST_FAMILY" 2>&1
+		# shellcheck disable=SC2086 # we need to expand here.
+		chroot_sdcard_apt_get_install $PACKAGE_LIST_FAMILY
 	fi
 
 	# install board packages
 	if [[ -n ${PACKAGE_LIST_BOARD} ]]; then
 		display_alert "Installing PACKAGE_LIST_BOARD packages" "${PACKAGE_LIST_BOARD}"
-		chroot "${SDCARD}" /bin/bash -c "${apt_get_cmd} --no-install-recommends install $PACKAGE_LIST_BOARD" 2>&1 || {
-			display_alert "Failed to install PACKAGE_LIST_BOARD" "${PACKAGE_LIST_BOARD}" "err"
-			exit 2 # @TODO: why only here?
+		# shellcheck disable=SC2086 # we need to expand.
+		chroot_sdcard_apt_get_install $PACKAGE_LIST_BOARD || {
+			exit_with_error "Failed to install PACKAGE_LIST_BOARD" "${PACKAGE_LIST_BOARD}" "err"
 		}
 	fi
 
 	# remove family packages
 	if [[ -n ${PACKAGE_LIST_FAMILY_REMOVE} ]]; then
 		display_alert "Removing PACKAGE_LIST_FAMILY_REMOVE packages" "${PACKAGE_LIST_FAMILY_REMOVE}"
-		chroot "${SDCARD}" /bin/bash -c "${apt_get_cmd} remove --auto-remove $PACKAGE_LIST_FAMILY_REMOVE" 2>&1
+		chroot_sdcard_apt_get remove --auto-remove $PACKAGE_LIST_FAMILY_REMOVE
 	fi
 
 	# remove board packages
 	if [[ -n ${PACKAGE_LIST_BOARD_REMOVE} ]]; then
 		display_alert "Removing PACKAGE_LIST_BOARD_REMOVE packages" "${PACKAGE_LIST_BOARD_REMOVE}"
 		for PKG_REMOVE in ${PACKAGE_LIST_BOARD_REMOVE}; do
-			chroot "${SDCARD}" /bin/bash -c "${apt_get_cmd} remove --auto-remove ${PKG_REMOVE}" 2>&1
+			chroot_sdcard_apt_get remove --auto-remove "${PKG_REMOVE}" 2>&1
 		done
 	fi
 
@@ -406,7 +404,7 @@ POST_INSTALL_KERNEL_DEBS
 	if [[ $BSPFREEZE == yes ]]; then
 		display_alert "Freezing Armbian packages" "$BOARD" "info"
 		chroot "${SDCARD}" /bin/bash -c "apt-mark hold ${CHOSEN_KERNEL} ${CHOSEN_KERNEL/image/headers} \
-		linux-u-boot-${BOARD}-${BRANCH} ${CHOSEN_KERNEL/image/dtb}" >> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+		linux-u-boot-${BOARD}-${BRANCH} ${CHOSEN_KERNEL/image/dtb}" 2>&1
 	fi
 
 	# remove deb files
@@ -587,6 +585,7 @@ FAMILY_TWEAKS
 	# build logo in any case
 	boot_logo
 
+	return 0 # make sure to exit with success
 }
 
 install_rclocal() {

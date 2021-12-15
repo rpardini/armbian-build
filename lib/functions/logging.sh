@@ -8,17 +8,28 @@ function do_with_logging() {
 
 	# We now execute whatever was passed as parameters, in some different conditions:
 	# In both cases, writing to stderr will display to terminal.
+	# So whatever is being called, should prevent rogue stuff writing to stderr.
+	# this is mostly handled by redirecting stderr to stdout: 2>&1
+
+	local PREFIX_SED_CONTENTS="[ ${CURRENT_LOGGING_SECTION} ]  "
+	local PREFIX_SED_CMD="s/^/${PREFIX_SED_CONTENTS}/;"
+	local FAILED=1
 	if [[ "${SLOW_LOG}" != "no" ]]; then
 		# If showing log, use tee, so we log to file AND show the log. stderr will flow to screen.
-		echo "<START $1> Showing log for" "$@"
-		"$@" | tee -a "${CURRENT_LOGFILE}"
-		echo "<END $1> Showing log for" "$@"
+		#echo "<START $1> Showing log for" "$@"
+		# This is sick. Create a 3rd file descriptor sending it to sed. https://unix.stackexchange.com/questions/174849/redirecting-stdout-to-terminal-and-file-without-using-a-pipe
+		exec 3> >(sed -e "${PREFIX_SED_CMD}") # tee -a "${CURRENT_LOGFILE}" |
+		# tee_pid=$!
+		{ "$@" && FAILED=0; } >&3
+		#echo "<END $1> FAILED:${FAILED} Showing log for" "$@"
 	else
-		echo "<START $1> NOT Showing log for" "$@"
+		#echo "<START $1> NOT Showing log for" "$@"
 		# If not showing the log, just send stdout to logfile. stderr will flow to screen.
-		"$@" >> "${CURRENT_LOGFILE}"
-		echo "<END $1> NOT Showing log for" "$@"
+		{ "$@" && FAILED=0; } >> "${CURRENT_LOGFILE}"
+		#echo "<END $1> FAILED:${FAILED} NOT Showing log for" "$@"
 	fi
+
+	return $FAILED # hopefully not
 }
 
 display_alert() {
