@@ -9,17 +9,7 @@
 # This file is a part of the Armbian build script
 # https://github.com/armbian/build/
 
-# Functions:
-
-# debootstrap_ng
-# create_rootfs_cache
-# prepare_partitions
-# update_initramfs
-# create_image
-
-# debootstrap_ng
-#
-debootstrap_ng() {
+function build_rootfs_image() {
 	display_alert "Starting rootfs and image building process for" "${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL}" "info"
 
 	[[ $ROOTFS_TYPE != ext4 ]] && display_alert "Assuming $BOARD $BRANCH kernel supports $ROOTFS_TYPE" "" "wrn"
@@ -52,7 +42,7 @@ debootstrap_ng() {
 	[[ $use_tmpfs == yes ]] && mount -t tmpfs -o size=${phymem}M tmpfs $SDCARD
 
 	# stage: prepare basic rootfs: unpack cache or create from scratch
-	create_rootfs_cache
+	LOG_SECTION="rootfs" do_with_logging create_rootfs_cache
 
 	call_extension_method "pre_install_distribution_specific" "config_pre_install_distribution_specific" << 'PRE_INSTALL_DISTRIBUTION_SPECIFIC'
 *give config a chance to act before install_distribution_specific*
@@ -62,37 +52,38 @@ PRE_INSTALL_DISTRIBUTION_SPECIFIC
 	# stage: install kernel and u-boot packages
 	# install distribution and board specific applications
 
-	install_distribution_specific
-	install_common
+	LOG_SECTION="distro" do_with_logging install_distribution_specific
+	LOG_SECTION="common" do_with_logging install_common
 
 	# install locally built packages
-	[[ $EXTERNAL_NEW == compile ]] && chroot_installpackages_local
+	[[ $EXTERNAL_NEW == compile ]] && LOG_SECTION="packages_local" do_with_logging chroot_installpackages_local
 
 	# install from apt.armbian.com
-	[[ $EXTERNAL_NEW == prebuilt ]] && chroot_installpackages "yes"
+	[[ $EXTERNAL_NEW == prebuilt ]] && LOG_SECTION="packages_prebuilt" do_with_logging chroot_installpackages "yes"
 
 	# stage: user customization script
 	# NOTE: installing too many packages may fill tmpfs mount
-	customize_image
+	LOG_SECTION="custom" do_with_logging customize_image
 
 	# remove packages that are no longer needed. Since we have intrudoced uninstall feature, we might want to clean things that are no longer needed
 	display_alert "No longer needed packages" "purge" "info"
-	chroot $SDCARD /bin/bash -c "apt-get autoremove -y" > /dev/null 2>&1
+	LOG_SECTION="rootfs" do_with_logging chroot $SDCARD /bin/bash -c "apt-get  -y autoremove" # YES! THIS NEVER WORKED BEFORE!
 
 	# create list of installed packages for debug purposes
 	chroot $SDCARD /bin/bash -c "dpkg --get-selections" | grep -v deinstall | awk '{print $1}' | cut -f1 -d':' > $DEST/${LOG_SUBPATH}/installed-packages-${RELEASE}$([[ ${BUILD_MINIMAL} == yes ]] && echo "-minimal")$([[ ${BUILD_DESKTOP} == yes ]] && echo "-desktop").list 2>&1
 
 	# clean up / prepare for making the image
 	umount_chroot "$SDCARD"
-	post_debootstrap_tweaks
+	LOG_SECTION="rootfs" post_debootstrap_tweaks
 
 	if [[ $ROOTFS_TYPE == fel ]]; then
 		FEL_ROOTFS=$SDCARD/
 		display_alert "Starting FEL boot" "$BOARD" "info"
 		source $SRC/lib/fel-load.sh
 	else
-		prepare_partitions
-		create_image
+		LOG_SECTION="partitioning" do_with_logging prepare_partitions # do_with_logging
+		display_alert "Between prepare_partitions and create_image" "LOOP=${LOOP}" "wrn"
+		LOG_SECTION="image" do_with_logging create_image # do_with_logging where is LOOP?
 	fi
 
 	# stage: unmount tmpfs
@@ -417,6 +408,7 @@ create_rootfs_cache() {
 # and mounts it to local dir
 # FS-dependent stuff (boot and root fs partition types) happens here
 #
+# LOGGING: this is run under the log manager. so just redirect unwanted stderr to stdout, and it goes to log.
 prepare_partitions() {
 	display_alert "Preparing image file for rootfs" "$BOARD $RELEASE" "info"
 
@@ -647,8 +639,8 @@ PREPARE_IMAGE_SIZE
 	exec {FD}> /var/lock/armbian-debootstrap-losetup
 	flock -x $FD
 
-	LOOP=$(losetup -f)
-	[[ -z $LOOP ]] && exit_with_error "Unable to find free loop device"
+	export LOOP=$(losetup -f) || exit_with_error "Unable to find free loop device"
+	display_alert "Allocated loop device" "LOOP=${LOOP}" "wrn"
 
 	check_loop_device "$LOOP"
 
@@ -675,7 +667,7 @@ PREPARE_IMAGE_SIZE
 
 		check_loop_device "$rootdevice"
 		display_alert "Creating rootfs" "$ROOTFS_TYPE on $rootdevice"
-		mkfs.${mkfs[$ROOTFS_TYPE]} ${mkopts[$ROOTFS_TYPE]} $rootdevice >> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+		mkfs.${mkfs[$ROOTFS_TYPE]} ${mkopts[$ROOTFS_TYPE]} $rootdevice 2>&1
 		[[ $ROOTFS_TYPE == ext4 ]] && tune2fs -o journal_data_writeback $rootdevice > /dev/null
 		if [[ $ROOTFS_TYPE == btrfs && $BTRFS_COMPRESSION != none ]]; then
 			local fscreateopt="-o compress-force=${BTRFS_COMPRESSION}"
@@ -694,7 +686,7 @@ PREPARE_IMAGE_SIZE
 	if [[ -n $bootpart ]]; then
 		display_alert "Creating /boot" "$bootfs on ${LOOP}p${bootpart}"
 		check_loop_device "${LOOP}p${bootpart}"
-		mkfs.${mkfs[$bootfs]} ${mkopts[$bootfs]} ${LOOP}p${bootpart} >> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+		mkfs.${mkfs[$bootfs]} ${mkopts[$bootfs]} ${LOOP}p${bootpart} 2>&1
 		mkdir -p $MOUNT/boot/
 		mount ${LOOP}p${bootpart} $MOUNT/boot/
 		echo "UUID=$(blkid -s UUID -o value ${LOOP}p${bootpart}) /boot ${mkfs[$bootfs]} defaults${mountopts[$bootfs]} 0 2" >> $SDCARD/etc/fstab
@@ -702,7 +694,7 @@ PREPARE_IMAGE_SIZE
 	if [[ -n $uefipart ]]; then
 		display_alert "Creating EFI partition" "FAT32 ${UEFI_MOUNT_POINT} on ${LOOP}p${uefipart} label ${UEFI_FS_LABEL}"
 		check_loop_device "${LOOP}p${uefipart}"
-		mkfs.fat -F32 -n "${UEFI_FS_LABEL}" ${LOOP}p${uefipart} >> "${DEST}"/debug/install.log 2>&1
+		mkfs.fat -F32 -n "${UEFI_FS_LABEL}" ${LOOP}p${uefipart} 2>&1
 		mkdir -p "${MOUNT}${UEFI_MOUNT_POINT}"
 		mount ${LOOP}p${uefipart} "${MOUNT}${UEFI_MOUNT_POINT}"
 		echo "UUID=$(blkid -s UUID -o value ${LOOP}p${uefipart}) ${UEFI_MOUNT_POINT} vfat defaults 0 2" >> $SDCARD/etc/fstab
@@ -763,7 +755,10 @@ PREPARE_IMAGE_SIZE
 		[[ -f $SDCARD/boot/armbianEnv.txt ]] && rm $SDCARD/boot/armbianEnv.txt
 	fi
 
-} #############################################################################
+	display_alert "Finished prepare_partitions" "LOOP=${LOOP}" "wrn"
+
+}
+#############################################################################
 
 # update_initramfs
 #
@@ -779,6 +774,7 @@ PREPARE_IMAGE_SIZE
 # path instead of $SDCARD (which can be a tmpfs and breaks cryptsetup-initramfs).
 # see: https://github.com/armbian/build/issues/1584
 #
+# @TODO: logging?
 update_initramfs() {
 	local chroot_target=$1
 	local target_dir=$(
@@ -812,6 +808,7 @@ update_initramfs() {
 # finishes creation of image from cached rootfs
 #
 create_image() {
+	display_alert "Inside create_image" "LOOP=${LOOP}" "wrn"
 	# create DESTIMG, hooks might put stuff there early.
 	mkdir -p $DESTIMG
 
@@ -823,7 +820,6 @@ create_image() {
 
 	if [[ $ROOTFS_TYPE != nfs ]]; then
 		display_alert "Copying files to" "/"
-		echo -e "\nCopying files to [/]" >> "${DEST}"/${LOG_SUBPATH}/install.log
 		rsync -aHWXh \
 			--exclude="/boot/*" \
 			--exclude="/dev/*" \
@@ -831,7 +827,7 @@ create_image() {
 			--exclude="/run/*" \
 			--exclude="/tmp/*" \
 			--exclude="/sys/*" \
-			--info=progress0,stats1 $SDCARD/ $MOUNT/ >> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+			--info=progress0,stats1 $SDCARD/ $MOUNT/ 2>&1
 	else
 		display_alert "Creating rootfs archive" "rootfs.tgz" "info"
 		tar cp --xattrs --directory=$SDCARD/ --exclude='./boot/*' --exclude='./dev/*' --exclude='./proc/*' --exclude='./run/*' --exclude='./tmp/*' \
@@ -840,17 +836,16 @@ create_image() {
 
 	# stage: rsync /boot
 	display_alert "Copying files to" "/boot"
-	echo -e "\nCopying files to [/boot]" >> "${DEST}"/${LOG_SUBPATH}/install.log
 	if [[ $(findmnt --target $MOUNT/boot -o FSTYPE -n) == vfat ]]; then
 		# fat32
 		rsync -rLtWh \
 			--info=progress0,stats1 \
-			--log-file="${DEST}"/${LOG_SUBPATH}/install.log $SDCARD/boot $MOUNT
+			--log-file="${DEST}"/${LOG_SUBPATH}/install.log $SDCARD/boot $MOUNT 2>&1
 	else
 		# ext4
 		rsync -aHWXh \
 			--info=progress0,stats1 \
-			--log-file="${DEST}"/${LOG_SUBPATH}/install.log $SDCARD/boot $MOUNT
+			--log-file="${DEST}"/${LOG_SUBPATH}/install.log $SDCARD/boot $MOUNT 2>&1
 	fi
 
 	call_extension_method "pre_update_initramfs" "config_pre_update_initramfs" << 'PRE_UPDATE_INITRAMFS'
@@ -865,7 +860,8 @@ PRE_UPDATE_INITRAMFS
 
 	# DEBUG: print free space
 	local freespace=$(LC_ALL=C df -h)
-	echo $freespace >> $DEST/${LOG_SUBPATH}/debootstrap.log
+	# @TODO: this is very specific; we don't want it on screen ever?
+	#echo $freespace >> $DEST/${LOG_SUBPATH}/debootstrap.log
 	display_alert "Free SD cache" "$(echo -e "$freespace" | grep $SDCARD | awk '{print $5}')" "info"
 	display_alert "Mount point" "$(echo -e "$freespace" | grep $MOUNT | head -1 | awk '{print $5}')" "info"
 
@@ -898,7 +894,8 @@ POST_UMOUNT_FINAL_IMAGE
 		sleep 5
 	done
 
-	losetup -d $LOOP
+	display_alert "Freeing loop device" "${LOOP}" "wrn"
+	losetup -d "${LOOP}"
 	# Don't delete $DESTIMG here, extensions might have put nice things there already.
 	rm -rf --one-file-system $MOUNT
 

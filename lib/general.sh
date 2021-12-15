@@ -152,7 +152,7 @@ get_package_list_hash() {
 	local list_content
 	read -ra package_arr <<< "${DEBOOTSTRAP_LIST} ${PACKAGE_LIST}"
 	read -ra exclude_arr <<< "${PACKAGE_LIST_EXCLUDE}"
-	( 
+	(
 		(
 			printf "%s\n" "${package_arr[@]}"
 			printf -- "-%s\n" "${exclude_arr[@]}"
@@ -601,39 +601,6 @@ fetch_from_repo() {
 } #############################################################################
 
 #--------------------------------------------------------------------------------------------------------------------------------
-# Let's have unique way of displaying alerts
-#--------------------------------------------------------------------------------------------------------------------------------
-display_alert() {
-	# log function parameters to install.log
-	[[ -n "${DEST}" ]] && echo "Displaying message: $@" >> "${DEST}"/${LOG_SUBPATH}/output.log
-
-	local tmp=""
-	[[ -n $2 ]] && tmp="[\e[0;33m $2 \x1B[0m]"
-
-	case $3 in
-		err)
-			echo -e "[\e[0;31m error \x1B[0m] $1 $tmp"
-			;;
-
-		wrn)
-			echo -e "[\e[0;35m warn \x1B[0m] $1 $tmp"
-			;;
-
-		ext)
-			echo -e "[\e[0;32m o.k. \x1B[0m] \e[1;32m$1\x1B[0m $tmp"
-			;;
-
-		info)
-			echo -e "[\e[0;32m o.k. \x1B[0m] $1 $tmp"
-			;;
-
-		*)
-			echo -e "[\e[0;32m .... \x1B[0m] $1 $tmp"
-			;;
-	esac
-}
-
-#--------------------------------------------------------------------------------------------------------------------------------
 # fingerprint_image <out_txt_file> [image_filename]
 # Saving build summary to the image
 #--------------------------------------------------------------------------------------------------------------------------------
@@ -798,6 +765,7 @@ function boot_logo() {
 	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable bootsplash-ask-password-console.path >/dev/null 2>&1"
 	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable bootsplash-hide-when-booted.service >/dev/null 2>&1"
 	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable bootsplash-show-on-shutdown.service >/dev/null 2>&1"
+	return 0
 }
 
 DISTRIBUTIONS_DESC_DIR="config/distributions"
