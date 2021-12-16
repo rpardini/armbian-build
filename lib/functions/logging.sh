@@ -39,18 +39,17 @@ function do_with_logging() {
 	local prefix_sed_cmd="s/^/${prefix_sed_contents}/;"
 	local FAILED=1
 	if [[ "${SHOW_LOG}" == "yes" ]]; then
-		# If showing log, use tee, so we log to file AND show the log. stderr will flow to screen.
-		#echo "<START $1> Showing log for" "$@"
 		# This is sick. Create a 3rd file descriptor sending it to sed. https://unix.stackexchange.com/questions/174849/redirecting-stdout-to-terminal-and-file-without-using-a-pipe
-		exec 3> >(sed -e "${prefix_sed_cmd}") # tee -a "${CURRENT_LOGFILE}" |
-		# tee_pid=$!
+		# Also terrible: don't hold a reference to cwd by changing to SRC always
+		exec 3> >(
+			cd "${SRC}"
+			sed -e "${prefix_sed_cmd}"
+		)
 		{ "$@" && FAILED=0; } >&3
-		#echo "<END $1> FAILED:${FAILED} Showing log for" "$@"
+		exec 3>&- # close the file descriptor, lest sed keeps running forever.
 	else
-		#echo "<START $1> NOT Showing log for" "$@"
 		# If not showing the log, just send stdout to logfile. stderr will flow to screen.
 		{ "$@" && FAILED=0; } >> "${CURRENT_LOGFILE}"
-		#echo "<END $1> FAILED:${FAILED} NOT Showing log for" "$@"
 	fi
 
 	return $FAILED # hopefully not
