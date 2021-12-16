@@ -114,7 +114,7 @@ cleaning() {
 # with verbose error message
 #
 
-exit_with_error() {
+function exit_with_error() {
 	local _file
 	local _line=${BASH_LINENO[0]}
 	local _function=${FUNCNAME[1]}
@@ -125,7 +125,9 @@ exit_with_error() {
 
 	display_alert "ERROR in function $_function" "$stacktrace" "err"
 	display_alert "$_description" "$_highlight" "err"
-	display_alert "Process terminated" "" "info"
+
+	# delegate to logging
+	logging_error_show_log "$_description" "$_highlight" "${stacktrace}"
 
 	if [[ "${ERROR_DEBUG_SHELL}" == "yes" ]]; then
 		display_alert "MOUNT" "${MOUNT}" "err"
@@ -134,13 +136,16 @@ exit_with_error() {
 		bash < /dev/tty || true
 	fi
 
-	# TODO: execute run_after_build here?
+	display_alert "Build terminating... wait for cleanups..." "" "err"
+
 	overlayfs_wrapper "cleanup"
-	# unlock loop device access in case of starvation
+	# unlock loop device access in case of starvation # @TODO: hmm, say that again?
 	exec {FD}> /var/lock/armbian-debootstrap-losetup
 	flock -u "${FD}"
 
+	export ALREADY_EXITING_WITH_ERROR=yes # marker for future trap handlers. avoid showing errors twice.
 	exit 255
+	display_alert "Never to be seen" "after exit and traps" "bye"
 }
 
 # get_package_list_hash

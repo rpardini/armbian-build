@@ -104,6 +104,8 @@ PRE_INSTALL_DISTRIBUTION_SPECIFIC
 #
 # unpacks cached rootfs for $RELEASE or creates one
 #
+
+# this is under the logging manager. so just log to stdout (no redirections), and redirect stderr to stdout unless you want it on screen.
 create_rootfs_cache() {
 	if [[ "$ROOT_FS_CREATE_ONLY" == "force" ]]; then
 		local cycles=1
@@ -180,6 +182,7 @@ create_rootfs_cache() {
 	else
 		display_alert "... remote not found" "Creating new rootfs cache for $RELEASE" "info"
 
+		# @TODO: unify / remove this. distribuitions has the good stuff.
 		# stage: debootstrap base system
 		if [[ $NO_APT_CACHER != yes ]]; then
 			# apt-cacher-ng apt-get proxy parameter
@@ -189,65 +192,58 @@ create_rootfs_cache() {
 			local apt_mirror="http://$APT_MIRROR"
 		fi
 
-		# fancy progress bars
-		[[ -z $OUTPUT_DIALOG ]] && local apt_extra_progress="--show-progress -o DPKG::Progress-Fancy=1"
-
-		# Ok so for eval+PIPESTATUS.
-		# Try this on your bash shell:
-		# ONEVAR="testing" eval 'bash -c "echo value once $ONEVAR && false && echo value twice $ONEVAR"' '| grep value'  '| grep value' ; echo ${PIPESTATUS[*]}
-		# Notice how PIPESTATUS has only one element. and it is always true, although we failed explicitly with false in the middle of the bash.
-		# That is because eval itself is considered a single command, no matter how many pipes you put in there, you'll get a single value, the return code of the LAST pipe.
-		# Lets export the value of the pipe inside eval so we know outside what happened:
-		# ONEVAR="testing" eval 'bash -e -c "echo value once $ONEVAR && false && echo value twice $ONEVAR"' '| grep value'  '| grep value' ';EVALPIPE=(${PIPESTATUS[@]})' ; echo ${EVALPIPE[*]}
-
 		display_alert "Installing base system" "Stage 1/2" "info"
-		cd $SDCARD # this will prevent error sh: 0: getcwd() failed
-		eval 'debootstrap --variant=minbase --include=${DEBOOTSTRAP_LIST// /,} ${PACKAGE_LIST_EXCLUDE:+ --exclude=${PACKAGE_LIST_EXCLUDE// /,}} \
-			--arch=$ARCH --components=${DEBOOTSTRAP_COMPONENTS} $DEBOOTSTRAP_OPTION --foreign $RELEASE $SDCARD/ $apt_mirror' \
-			${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/debootstrap.log'} \
-			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Debootstrap (stage 1/2)..." $TTY_Y $TTY_X'} \
-			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} ';EVALPIPE=(${PIPESTATUS[@]})'
+		cd "${SDCARD}" || exit_with_error "cray-cray about SDCARD" "${SDCARD}" # this will prevent error sh: 0: getcwd() failed
+		local -a deboostrap_arguments=(
+			"--variant=minbase"                                                # minimal base variant. go ask Debian about it.
+			"--include=${DEBOOTSTRAP_LIST// /,}"                               # from aggregation?
+			${PACKAGE_LIST_EXCLUDE:+ --exclude="${PACKAGE_LIST_EXCLUDE// /,}"} # exclude some
+			"--arch=${ARCH}"                                                   # the arch
+			"--components=${DEBOOTSTRAP_COMPONENTS}"                           # from aggregation?
+			"--foreign" "${RELEASE}" "${SDCARD}/" "${apt_mirror}"              # path and mirror
+		)
+		echo Running: debootstrap "${deboostrap_arguments[@]}" 1>&2
+		debootstrap "${deboostrap_arguments[@]}" 2>&1 || { # invoke debootstrap, stderr to stdout.
+			exit_with_error "Debootstrap first stage failed" "${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL}"
+		}
+		[[ ! -f $SDCARD/debootstrap/debootstrap ]] && exit_with_error "Debootstrap first stage did not produce marker file"
 
-		[[ ${EVALPIPE[0]} -ne 0 || ! -f $SDCARD/debootstrap/debootstrap ]] && exit_with_error "Debootstrap base system for ${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL} first stage failed"
+		cp "/usr/bin/$QEMU_BINARY" "$SDCARD/usr/bin/"
 
-		cp /usr/bin/$QEMU_BINARY $SDCARD/usr/bin/
-
-		mkdir -p $SDCARD/usr/share/keyrings/
-		cp /usr/share/keyrings/*-archive-keyring.gpg $SDCARD/usr/share/keyrings/
+		mkdir -p "${SDCARD}/usr/share/keyrings/"
+		cp /usr/share/keyrings/*-archive-keyring.gpg "${SDCARD}/usr/share/keyrings/"
 
 		display_alert "Installing base system" "Stage 2/2" "info"
-		eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -e -c "/debootstrap/debootstrap --second-stage"' \
-			${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/debootstrap.log'} \
-			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Debootstrap (stage 2/2)..." $TTY_Y $TTY_X'} \
-			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} ';EVALPIPE=(${PIPESTATUS[@]})'
+		chroot_sdcard LC_ALL=C LANG=C /debootstrap/debootstrap --second-stage 2>&1 || { # invoke inside chroot/qemu, stderr to stdout.
+			exit_with_error "Debootstrap second stage failed" "${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL}"
+		}
+		[[ ! -f "${SDCARD}/bin/bash" ]] && exit_with_error "Debootstrap first stage did not produce /bin/bash"
 
-		[[ ${EVALPIPE[0]} -ne 0 || ! -f $SDCARD/bin/bash ]] && exit_with_error "Debootstrap base system for ${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL} second stage failed"
-
-		mount_chroot "$SDCARD"
+		mount_chroot "${SDCARD}"
 
 		display_alert "Diverting" "initctl/start-stop-daemon" "info"
 		# policy-rc.d script prevents starting or reloading services during image creation
 		printf '#!/bin/sh\nexit 101' > $SDCARD/usr/sbin/policy-rc.d
-		LC_ALL=C LANG=C chroot $SDCARD /bin/bash -c "dpkg-divert --quiet --local --rename --add /sbin/initctl" &> /dev/null
-		LC_ALL=C LANG=C chroot $SDCARD /bin/bash -c "dpkg-divert --quiet --local --rename --add /sbin/start-stop-daemon" &> /dev/null
-		printf '#!/bin/sh\necho "Warning: Fake start-stop-daemon called, doing nothing"' > $SDCARD/sbin/start-stop-daemon
-		printf '#!/bin/sh\necho "Warning: Fake initctl called, doing nothing"' > $SDCARD/sbin/initctl
-		chmod 755 $SDCARD/usr/sbin/policy-rc.d
-		chmod 755 $SDCARD/sbin/initctl
-		chmod 755 $SDCARD/sbin/start-stop-daemon
+		chroot_sdcard LC_ALL=C LANG=C dpkg-divert --quiet --local --rename --add /sbin/initctl
+		chroot_sdcard LC_ALL=C LANG=C dpkg-divert --quiet --local --rename --add /sbin/start-stop-daemon
+		printf '#!/bin/sh\necho "Warning: Fake start-stop-daemon called, doing nothing"' > "$SDCARD/sbin/start-stop-daemon"
+		printf '#!/bin/sh\necho "Warning: Fake initctl called, doing nothing"' > "$SDCARD/sbin/initctl"
+		chmod 755 "$SDCARD/usr/sbin/policy-rc.d"
+		chmod 755 "$SDCARD/sbin/initctl"
+		chmod 755 "$SDCARD/sbin/start-stop-daemon"
 
 		# stage: configure language and locales
 		display_alert "Configuring locales" "$DEST_LANG" "info"
 
 		[[ -f $SDCARD/etc/locale.gen ]] && sed -i "s/^# $DEST_LANG/$DEST_LANG/" $SDCARD/etc/locale.gen
-		eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -c "locale-gen $DEST_LANG"' ${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'}
-		eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -c "update-locale LANG=$DEST_LANG LANGUAGE=$DEST_LANG LC_MESSAGES=$DEST_LANG"' \
-			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'}
+		chroot_sdcard LC_ALL=C LANG=C locale-gen "$DEST_LANG"
+		chroot_sdcard LC_ALL=C LANG=C update-locale "LANG=$DEST_LANG" "LANGUAGE=$DEST_LANG" "LC_MESSAGES=$DEST_LANG"
 
 		if [[ -f $SDCARD/etc/default/console-setup ]]; then
+			# @TODO: Should be configurable.
 			sed -e 's/CHARMAP=.*/CHARMAP="UTF-8"/' -e 's/FONTSIZE=.*/FONTSIZE="8x16"/' \
-				-e 's/CODESET=.*/CODESET="guess"/' -i $SDCARD/etc/default/console-setup
-			eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -c "setupcon --save --force"'
+				-e 's/CODESET=.*/CODESET="guess"/' -i "$SDCARD/etc/default/console-setup"
+			chroot_sdcard LC_ALL=C LANG=C setupcon --save --force
 		fi
 
 		# stage: create apt-get sources list
@@ -255,28 +251,23 @@ create_rootfs_cache() {
 
 		# add armhf arhitecture to arm64, unless configured not to do so.
 		if [[ "a${ARMHF_ARCH}" != "askip" ]]; then
-			[[ $ARCH == arm64 ]] && eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -c "dpkg --add-architecture armhf"'
+			[[ $ARCH == arm64 ]] && chroot_sdcard LC_ALL=C LANG=C dpkg --add-architecture armhf
 		fi
 
 		# this should fix resolvconf installation failure in some cases
-		chroot $SDCARD /bin/bash -c 'echo "resolvconf resolvconf/linkify-resolvconf boolean false" | debconf-set-selections'
+		chroot_sdcard 'echo "resolvconf resolvconf/linkify-resolvconf boolean false" | debconf-set-selections'
 
 		# stage: update packages list
 		display_alert "Updating package list" "$RELEASE" "info"
-		eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -e -c "apt-get -q -y $apt_extra update"' \
-			${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/debootstrap.log'} \
-			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Updating package lists..." $TTY_Y $TTY_X'} \
-			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} ';EVALPIPE=(${PIPESTATUS[@]})'
-
-		[[ ${EVALPIPE[0]} -ne 0 ]] && display_alert "Updating package lists" "failed" "wrn"
+		chroot_sdcard_apt_get update || {
+			display_alert "Updating package lists" "failed" "wrn"
+		}
 
 		# stage: upgrade base packages from xxx-updates and xxx-backports repository branches
 		display_alert "Upgrading base packages" "Armbian" "info"
-		eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -e -c "DEBIAN_FRONTEND=noninteractive apt-get -y -q \
-			$apt_extra $apt_extra_progress upgrade"' \
-			${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/debootstrap.log'} \
-			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Upgrading base packages..." $TTY_Y $TTY_X'} \
-			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} ';EVALPIPE=(${PIPESTATUS[@]})'
+		chroot_sdcard_apt_get upgrade || {
+			display_alert "Upgrading packages" "failed" "wrn"
+		}
 
 		# Myy: Dividing the desktop packages installation steps into multiple
 		# ones. We first install the "ADDITIONAL_PACKAGES" in order to get
@@ -284,17 +275,11 @@ create_rootfs_cache() {
 		# THEN we add the APT sources and install the Desktop packages.
 		# TODO : Find a way to add APT sources WITHOUT software-common-properties
 
-		[[ ${EVALPIPE[0]} -ne 0 ]] && display_alert "Upgrading base packages" "failed" "wrn"
-
 		# stage: install additional packages
 		display_alert "Installing the main packages for" "Armbian" "info"
-		eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -e -c "DEBIAN_FRONTEND=noninteractive apt-get -y -q \
-			$apt_extra $apt_extra_progress --no-install-recommends install $PACKAGE_MAIN_LIST"' \
-			${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/debootstrap.log'} \
-			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Installing Armbian main packages..." $TTY_Y $TTY_X'} \
-			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} ';EVALPIPE=(${PIPESTATUS[@]})'
-
-		[[ ${EVALPIPE[0]} -ne 0 ]] && exit_with_error "Installation of Armbian main packages for ${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL} failed"
+		chroot_sdcard_apt_get_install "$PACKAGE_MAIN_LIST" || {
+			exit_with_error "Installation of Armbian main packages for ${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL} failed"
+		}
 
 		if [[ $BUILD_DESKTOP == "yes" ]]; then
 			# FIXME Myy : Are we keeping this only for Desktop users,
@@ -328,6 +313,7 @@ create_rootfs_cache() {
 		# Remove packages from packages.uninstall
 
 		display_alert "Uninstall packages" "$PACKAGE_LIST_UNINSTALL" "info"
+		chroot
 		eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -e -c "DEBIAN_FRONTEND=noninteractive apt-get -y -qq \
 			$apt_extra $apt_extra_progress purge $PACKAGE_LIST_UNINSTALL"' \
 			${PROGRESS_LOG_TO_FILE:+' >> $DEST/${LOG_SUBPATH}/debootstrap.log'} \
@@ -565,7 +551,7 @@ PREPARE_IMAGE_SIZE
 		truncate --size=${sdsize}M ${SDCARD}.raw # sometimes results in fs corruption, revert to previous know to work solution
 		sync
 	else
-		dd if=/dev/zero bs=1M status=none count=$sdsize | pv -p -b -r -s $(($sdsize * 1024 * 1024)) -N "[ .... ] dd" | dd status=none of=${SDCARD}.raw
+		dd if=/dev/zero bs=1M status=none count=$sdsize | pv -p -b -r -s $(($sdsize * 1024 * 1024)) -N "[🤓] dd" | dd status=none of=${SDCARD}.raw
 	fi
 
 	# stage: calculate boot partition size

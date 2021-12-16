@@ -43,10 +43,8 @@ umount_chroot() {
 # unmount_on_exit
 #
 unmount_on_exit() {
-
-	trap - INT TERM EXIT
+	trap - INT TERM EXIT # remove the trap
 	local stacktrace="$(get_extension_hook_stracktrace "${BASH_SOURCE[*]}" "${BASH_LINENO[*]}")"
-	display_alert "unmount_on_exit() called!" "$stacktrace" "err"
 	if [[ "${ERROR_DEBUG_SHELL}" == "yes" ]]; then
 		ERROR_DEBUG_SHELL=no # dont do it twice
 		display_alert "MOUNT" "${MOUNT}" "err"
@@ -65,8 +63,13 @@ unmount_on_exit() {
 	[[ $CRYPTROOT_ENABLE == yes ]] && cryptsetup luksClose "${ROOT_MAPPER}"
 	losetup -d "${LOOP}" > /dev/null 2>&1
 	rm -rf --one-file-system "${SDCARD}"
-	exit_with_error "debootstrap-ng was interrupted" || true # don't trigger again
 
+	# if we've been called by exit_with_error itself, don't recurse. it makes no sense.
+	if [[ "${ALREADY_EXITING_WITH_ERROR:-no}" != "yes" ]]; then
+		exit_with_error "generic error during build_rootfs_image: ${stacktrace}" || true # but don't trigger error again
+	fi
+
+	return 0 # exit successfully. we're already handling a trap here.
 }
 
 # check_loop_device <device_node>
@@ -162,11 +165,18 @@ function chroot_sdcard_apt_get_install() {
 }
 
 function chroot_sdcard_apt_get() {
-	export APT_EXTRA_DIST_PARAMS=""
-	APT_OPTS="${APT_OPTS:-yqq}"
-	[[ $NO_APT_CACHER != yes ]] && APT_EXTRA_DIST_PARAMS="-o Acquire::http::Proxy=\"http://${APT_PROXY_ADDR:-localhost:3142}\" -o Acquire::http::Proxy::localhost=\"DIRECT\""
+	local -a apt_params=("-${APT_OPTS:-yqq}")
+	[[ $NO_APT_CACHER != yes ]] && apt_params+=(
+		-o "Acquire::http::Proxy=\"http://${APT_PROXY_ADDR:-localhost:3142}\""
+		-o "Acquire::http::Proxy::localhost=\"DIRECT\""
+	)
 	# IMPORTANT: this function returns the exit code of last statement, in this case chroot (which gets its result from bash which calls apt-get)
-	chroot "${SDCARD}" /bin/bash -e -c "DEBIAN_FRONTEND=noninteractive apt-get ${APT_EXTRA_DIST_PARAMS} -${APT_OPTS} $*" 2>&1 # echo \"\";
+	chroot_sdcard DEBIAN_FRONTEND=noninteractive apt-get "${apt_params[@]}" "$@"
+}
+
+function chroot_sdcard() {
+	echo RUNNING: chroot "${SDCARD}" /bin/bash -e -c "$*" 1>&2
+	chroot "${SDCARD}" /bin/bash -e -c "$*" 2>&1
 }
 
 # this is called by distributions.sh->install_common(), and thus already under a logging manager.

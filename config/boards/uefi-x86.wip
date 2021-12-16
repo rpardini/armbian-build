@@ -2,3 +2,4 @@
 export BOARD_NAME="uefi-x86"
 export BOARDFAMILY="uefi-x86"
 export KERNEL_TARGET="current,edge"
+export PACKAGE_LIST_BOARD=""

@@ -265,6 +265,7 @@ install_common() {
 		display_alert "Installing PACKAGE_LIST_BOARD packages" "${PACKAGE_LIST_BOARD}"
 		# shellcheck disable=SC2086 # we need to expand.
 		chroot_sdcard_apt_get_install $PACKAGE_LIST_BOARD || {
+			# exit_with_error will collaborate with logging to show the current log before exiting.
 			exit_with_error "Failed to install PACKAGE_LIST_BOARD" "${PACKAGE_LIST_BOARD}" "err"
 		}
 	fi
