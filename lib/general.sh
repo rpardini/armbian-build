@@ -121,13 +121,17 @@ function exit_with_error() {
 	local _description=$1
 	local _highlight=$2
 	_file=$(basename "${BASH_SOURCE[1]}")
-	local stacktrace="$(get_extension_hook_stracktrace "${BASH_SOURCE[*]}" "${BASH_LINENO[*]}")"
+	local stacktrace logfile
+	stacktrace="$(get_extension_hook_stracktrace "${BASH_SOURCE[*]}" "${BASH_LINENO[*]}")"
+
+	local logfile_to_show="${CURRENT_LOGFILE}" # store it
+	unset CURRENT_LOGFILE                      # stop logging, otherwise crazy
 
 	display_alert "ERROR in function $_function" "$stacktrace" "err"
 	display_alert "$_description" "$_highlight" "err"
 
-	# delegate to logging
-	logging_error_show_log "$_description" "$_highlight" "${stacktrace}"
+	# delegate to logging to make it pretty
+	logging_error_show_log "$_description" "$_highlight" "${stacktrace}" "${logfile_to_show}"
 
 	if [[ "${ERROR_DEBUG_SHELL}" == "yes" ]]; then
 		display_alert "MOUNT" "${MOUNT}" "err"
@@ -1615,7 +1619,7 @@ download_and_verify() {
 			if [[ "${filename:(-6)}" == "tar.xz" ]]; then
 
 				display_alert "decompressing"
-				pv -p -b -r -c -N "[ .... ] ${filename}" "${filename}" | xz -dc | tar xp --xattrs --no-same-owner --overwrite
+				pv -p -b -r -c -N "[🗜] ${filename}" "${filename}" | xz -dc | tar xp --xattrs --no-same-owner --overwrite
 				[[ $? -eq 0 ]] && touch "${localdir}/${dirname}/.download-complete"
 			fi
 		else

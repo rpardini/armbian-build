@@ -247,39 +247,43 @@ install_common() {
 	# LOGGING: so we just log directly to stdout and let it handle it.
 	# LOGGING: redirect commands' stderr to stdout so it goes into the log, not screen.
 
-	display_alert "Updating" "package lists"
-	APT_OPTS="y" chroot_sdcard_apt_get update
-
 	display_alert "Temporarily disabling" "initramfs-tools hook for kernel"
-	chroot "${SDCARD}" /bin/bash -c "chmod -v -x /etc/kernel/postinst.d/initramfs-tools" 2>&1
+	chroot_sdcard chmod -v -x /etc/kernel/postinst.d/initramfs-tools
+
+	display_alert "Updating" "apt package lists"
+	APT_OPTS="y" chroot_sdcard_apt_get update
 
 	# install family packages
 	if [[ -n ${PACKAGE_LIST_FAMILY} ]]; then
-		display_alert "Installing PACKAGE_LIST_FAMILY packages" "${PACKAGE_LIST_FAMILY}"
+		_pkg_list=${PACKAGE_LIST_FAMILY}
+		display_alert "Installing PACKAGE_LIST_FAMILY packages" "${_pkg_list}"
 		# shellcheck disable=SC2086 # we need to expand here.
-		chroot_sdcard_apt_get_install $PACKAGE_LIST_FAMILY
+		chroot_sdcard_apt_get_install $_pkg_list
 	fi
 
 	# install board packages
 	if [[ -n ${PACKAGE_LIST_BOARD} ]]; then
-		display_alert "Installing PACKAGE_LIST_BOARD packages" "${PACKAGE_LIST_BOARD}"
+		_pkg_list=${PACKAGE_LIST_BOARD}
+		display_alert "Installing PACKAGE_LIST_BOARD packages" "${_pkg_list}"
 		# shellcheck disable=SC2086 # we need to expand.
-		chroot_sdcard_apt_get_install $PACKAGE_LIST_BOARD || {
+		chroot_sdcard_apt_get_install ${_pkg_list} || {
 			# exit_with_error will collaborate with logging to show the current log before exiting.
-			exit_with_error "Failed to install PACKAGE_LIST_BOARD" "${PACKAGE_LIST_BOARD}" "err"
+			exit_with_error "Failed to install PACKAGE_LIST_BOARD" "${_pkg_list}" "err"
 		}
 	fi
 
 	# remove family packages
 	if [[ -n ${PACKAGE_LIST_FAMILY_REMOVE} ]]; then
-		display_alert "Removing PACKAGE_LIST_FAMILY_REMOVE packages" "${PACKAGE_LIST_FAMILY_REMOVE}"
-		chroot_sdcard_apt_get remove --auto-remove $PACKAGE_LIST_FAMILY_REMOVE
+		_pkg_list=${PACKAGE_LIST_FAMILY_REMOVE}
+		display_alert "Removing PACKAGE_LIST_FAMILY_REMOVE packages" "${_pkg_list}"
+		chroot_sdcard_apt_get remove --auto-remove ${_pkg_list}
 	fi
 
 	# remove board packages
 	if [[ -n ${PACKAGE_LIST_BOARD_REMOVE} ]]; then
-		display_alert "Removing PACKAGE_LIST_BOARD_REMOVE packages" "${PACKAGE_LIST_BOARD_REMOVE}"
-		for PKG_REMOVE in ${PACKAGE_LIST_BOARD_REMOVE}; do
+		_pkg_list=${PACKAGE_LIST_BOARD_REMOVE}
+		display_alert "Removing PACKAGE_LIST_BOARD_REMOVE packages" "${_pkg_list}"
+		for PKG_REMOVE in ${_pkg_list}; do
 			chroot_sdcard_apt_get remove --auto-remove "${PKG_REMOVE}" 2>&1
 		done
 	fi

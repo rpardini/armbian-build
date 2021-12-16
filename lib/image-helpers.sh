@@ -77,7 +77,7 @@ unmount_on_exit() {
 check_loop_device() {
 
 	local device=$1
-	display_alert "Checking look device" "${device}" "wrn"
+	#display_alert "Checking look device" "${device}" "wrn"
 	if [[ ! -b $device ]]; then
 		if [[ $CONTAINER_COMPAT == yes && -b /tmp/$device ]]; then
 			display_alert "Creating device node" "$device"
@@ -169,14 +169,25 @@ function chroot_sdcard_apt_get() {
 	[[ $NO_APT_CACHER != yes ]] && apt_params+=(
 		-o "Acquire::http::Proxy=\"http://${APT_PROXY_ADDR:-localhost:3142}\""
 		-o "Acquire::http::Proxy::localhost=\"DIRECT\""
+		-o "Dpkg::Use-Pty=0" # Please be quiet
 	)
 	# IMPORTANT: this function returns the exit code of last statement, in this case chroot (which gets its result from bash which calls apt-get)
 	chroot_sdcard DEBIAN_FRONTEND=noninteractive apt-get "${apt_params[@]}" "$@"
 }
 
+# please, please, unify around this function. if SDCARD is not enough, I'll make a mount version.
 function chroot_sdcard() {
-	echo RUNNING: chroot "${SDCARD}" /bin/bash -e -c "$*" 1>&2
-	chroot "${SDCARD}" /bin/bash -e -c "$*" 2>&1
+	# Log the command to the current logfile, so it has context of what was run.
+	if [[ -f "${CURRENT_LOGFILE}" ]]; then
+		echo "(=-Armbian-->" chroot "\${SDCARD}" /bin/bash -e -c "$*" " <- at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
+	fi
+	local exit_code=666
+	chroot "${SDCARD}" /bin/bash -e -c "$*" 2>&1 # redirect stderr to stdout. $* is NOT $@!
+	exit_code=$?
+	if [[ -f "${CURRENT_LOGFILE}" ]]; then
+		echo "(=-Armbian--> cmd exited with code ${exit_code} at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
+	fi
+	return $exit_code
 }
 
 # this is called by distributions.sh->install_common(), and thus already under a logging manager.
@@ -187,7 +198,7 @@ install_deb_chroot() {
 	local name
 	local desc
 	if [[ ${variant} != remote ]]; then
-		# @TODO: this can be sped up significantly by mounting debs directly in chroot /root/debs and installing from there
+		# @TODO: this can be sped up significantly by mounting debs readonly directly in chroot /root/debs and installing from there
 		# also won't require cleanup later
 		name="/root/"$(basename "${package}")
 		[[ ! -f "${SDCARD}${name}" ]] && cp "${package}" "${SDCARD}${name}"

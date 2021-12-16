@@ -82,7 +82,6 @@ PRE_INSTALL_DISTRIBUTION_SPECIFIC
 		source $SRC/lib/fel-load.sh
 	else
 		LOG_SECTION="partitioning" do_with_logging prepare_partitions # do_with_logging
-		display_alert "Between prepare_partitions and create_image" "LOOP=${LOOP}" "wrn"
 		LOG_SECTION="image" do_with_logging create_image # do_with_logging where is LOOP?
 	fi
 
@@ -174,7 +173,7 @@ create_rootfs_cache() {
 
 		local date_diff=$((($(date +%s) - $(stat -c %Y $cache_fname)) / 86400))
 		display_alert "Extracting $display_name" "$date_diff days old" "info"
-		pv -p -b -r -c -N "[ .... ] $display_name" "$cache_fname" | lz4 -dc | tar xp --xattrs -C $SDCARD/
+		pv -p -b -r -c -N "[💖] $display_name" "$cache_fname" | lz4 -dc | tar xp --xattrs -C $SDCARD/
 		[[ $? -ne 0 ]] && rm $cache_fname && exit_with_error "Cache $cache_fname is corrupted and was deleted. Restart."
 		rm $SDCARD/etc/resolv.conf
 		echo "nameserver $NAMESERVER" >> $SDCARD/etc/resolv.conf
@@ -202,13 +201,12 @@ create_rootfs_cache() {
 			"--components=${DEBOOTSTRAP_COMPONENTS}"                           # from aggregation?
 			"--foreign" "${RELEASE}" "${SDCARD}/" "${apt_mirror}"              # path and mirror
 		)
-		echo Running: debootstrap "${deboostrap_arguments[@]}" 1>&2
 		debootstrap "${deboostrap_arguments[@]}" 2>&1 || { # invoke debootstrap, stderr to stdout.
 			exit_with_error "Debootstrap first stage failed" "${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL}"
 		}
 		[[ ! -f $SDCARD/debootstrap/debootstrap ]] && exit_with_error "Debootstrap first stage did not produce marker file"
 
-		cp "/usr/bin/$QEMU_BINARY" "$SDCARD/usr/bin/"
+		cp "/usr/bin/$QEMU_BINARY" "$SDCARD/usr/bin/" # @TODO: who cleans this up later?
 
 		mkdir -p "${SDCARD}/usr/share/keyrings/"
 		cp /usr/share/keyrings/*-archive-keyring.gpg "${SDCARD}/usr/share/keyrings/"
@@ -311,16 +309,9 @@ create_rootfs_cache() {
 		fi
 
 		# Remove packages from packages.uninstall
-
 		display_alert "Uninstall packages" "$PACKAGE_LIST_UNINSTALL" "info"
-		chroot
-		eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -e -c "DEBIAN_FRONTEND=noninteractive apt-get -y -qq \
-			$apt_extra $apt_extra_progress purge $PACKAGE_LIST_UNINSTALL"' \
-			${PROGRESS_LOG_TO_FILE:+' >> $DEST/${LOG_SUBPATH}/debootstrap.log'} \
-			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Removing packages.uninstall packages..." $TTY_Y $TTY_X'} \
-			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} ';EVALPIPE=(${PIPESTATUS[@]})'
-
-		[[ ${EVALPIPE[0]} -ne 0 ]] && exit_with_error "Installation of Armbian packages failed"
+		# shellcheck disable=SC2086
+		chroot_sdcard_apt_get purge $PACKAGE_LIST_UNINSTALL || exit_with_error "Un-Installation of packages failed"
 
 		# stage: purge residual packages
 		display_alert "Purging residual packages for" "Armbian" "info"
@@ -741,8 +732,6 @@ PREPARE_IMAGE_SIZE
 		[[ -f $SDCARD/boot/armbianEnv.txt ]] && rm $SDCARD/boot/armbianEnv.txt
 	fi
 
-	display_alert "Finished prepare_partitions" "LOOP=${LOOP}" "wrn"
-
 }
 #############################################################################
 
@@ -794,7 +783,6 @@ update_initramfs() {
 # finishes creation of image from cached rootfs
 #
 create_image() {
-	display_alert "Inside create_image" "LOOP=${LOOP}" "wrn"
 	# create DESTIMG, hooks might put stuff there early.
 	mkdir -p $DESTIMG
 
@@ -1005,7 +993,7 @@ POST_BUILD_IMAGE
 		display_alert "Writing image" "$CARD_DEVICE ${readsha}" "info"
 
 		# write to SD card
-		pv -p -b -r -c -N "[ .... ] dd" ${FINALDEST}/${version}.img | dd of=$CARD_DEVICE bs=1M iflag=fullblock oflag=direct status=none
+		pv -p -b -r -c -N "[💾] dd" ${FINALDEST}/${version}.img | dd of=$CARD_DEVICE bs=1M iflag=fullblock oflag=direct status=none
 
 		call_extension_method "post_write_sdcard" <<- 'POST_BUILD_IMAGE'
 			*run after writing img to sdcard*
