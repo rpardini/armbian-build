@@ -19,8 +19,11 @@ fi
 # shellcheck source=functions/build-single.sh
 source "${SRC}"/lib/functions/build-single.sh
 
-# shellcheck source=debootstrap.sh
-source "${SRC}"/lib/debootstrap.sh # system specific install
+# shellcheck source=lib/functions/rootfs.sh
+source "${SRC}"/lib/functions/rootfs.sh
+# shellcheck source=lib/functions/image.sh
+source "${SRC}"/lib/functions/image.sh
+
 # shellcheck source=image-helpers.sh
 source "${SRC}"/lib/image-helpers.sh # helpers for OS image building
 # shellcheck source=distributions.sh
