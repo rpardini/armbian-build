@@ -46,8 +46,8 @@ source "${SRC}"/lib/functions/bsp.sh # board support package
 # shellcheck source=functions/general.sh
 source "${SRC}"/lib/functions/general.sh # general functions
 
-# shellcheck source=chroot-buildpackages.sh
-source "${SRC}"/lib/chroot-buildpackages.sh # chroot packages building
+# shellcheck source=functions/packages.sh
+source "${SRC}"/lib/functions/packages.sh # chroot packages building
 
 ## Configuration.
 #shellcheck source=functions/misc_configuration.sh

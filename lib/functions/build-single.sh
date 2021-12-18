@@ -107,7 +107,7 @@ main_default_build_single() {
 
 	# build additional packages
 	if [[ $EXTERNAL_NEW == compile ]]; then
-		LOG_SECTION="create_bsp_desktop_package" do_with_logging chroot_build_packages
+		LOG_SECTION="chroot_build_packages" do_with_logging chroot_build_packages
 	fi
 
 	# end of kernel-only, so display what was built.
