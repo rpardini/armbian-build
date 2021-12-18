@@ -43,8 +43,8 @@ source "${SRC}"/lib/functions/extra-drivers.sh # drivers that are not upstreamed
 # shellcheck source=functions/bsp.sh
 source "${SRC}"/lib/functions/bsp.sh # board support package
 
-# shellcheck source=general.sh
-source "${SRC}"/lib/general.sh # general functions
+# shellcheck source=functions/general.sh
+source "${SRC}"/lib/functions/general.sh # general functions
 
 # shellcheck source=chroot-buildpackages.sh
 source "${SRC}"/lib/chroot-buildpackages.sh # chroot packages building
