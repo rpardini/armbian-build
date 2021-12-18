@@ -52,7 +52,7 @@ PRE_INSTALL_DISTRIBUTION_SPECIFIC
 	# install distribution and board specific applications
 
 	LOG_SECTION="distro" do_with_logging install_distribution_specific
-	LOG_SECTION="common" do_with_logging install_common
+	LOG_SECTION="install_common" do_with_logging install_common
 
 	# install locally built packages
 	[[ $EXTERNAL_NEW == compile ]] && LOG_SECTION="packages_local" do_with_logging chroot_installpackages_local
@@ -73,15 +73,15 @@ PRE_INSTALL_DISTRIBUTION_SPECIFIC
 
 	# clean up / prepare for making the image
 	umount_chroot "$SDCARD"
-	LOG_SECTION="rootfs" post_debootstrap_tweaks
+	LOG_SECTION="post_debootstrap_tweaks" post_debootstrap_tweaks
 
 	if [[ $ROOTFS_TYPE == fel ]]; then
 		FEL_ROOTFS=$SDCARD/
 		display_alert "Starting FEL boot" "$BOARD" "info"
 		start_fel_boot
 	else
-		LOG_SECTION="partitioning" do_with_logging prepare_partitions # do_with_logging
-		LOG_SECTION="image" do_with_logging create_image              # do_with_logging where is LOOP?
+		LOG_SECTION="partitioning" do_with_logging prepare_partitions
+		LOG_SECTION="image" do_with_logging create_image
 	fi
 
 	# stage: unmount tmpfs

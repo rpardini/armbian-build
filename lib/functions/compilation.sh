@@ -191,7 +191,7 @@ compile_uboot() {
 			rm -rf "${atftempdir}"
 		fi
 
-		display_alert "Preparing u-boot config" "${BOOTCONFIG} ${version} ${target}" "info"
+		display_alert "Preparing u-boot config" "${version}${BOOTCONFIG} ${target_make}" "info"
 		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
 			make $CTHREADS $BOOTCONFIG CROSS_COMPILE="$CCACHE $UBOOT_COMPILER" 2>&1
 
@@ -199,18 +199,16 @@ compile_uboot() {
 		[[ -f .config ]] && sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-armbian"/g' .config
 		[[ -f .config ]] && sed -i 's/CONFIG_LOCALVERSION_AUTO=.*/# CONFIG_LOCALVERSION_AUTO is not set/g' .config
 
-		# for modern kernel and non spi targets
+		# for modern (? 2018-2019?) kernel and non spi targets
 		if [[ ${BOOTBRANCH} =~ ^tag:v201[8-9](.*) && ${target} != "spi" && -f .config ]]; then
-
 			sed -i 's/^.*CONFIG_ENV_IS_IN_FAT.*/# CONFIG_ENV_IS_IN_FAT is not set/g' .config
 			sed -i 's/^.*CONFIG_ENV_IS_IN_EXT4.*/CONFIG_ENV_IS_IN_EXT4=y/g' .config
 			sed -i 's/^.*CONFIG_ENV_IS_IN_MMC.*/# CONFIG_ENV_IS_IN_MMC is not set/g' .config
-			sed -i 's/^.*CONFIG_ENV_IS_NOWHERE.*/# CONFIG_ENV_IS_NOWHERE is not set/g' .config | echo \
-				"# CONFIG_ENV_IS_NOWHERE is not set" >> .config
+			sed -i 's/^.*CONFIG_ENV_IS_NOWHERE.*/# CONFIG_ENV_IS_NOWHERE is not set/g' .config
+			echo "# CONFIG_ENV_IS_NOWHERE is not set" >> .config
 			echo 'CONFIG_ENV_EXT4_INTERFACE="mmc"' >> .config
 			echo 'CONFIG_ENV_EXT4_DEVICE_AND_PART="0:auto"' >> .config
 			echo 'CONFIG_ENV_EXT4_FILE="/boot/boot.env"' >> .config
-
 		fi
 
 		[[ -f tools/logos/udoo.bmp ]] && cp "${SRC}"/packages/blobs/splash/udoo.bmp tools/logos/udoo.bmp
@@ -224,16 +222,19 @@ compile_uboot() {
 		cross_compile="CROSS_COMPILE=$CCACHE $UBOOT_COMPILER"
 		[[ -n $UBOOT_TOOLCHAIN2 ]] && cross_compile="ARMBIAN=foe" # empty parameter is not allowed
 
-		display_alert "Compiling u-boot" "${version} ${target_make}" "info"
+		display_alert "Compiling u-boot" "${version}${BOOTCONFIG} ${target_make}" "info"
 		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
 			make $target_make $CTHREADS "${cross_compile}" 2>&1
 
 		[[ ${EVALPIPE[0]} -ne 0 ]] && exit_with_error "U-boot compilation failed"
 
 		if [[ $(type -t uboot_custom_postprocess) == function ]]; then
+			set -e # Insist, errors are not tolerated.
+			display_alert "Postprocessing u-boot" "${version}${BOOTCONFIG} ${target_make}" "info"
 			uboot_custom_postprocess 2>&1
 		fi
 
+		display_alert "Preparing u-boot targets packaging" "${version}${BOOTCONFIG} ${target_make}" "info"
 		# copy files to build directory
 		for f in $target_files; do
 			local f_src
@@ -248,7 +249,7 @@ compile_uboot() {
 			[[ ! -f $f_src ]] && exit_with_error "U-boot file not found" "$(basename "${f_src}")"
 			cp -v "${f_src}" "$uboottempdir/${uboot_name}/usr/lib/${uboot_name}/${f_dst}" 2>&1
 		done
-	done <<< "$UBOOT_TARGET_MAP"
+	done <<< "$UBOOT_TARGET_MAP" # this overrides stdin in the loop. be aware.
 
 	# set up postinstall script
 	if [[ $BOARD == tinkerboard ]]; then
@@ -315,6 +316,8 @@ compile_uboot() {
 
 	rsync --remove-source-files -rq "$uboottempdir/${uboot_name}.deb" "${DEB_STORAGE}/"
 	rm -rf "$uboottempdir"
+
+	return 0 # success
 }
 
 create_linux-source_package() {

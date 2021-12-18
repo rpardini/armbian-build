@@ -15,7 +15,7 @@ function logging_error_show_log() {
 
 	if [[ -f "${logfile_to_show}" ]]; then
 
-		local prefix_sed_contents="${left_marker}${padding}👉${padding}${right_marker}    "
+		local prefix_sed_contents="${normal_color}${left_marker}${padding}👉${padding}${right_marker}    "
 		local prefix_sed_cmd="s/^/${prefix_sed_contents}/;"
 		display_alert "    👇👇👇 Showing logfile below 👇👇👇" "${logfile_to_show}" "err"
 		# shellcheck disable=SC2002 # my cat is great. thank you, shellcheck.
@@ -131,7 +131,7 @@ function logging_echo_prefix_for_pv() {
 			;;
 	esac
 
-	echo -n "${normal_color}${left_marker}${padding}${indicator}${padding}${right_marker}"
+	echo -n -e "${normal_color}${left_marker}${padding}${indicator}${padding}${right_marker}"
 	return 0
 
 }
