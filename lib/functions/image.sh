@@ -78,7 +78,7 @@ PRE_INSTALL_DISTRIBUTION_SPECIFIC
 	if [[ $ROOTFS_TYPE == fel ]]; then
 		FEL_ROOTFS=$SDCARD/
 		display_alert "Starting FEL boot" "$BOARD" "info"
-		source $SRC/lib/fel-load.sh
+		start_fel_boot
 	else
 		LOG_SECTION="partitioning" do_with_logging prepare_partitions # do_with_logging
 		LOG_SECTION="image" do_with_logging create_image # do_with_logging where is LOOP?

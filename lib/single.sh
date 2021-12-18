@@ -49,13 +49,15 @@ source "${SRC}"/lib/general.sh # general functions
 # shellcheck source=chroot-buildpackages.sh
 source "${SRC}"/lib/chroot-buildpackages.sh # chroot packages building
 
-
 ## Configuration.
 #shellcheck source=functions/misc_configuration.sh
 source "${SRC}"/lib/functions/misc_configuration.sh
 
 #shellcheck source=functions/configuration.sh
 source "${SRC}"/lib/functions/configuration.sh
+
+#shellcheck source=functions/fel.sh
+source "${SRC}"/lib/functions/fel.sh
 
 # shellcheck source=functions/misc_compile.sh
 source "${SRC}"/lib/functions/misc_compile.sh # Misc functions previously found here.
