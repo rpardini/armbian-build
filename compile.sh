@@ -33,7 +33,7 @@ if [[ "${ARMBIAN_ENABLE_CALL_TRACING}" == "yes" ]]; then
 fi
 
 # Sanity check.
-if [[ ! -f "${SRC}"/lib/general.sh ]]; then
+if [[ ! -f "${SRC}"/lib/single.sh ]]; then
 	echo "Error: missing build directory structure"
 	echo "Please clone the full repository https://github.com/armbian/build/"
 	exit 255
