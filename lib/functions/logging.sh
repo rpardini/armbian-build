@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function logging_init() {
-	export padding="" left_marker="[" right_marker="]" # global.
+	export padding="" left_marker="[" right_marker="]" normal_color="\x1B[0m" # globals
 }
 
 function logging_error_show_log() {
@@ -30,7 +30,7 @@ function logging_error_show_log() {
 }
 
 function do_with_logging() {
-	[[ ! -n "${DEST}" ]] && exit_with_error "DEST is not defined. Can't start logging."
+	[[ -z "${DEST}" ]] && exit_with_error "DEST is not defined. Can't start logging."
 
 	# @TODO: check we're not currently logging (eg: this has been called 2 times without exiting)
 	export CURRENT_LOGGING_SECTION=${LOG_SECTION:-build}
@@ -38,15 +38,20 @@ function do_with_logging() {
 	export CURRENT_LOGFILE="${CURRENT_LOGGING_DIR}/000.${CURRENT_LOGGING_SECTION}.log"
 	mkdir -p "${CURRENT_LOGGING_DIR}"
 
+	# Markers for CI (GitHub Actions); CI env var comes predefined as true there.
+	if [[ "${CI}" == "true" ]]; then
+		echo "::group::${CURRENT_LOGGING_SECTION}"
+	fi
+
 	# We now execute whatever was passed as parameters, in some different conditions:
 	# In both cases, writing to stderr will display to terminal.
 	# So whatever is being called, should prevent rogue stuff writing to stderr.
 	# this is mostly handled by redirecting stderr to stdout: 2>&1
 
-	inline_logs_color="\e[1;30m"
+	local exit_code=1                  # fail by default...
+	local inline_logs_color="\e[1;30m" # color inline logs "bright black", which is grey
 	local prefix_sed_contents="$(logging_echo_prefix_for_pv "tool")   $(echo -n -e "${inline_logs_color}")"
 	local prefix_sed_cmd="s/^/${prefix_sed_contents}/;"
-	local FAILED=1
 	if [[ "${SHOW_LOG}" == "yes" ]]; then
 		# This is sick. Create a 3rd file descriptor sending it to sed. https://unix.stackexchange.com/questions/174849/redirecting-stdout-to-terminal-and-file-without-using-a-pipe
 		# Also terrible: don't hold a reference to cwd by changing to SRC always
@@ -54,14 +59,19 @@ function do_with_logging() {
 			cd "${SRC}"
 			grep --line-buffered -v "^$" | sed -e "${prefix_sed_cmd}"
 		)
-		{ "$@" && FAILED=0; } >&3
+		{ "$@" && exit_code=0; } >&3
 		exec 3>&- # close the file descriptor, lest sed keeps running forever.
 	else
 		# If not showing the log, just send stdout to logfile. stderr will flow to screen.
-		{ "$@" && FAILED=0; } >> "${CURRENT_LOGFILE}"
+		{ "$@" && exit_code=0; } >> "${CURRENT_LOGFILE}"
 	fi
 
-	return $FAILED # hopefully not
+	# Close opened CI group.
+	if [[ "${CI}" == "true" ]]; then
+		echo "::endgroup::"
+	fi
+
+	return $exit_code
 }
 
 display_alert() {
@@ -70,7 +80,6 @@ display_alert() {
 		echo "(=-Armbian-: " "$@" >> "${CURRENT_LOGFILE}"
 	fi
 
-	local normal_color="\x1B[0m"                           # const
 	local message="$1" level="$3"                          # params
 	local level_indicator="" inline_logs_color="" extra="" # this log
 	case "${level}" in
@@ -118,11 +127,11 @@ function logging_echo_prefix_for_pv() {
 			indicator="💾"
 			;;
 		create_rootfs_archive | decompress | compress_kernel_sources)
-			indicator="🗜"
+			indicator="🤐"
 			;;
 	esac
 
-	echo -n "${left_marker}${padding}${indicator}${padding}${right_marker}"
+	echo -n "${normal_color}${left_marker}${padding}${indicator}${padding}${right_marker}"
 	return 0
 
 }

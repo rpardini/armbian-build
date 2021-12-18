@@ -243,6 +243,8 @@ function prepare_and_config_main_build_single() {
 
 	SHOW_WARNING=yes
 
+	display_alert "Starting single build process" "${BOARD}" "info"
+
 	if [[ $USE_CCACHE != no ]]; then
 		CCACHE=ccache
 		export PATH="/usr/lib/ccache:$PATH"
@@ -373,6 +375,7 @@ function prepare_and_config_main_build_single() {
 		BOARD_TYPE='tvb'
 	fi
 
+	display_alert "Sourcing board configuration" "${BOARD}.${BOARD_TYPE}" "info"
 	# shellcheck source=/dev/null
 	source "${SRC}/config/boards/${BOARD}.${BOARD_TYPE}"
 	LINUXFAMILY="${BOARDFAMILY}"
@@ -500,4 +503,7 @@ function prepare_and_config_main_build_single() {
 	CHOSEN_ROOTFS=${BSP_CLI_PACKAGE_NAME}
 	CHOSEN_DESKTOP=armbian-${RELEASE}-desktop-${DESKTOP_ENVIRONMENT}
 	CHOSEN_KSRC=linux-source-${BRANCH}-${LINUXFAMILY}
+
+	display_alert "Done with prepare_and_config_main_build_single" "${BOARD}.${BOARD_TYPE}" "info"
+
 }

@@ -177,7 +177,7 @@ compile_uboot() {
 			display_alert "Cleaning" "$BOOTSOURCEDIR" "info"
 			(
 				cd "${SRC}/cache/sources/${BOOTSOURCEDIR}"
-				make clean > /dev/null 2>&1
+				make clean 2>&1
 			)
 		fi
 
@@ -191,12 +191,9 @@ compile_uboot() {
 			rm -rf "${atftempdir}"
 		fi
 
-		echo -e "\n\t== u-boot make $BOOTCONFIG ==\n" >> "${DEST}"/${LOG_SUBPATH}/compilation.log
-		eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${toolchain2}:${PATH}" \
-			'make $CTHREADS $BOOTCONFIG \
-			CROSS_COMPILE="$CCACHE $UBOOT_COMPILER"' \
-			${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/compilation.log'} \
-			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} 2>> "${DEST}"/${LOG_SUBPATH}/compilation.log
+		display_alert "Preparing u-boot config" "${BOOTCONFIG} ${version} ${target}" "info"
+		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
+			make $CTHREADS $BOOTCONFIG CROSS_COMPILE="$CCACHE $UBOOT_COMPILER" 2>&1
 
 		# armbian specifics u-boot settings
 		[[ -f .config ]] && sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-armbian"/g' .config
@@ -227,17 +224,15 @@ compile_uboot() {
 		cross_compile="CROSS_COMPILE=$CCACHE $UBOOT_COMPILER"
 		[[ -n $UBOOT_TOOLCHAIN2 ]] && cross_compile="ARMBIAN=foe" # empty parameter is not allowed
 
-		echo -e "\n\t== u-boot make $target_make ==\n" >> "${DEST}"/${LOG_SUBPATH}/compilation.log
-		eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${toolchain2}:${PATH}" \
-			'make $target_make $CTHREADS \
-			"${cross_compile}"' \
-			${PROGRESS_LOG_TO_FILE:+' | tee -a "${DEST}"/${LOG_SUBPATH}/compilation.log'} \
-			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Compiling u-boot..." $TTY_Y $TTY_X'} \
-			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} ';EVALPIPE=(${PIPESTATUS[@]})' 2>> "${DEST}"/${LOG_SUBPATH}/compilation.log
+		display_alert "Compiling u-boot" "${version} ${target_make}" "info"
+		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
+			make $target_make $CTHREADS "${cross_compile}" 2>&1
 
 		[[ ${EVALPIPE[0]} -ne 0 ]] && exit_with_error "U-boot compilation failed"
 
-		[[ $(type -t uboot_custom_postprocess) == function ]] && uboot_custom_postprocess
+		if [[ $(type -t uboot_custom_postprocess) == function ]]; then
+			uboot_custom_postprocess 2>&1
+		fi
 
 		# copy files to build directory
 		for f in $target_files; do
@@ -251,7 +246,7 @@ compile_uboot() {
 				f_dst=$(basename "${f_src}")
 			fi
 			[[ ! -f $f_src ]] && exit_with_error "U-boot file not found" "$(basename "${f_src}")"
-			cp "${f_src}" "$uboottempdir/${uboot_name}/usr/lib/${uboot_name}/${f_dst}"
+			cp -v "${f_src}" "$uboottempdir/${uboot_name}/usr/lib/${uboot_name}/${f_dst}" 2>&1
 		done
 	done <<< "$UBOOT_TARGET_MAP"
 
@@ -311,7 +306,7 @@ compile_uboot() {
 	[[ -f Licenses/README ]] && cp Licenses/README "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE"
 	[[ -n $atftempdir && -f $atftempdir/license.md ]] && cp "${atftempdir}/license.md" "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE.atf"
 
-	display_alert "Building deb" "${uboot_name}.deb" "info"
+	display_alert "Building u-boot deb" "${uboot_name}.deb" "info"
 	fakeroot dpkg-deb -b -Z${DEB_COMPRESS} "$uboottempdir/${uboot_name}" "$uboottempdir/${uboot_name}.deb" >> "${DEST}"/${LOG_SUBPATH}/output.log 2>&1
 	rm -rf "$uboottempdir/${uboot_name}"
 	[[ -n $atftempdir ]] && rm -rf "${atftempdir}"
@@ -439,12 +434,12 @@ compile_kernel() {
 		fi
 	fi
 
-	call_extension_method "custom_kernel_config" << 'CUSTOM_KERNEL_CONFIG'
-*Kernel .config is in place, still clean from git version*
-Called after ${LINUXCONFIG}.config is put in place (.config).
-Before any olddefconfig any Kconfig make is called.
-A good place to customize the .config directly.
-CUSTOM_KERNEL_CONFIG
+	call_extension_method "custom_kernel_config" <<- 'CUSTOM_KERNEL_CONFIG'
+		*Kernel .config is in place, still clean from git version*
+		Called after ${LINUXCONFIG}.config is put in place (.config).
+		Before any olddefconfig any Kconfig make is called.
+		A good place to customize the .config directly.
+	CUSTOM_KERNEL_CONFIG
 
 	# hack for OdroidXU4. Copy firmare files
 	if [[ $BOARD == odroidxu4 ]]; then
@@ -455,6 +450,7 @@ CUSTOM_KERNEL_CONFIG
 	# hack for deb builder. To pack what's missing in headers pack.
 	cp "${SRC}"/patch/misc/headers-debian-byteshift.patch /tmp
 
+	display_alert "Kernel configuration" "${LINUXCONFIG}" "info"
 	if [[ $KERNEL_CONFIGURE != yes ]]; then
 		if [[ $BRANCH == default ]]; then
 			eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
@@ -486,20 +482,17 @@ CUSTOM_KERNEL_CONFIG
 	# create linux-source package - with already patched sources
 	# We will build this package first and clear the memory.
 	if [[ $BUILD_KSRC != no ]]; then
+		display_alert "Creating kernel source package" "${LINUXCONFIG}" "info"
 		create_linux-source_package
 	fi
 
-	echo -e "\n\t== kernel ==\n" >> "${DEST}"/${LOG_SUBPATH}/compilation.log
-	eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
-		'make $CTHREADS ARCH=$ARCHITECTURE \
+	display_alert "Compiling Kernel" "${LINUXCONFIG} ${KERNEL_IMAGE_TYPE}" "info"
+	CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
+		make $CTHREADS ARCH=$ARCHITECTURE \
 		CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" \
 		$SRC_LOADADDR \
 		LOCALVERSION="-$LINUXFAMILY" \
-		$KERNEL_IMAGE_TYPE ${KERNEL_EXTRA_TARGETS:-modules dtbs} 2>>$DEST/${LOG_SUBPATH}/compilation.log' \
-		${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/compilation.log'} \
-		${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" \
-		--progressbox "Compiling kernel..." $TTY_Y $TTY_X'} \
-		${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'}
+		$KERNEL_IMAGE_TYPE ${KERNEL_EXTRA_TARGETS:-modules dtbs} 2>&1
 
 	if [[ ${PIPESTATUS[0]} -ne 0 || ! -f arch/$ARCHITECTURE/boot/$KERNEL_IMAGE_TYPE ]]; then
 		exit_with_error "Kernel was not built" "@host"
@@ -512,12 +505,11 @@ CUSTOM_KERNEL_CONFIG
 		local kernel_packing="deb-pkg"
 	fi
 
-	display_alert "Creating packages"
+	display_alert "Creating kernel packages" "${LINUXCONFIG}" "info"
 
 	# produce deb packages: image, headers, firmware, dtb
-	echo -e "\n\t== deb packages: image, headers, firmware, dtb ==\n" >> "${DEST}"/${LOG_SUBPATH}/compilation.log
-	eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
-		'make $CTHREADS $kernel_packing \
+	CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
+		make $CTHREADS $kernel_packing \
 		KDEB_PKGVERSION=$REVISION \
 		KDEB_COMPRESS=${DEB_COMPRESS} \
 		BRANCH=$BRANCH \
@@ -526,10 +518,7 @@ CUSTOM_KERNEL_CONFIG
 		ARCH=$ARCHITECTURE \
 		DEBFULLNAME="$MAINTAINER" \
 		DEBEMAIL="$MAINTAINERMAIL" \
-		CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" 2>>$DEST/${LOG_SUBPATH}/compilation.log' \
-		${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/compilation.log'} \
-		${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Creating kernel packages..." $TTY_Y $TTY_X'} \
-		${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'}
+		CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" 2>&1
 
 	cd .. || exit
 	# remove firmare image packages here - easier than patching ~40 packaging scripts at once
