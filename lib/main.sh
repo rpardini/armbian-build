@@ -18,7 +18,7 @@ fi
 # this is used instead of making the chmod in prepare_host() recursive
 umask 002
 
-# destination
+# destination. # @TODO: logging this is when we can start logging to file. make sure.
 if [ -d "$CONFIG_PATH/output" ]; then
 	DEST="${CONFIG_PATH}"/output
 else

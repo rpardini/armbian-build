@@ -19,46 +19,62 @@ main_default_build() {
 	# The OFFLINE_WORK variable inside the function
 	LOG_SECTION="prepare_host" do_with_logging prepare_host
 
-	[[ "${JUST_INIT}" == "yes" ]] && exit 0
+	if [[ "${JUST_INIT}" == "yes" ]]; then
+		exit 0
+	fi
 
-	[[ $CLEAN_LEVEL == *sources* ]] && cleaning "sources"
-
+	if [[ $CLEAN_LEVEL == *sources* ]]; then
+		cleaning "sources"
+	fi
 	# ignore updates help on building all images - for internal purposes
 	if [[ $IGNORE_UPDATES != yes ]]; then
 		fetch_sources_kernel_uboot_atf
+		LOG_SECTION="XXXX_XX" do_with_logging XXXX_XX
 
 		fetch_and_build_host_tools
 
 		for option in $(tr ',' ' ' <<< "$CLEAN_LEVEL"); do
-			[[ $option != sources ]] && cleaning "$option"
+			if [[ $option != sources ]]; then
+				cleaning "$option"
+			fi
 		done
 	fi
 
 	# Don't build u-boot at all if the BOOTCONFIG is 'none'.
 	if [[ "${BOOTCONFIG}" != "none" ]]; then
+		# @TODO: refactor this. we use it very often
 		# Compile u-boot if packed .deb does not exist or use the one from repository
 		if [[ ! -f "${DEB_STORAGE}"/${CHOSEN_UBOOT}_${REVISION}_${ARCH}.deb ]]; then
 			if [[ -n "${ATFSOURCE}" && "${REPOSITORY_INSTALL}" != *u-boot* ]]; then
 				compile_atf
 			fi
-			[[ "${REPOSITORY_INSTALL}" != *u-boot* ]] && compile_uboot
+			# @TODO: refactor this construct. we use it too many times.
+			if [[ "${REPOSITORY_INSTALL}" != *u-boot* ]]; then
+				compile_uboot
+			fi
 		fi
 	fi
 
 	# Compile kernel if packed .deb does not exist or use the one from repository
 	if [[ ! -f ${DEB_STORAGE}/${CHOSEN_KERNEL}_${REVISION}_${ARCH}.deb ]]; then
 		export KDEB_CHANGELOG_DIST=$RELEASE
-		[[ -n $KERNELSOURCE ]] && [[ "${REPOSITORY_INSTALL}" != *kernel* ]] && compile_kernel
+		if [[ -n $KERNELSOURCE ]] && [[ "${REPOSITORY_INSTALL}" != *kernel* ]]; then
+			compile_kernel
+		fi
 	fi
 
 	# Compile armbian-config if packed .deb does not exist or use the one from repository
 	if [[ ! -f ${DEB_STORAGE}/armbian-config_${REVISION}_all.deb ]]; then
-		[[ "${REPOSITORY_INSTALL}" != *armbian-config* ]] && compile_armbian-config
+		if [[ "${REPOSITORY_INSTALL}" != *armbian-config* ]]; then
+			compile_armbian-config
+		fi
 	fi
 
 	# Compile armbian-zsh if packed .deb does not exist or use the one from repository
 	if [[ ! -f ${DEB_STORAGE}/armbian-zsh_${REVISION}_all.deb ]]; then
-		[[ "${REPOSITORY_INSTALL}" != *armbian-zsh* ]] && compile_armbian-zsh
+		if [[ "${REPOSITORY_INSTALL}" != *armbian-zsh* ]]; then
+			compile_armbian-zsh
+		fi
 	fi
 
 	# Compile armbian-firmware if packed .deb does not exist or use the one from repository
@@ -77,14 +93,22 @@ main_default_build() {
 	overlayfs_wrapper "cleanup"
 
 	# create board support package
-	[[ -n $RELEASE && ! -f ${DEB_STORAGE}/$RELEASE/${BSP_CLI_PACKAGE_FULLNAME}.deb ]] && create_board_package
+	if [[ -n $RELEASE && ! -f ${DEB_STORAGE}/$RELEASE/${BSP_CLI_PACKAGE_FULLNAME}.deb ]]; then
+		create_board_package
+	fi
 
 	# create desktop package
-	[[ -n $RELEASE && $DESKTOP_ENVIRONMENT && ! -f ${DEB_STORAGE}/$RELEASE/${CHOSEN_DESKTOP}_${REVISION}_all.deb ]] && create_desktop_package
-	[[ -n $RELEASE && $DESKTOP_ENVIRONMENT && ! -f ${DEB_STORAGE}/${RELEASE}/${BSP_DESKTOP_PACKAGE_FULLNAME}.deb ]] && create_bsp_desktop_package
+	if [[ -n $RELEASE && $DESKTOP_ENVIRONMENT && ! -f ${DEB_STORAGE}/$RELEASE/${CHOSEN_DESKTOP}_${REVISION}_all.deb ]]; then
+		create_desktop_package
+	fi
+	if [[ -n $RELEASE && $DESKTOP_ENVIRONMENT && ! -f ${DEB_STORAGE}/${RELEASE}/${BSP_DESKTOP_PACKAGE_FULLNAME}.deb ]]; then
+		create_bsp_desktop_package
+	fi
 
 	# build additional packages
-	[[ $EXTERNAL_NEW == compile ]] && chroot_build_packages
+	if [[ $EXTERNAL_NEW == compile ]]; then
+		chroot_build_packages
+	fi
 
 	# end of kernel-only, so display what was built.
 	if [[ $KERNEL_ONLY != yes ]]; then
@@ -110,30 +134,39 @@ RUN_AFTER_BUILD
 	runtime=$(((end - start) / 60))
 	display_alert "Runtime" "$runtime min" "info"
 
-	# Make it easy to repeat build by displaying build options used
 	[ "$(systemd-detect-virt)" == 'docker' ] && BUILD_CONFIG='docker'
-	display_alert "Repeat Build Options" "./compile.sh ${BUILD_CONFIG} BOARD=${BOARD} BRANCH=${BRANCH} \
-$([[ -n $RELEASE ]] && echo "RELEASE=${RELEASE} ")\
-$([[ -n $BUILD_MINIMAL ]] && echo "BUILD_MINIMAL=${BUILD_MINIMAL} ")\
-$([[ -n $BUILD_DESKTOP ]] && echo "BUILD_DESKTOP=${BUILD_DESKTOP} ")\
-$([[ -n $KERNEL_ONLY ]] && echo "KERNEL_ONLY=${KERNEL_ONLY} ")\
-$([[ -n $KERNEL_CONFIGURE ]] && echo "KERNEL_CONFIGURE=${KERNEL_CONFIGURE} ")\
-$([[ -n $DESKTOP_ENVIRONMENT ]] && echo "DESKTOP_ENVIRONMENT=${DESKTOP_ENVIRONMENT} ")\
-$([[ -n $DESKTOP_ENVIRONMENT_CONFIG_NAME ]] && echo "DESKTOP_ENVIRONMENT_CONFIG_NAME=${DESKTOP_ENVIRONMENT_CONFIG_NAME} ")\
-$([[ -n $DESKTOP_APPGROUPS_SELECTED ]] && echo "DESKTOP_APPGROUPS_SELECTED=\"${DESKTOP_APPGROUPS_SELECTED}\" ")\
-$([[ -n $DESKTOP_APT_FLAGS_SELECTED ]] && echo "DESKTOP_APT_FLAGS_SELECTED=\"${DESKTOP_APT_FLAGS_SELECTED}\" ")\
-$([[ -n $COMPRESS_OUTPUTIMAGE ]] && echo "COMPRESS_OUTPUTIMAGE=${COMPRESS_OUTPUTIMAGE} ")\
-" "ext"
+
+	# Make it easy to repeat build by displaying build options used. Prepare array.
+	local -a repeat_args=("./compile.sh" "${BUILD_CONFIG}" " BRANCH=${BRANCH}")
+	[[ -n ${RELEASE} ]] && repeat_args+=("RELEASE=${RELEASE}")
+	[[ -n ${BUILD_MINIMAL} ]] && repeat_args+=("BUILD_MINIMAL=${BUILD_MINIMAL}")
+	[[ -n ${BUILD_DESKTOP} ]] && repeat_args+=("BUILD_DESKTOP=${BUILD_DESKTOP}")
+	[[ -n ${KERNEL_ONLY} ]] && repeat_args+=("KERNEL_ONLY=${KERNEL_ONLY}")
+	[[ -n ${KERNEL_CONFIGURE} ]] && repeat_args+=("KERNEL_CONFIGURE=${KERNEL_CONFIGURE}")
+	[[ -n ${DESKTOP_ENVIRONMENT} ]] && repeat_args+=("DESKTOP_ENVIRONMENT=${DESKTOP_ENVIRONMENT}")
+	[[ -n ${DESKTOP_ENVIRONMENT_CONFIG_NAME} ]] && repeat_args+=("DESKTOP_ENVIRONMENT_CONFIG_NAME=${DESKTOP_ENVIRONMENT_CONFIG_NAME}")
+	[[ -n ${DESKTOP_APPGROUPS_SELECTED} ]] && repeat_args+=("DESKTOP_APPGROUPS_SELECTED=\"${DESKTOP_APPGROUPS_SELECTED}\"")
+	[[ -n ${DESKTOP_APT_FLAGS_SELECTED} ]] && repeat_args+=("DESKTOP_APT_FLAGS_SELECTED=\"${DESKTOP_APT_FLAGS_SELECTED}\"")
+	[[ -n ${COMPRESS_OUTPUTIMAGE} ]] && repeat_args+=("COMPRESS_OUTPUTIMAGE=${COMPRESS_OUTPUTIMAGE}")
+	display_alert "Repeat Build Options" "${repeat_args[*]}" "ext" # * = expand array, space delimited, single-word.
 
 }
 
 function fetch_sources_kernel_uboot_atf() {
-	display_alert "Downloading sources" "" "info"
-	# fetch_from_repo <url> <dir> <ref> <subdir_flag>
-	[[ -n $BOOTSOURCE ]] && fetch_from_repo "$BOOTSOURCE" "$BOOTDIR" "$BOOTBRANCH" "yes"
-	[[ -n $KERNELSOURCE ]] && fetch_from_repo "$KERNELSOURCE" "$KERNELDIR" "$KERNELBRANCH" "yes"
-	[[ -n $ATFSOURCE ]] && fetch_from_repo "$ATFSOURCE" "$ATFDIR" "$ATFBRANCH" "yes"
+	if [[ -n $BOOTSOURCE ]]; then
+		display_alert "Downloading sources" "u-boot" "git"
+		fetch_from_repo "$BOOTSOURCE" "$BOOTDIR" "$BOOTBRANCH" "yes" # fetch_from_repo <url> <dir> <ref> <subdir_flag>
+	fi
 
+	if [[ -n $KERNELSOURCE ]]; then
+		display_alert "Downloading sources" "kernel" "git"
+		fetch_from_repo "$KERNELSOURCE" "$KERNELDIR" "$KERNELBRANCH" "yes"
+	fi
+
+	if [[ -n $ATFSOURCE ]]; then
+		display_alert "Downloading sources" "atf" "git"
+		fetch_from_repo "$ATFSOURCE" "$ATFDIR" "$ATFBRANCH" "yes"
+	fi
 }
 
 function fetch_and_build_host_tools() {
