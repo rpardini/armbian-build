@@ -30,21 +30,32 @@ source "${SRC}"/lib/functions/misc_image.sh # helpers for OS image building
 # shellcheck source=lib/functions/distro.sh
 source "${SRC}"/lib/functions/distro.sh # system specific install
 
-# shellcheck source=desktop.sh
-source "${SRC}"/lib/desktop.sh # desktop specific install
+#### REFACTOR ALL THESE
+# shellcheck source=functions/desktop.sh
+source "${SRC}"/lib/functions/desktop.sh # desktop specific install
+
 # shellcheck source=compilation.sh
 source "${SRC}"/lib/compilation.sh # patching and compilation of kernel, uboot, ATF
+
 # shellcheck source=compilation-prepare.sh
 source "${SRC}"/lib/compilation-prepare.sh # drivers that are not upstreamed
+
 # shellcheck source=makeboarddeb.sh
 source "${SRC}"/lib/makeboarddeb.sh # board support package
+
 # shellcheck source=general.sh
 source "${SRC}"/lib/general.sh # general functions
+
 # shellcheck source=chroot-buildpackages.sh
 source "${SRC}"/lib/chroot-buildpackages.sh # chroot packages building
+
+
+## Configuration.
 #shellcheck source=functions/misc_configuration.sh
 source "${SRC}"/lib/functions/misc_configuration.sh
+
 #shellcheck source=functions/configuration.sh
 source "${SRC}"/lib/functions/configuration.sh
+
 # shellcheck source=functions/misc_compile.sh
 source "${SRC}"/lib/functions/misc_compile.sh # Misc functions previously found here.
