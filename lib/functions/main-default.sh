@@ -28,14 +28,12 @@ main_default_build() {
 	fi
 	# ignore updates help on building all images - for internal purposes
 	if [[ $IGNORE_UPDATES != yes ]]; then
-		fetch_sources_kernel_uboot_atf
-		LOG_SECTION="XXXX_XX" do_with_logging XXXX_XX
-
-		fetch_and_build_host_tools
+		LOG_SECTION="fetch_sources_kernel_uboot_atf" do_with_logging fetch_sources_kernel_uboot_atf
+		LOG_SECTION="fetch_and_build_host_tools" do_with_logging fetch_and_build_host_tools
 
 		for option in $(tr ',' ' ' <<< "$CLEAN_LEVEL"); do
 			if [[ $option != sources ]]; then
-				cleaning "$option"
+				LOG_SECTION="cleaning" do_with_logging cleaning "$option"
 			fi
 		done
 	fi
@@ -46,11 +44,11 @@ main_default_build() {
 		# Compile u-boot if packed .deb does not exist or use the one from repository
 		if [[ ! -f "${DEB_STORAGE}"/${CHOSEN_UBOOT}_${REVISION}_${ARCH}.deb ]]; then
 			if [[ -n "${ATFSOURCE}" && "${REPOSITORY_INSTALL}" != *u-boot* ]]; then
-				compile_atf
+				LOG_SECTION="compile_atf" do_with_logging compile_atf
 			fi
 			# @TODO: refactor this construct. we use it too many times.
 			if [[ "${REPOSITORY_INSTALL}" != *u-boot* ]]; then
-				compile_uboot
+				LOG_SECTION="compile_uboot" do_with_logging compile_uboot
 			fi
 		fi
 	fi
@@ -59,21 +57,21 @@ main_default_build() {
 	if [[ ! -f ${DEB_STORAGE}/${CHOSEN_KERNEL}_${REVISION}_${ARCH}.deb ]]; then
 		export KDEB_CHANGELOG_DIST=$RELEASE
 		if [[ -n $KERNELSOURCE ]] && [[ "${REPOSITORY_INSTALL}" != *kernel* ]]; then
-			compile_kernel
+			LOG_SECTION="compile_kernel" do_with_logging compile_kernel
 		fi
 	fi
 
 	# Compile armbian-config if packed .deb does not exist or use the one from repository
 	if [[ ! -f ${DEB_STORAGE}/armbian-config_${REVISION}_all.deb ]]; then
 		if [[ "${REPOSITORY_INSTALL}" != *armbian-config* ]]; then
-			compile_armbian-config
+			LOG_SECTION="compile_armbian-config" do_with_logging compile_armbian-config
 		fi
 	fi
 
 	# Compile armbian-zsh if packed .deb does not exist or use the one from repository
 	if [[ ! -f ${DEB_STORAGE}/armbian-zsh_${REVISION}_all.deb ]]; then
 		if [[ "${REPOSITORY_INSTALL}" != *armbian-zsh* ]]; then
-			compile_armbian-zsh
+			LOG_SECTION="compile_armbian-zsh" do_with_logging compile_armbian-zsh
 		fi
 	fi
 
@@ -83,9 +81,11 @@ main_default_build() {
 		if [[ "${REPOSITORY_INSTALL}" != *armbian-firmware* ]]; then
 			if [[ "${INSTALL_ARMBIAN_FIRMWARE:-yes}" == "yes" ]]; then # Build firmware by default.
 				# Build the light version of firmware package
-				FULL="" REPLACE="-full" compile_firmware
+				FULL="" REPLACE="-full" LOG_SECTION="compile_firmware" do_with_logging compile_firmware
+
 				# Build the full version of firmware package
-				FULL="-full" REPLACE="" compile_firmware
+				FULL="-full" REPLACE="" LOG_SECTION="compile_firmware" do_with_logging compile_firmware
+
 			fi
 		fi
 	fi
@@ -94,20 +94,20 @@ main_default_build() {
 
 	# create board support package
 	if [[ -n $RELEASE && ! -f ${DEB_STORAGE}/$RELEASE/${BSP_CLI_PACKAGE_FULLNAME}.deb ]]; then
-		create_board_package
+		LOG_SECTION="create_board_package" do_with_logging create_board_package
 	fi
 
 	# create desktop package
 	if [[ -n $RELEASE && $DESKTOP_ENVIRONMENT && ! -f ${DEB_STORAGE}/$RELEASE/${CHOSEN_DESKTOP}_${REVISION}_all.deb ]]; then
-		create_desktop_package
+		LOG_SECTION="create_desktop_package" do_with_logging create_desktop_package
 	fi
 	if [[ -n $RELEASE && $DESKTOP_ENVIRONMENT && ! -f ${DEB_STORAGE}/${RELEASE}/${BSP_DESKTOP_PACKAGE_FULLNAME}.deb ]]; then
-		create_bsp_desktop_package
+		LOG_SECTION="create_bsp_desktop_package" do_with_logging create_bsp_desktop_package
 	fi
 
 	# build additional packages
 	if [[ $EXTERNAL_NEW == compile ]]; then
-		chroot_build_packages
+		LOG_SECTION="create_bsp_desktop_package" do_with_logging chroot_build_packages
 	fi
 
 	# end of kernel-only, so display what was built.
