@@ -66,7 +66,7 @@ create_rootfs_cache() {
 
 		local date_diff=$((($(date +%s) - $(stat -c %Y $cache_fname)) / 86400))
 		display_alert "Extracting $display_name" "$date_diff days old" "info"
-		pv -p -b -r -c -N "[💖] $display_name" "$cache_fname" | lz4 -dc | tar xp --xattrs -C $SDCARD/
+		pv -p -b -r -c -N "$(logging_echo_prefix_for_pv "extract_rootfs") $display_name" "$cache_fname" | lz4 -dc | tar xp --xattrs -C $SDCARD/
 		[[ $? -ne 0 ]] && rm $cache_fname && exit_with_error "Cache $cache_fname is corrupted and was deleted. Restart."
 		rm $SDCARD/etc/resolv.conf
 		echo "nameserver $NAMESERVER" >> $SDCARD/etc/resolv.conf
@@ -247,7 +247,7 @@ create_rootfs_cache() {
 		umount_chroot "$SDCARD"
 
 		tar cp --xattrs --directory=$SDCARD/ --exclude='./dev/*' --exclude='./proc/*' --exclude='./run/*' --exclude='./tmp/*' \
-			--exclude='./sys/*' . | pv -p -b -r -s $(du -sb $SDCARD/ | cut -f1) -N "$display_name" | lz4 -5 -c > $cache_fname
+			--exclude='./sys/*' . | pv -p -b -r -s $(du -sb $SDCARD/ | cut -f1) -N "$(logging_echo_prefix_for_pv "store_rootfs") $display_name" | lz4 -5 -c > $cache_fname
 
 		# sign rootfs cache archive that it can be used for web cache once. Internal purposes
 		if [[ -n "${GPG_PASS}" && "${SUDO_USER}" ]]; then

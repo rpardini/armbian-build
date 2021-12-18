@@ -1614,7 +1614,7 @@ download_and_verify() {
 			if [[ "${filename:(-6)}" == "tar.xz" ]]; then
 
 				display_alert "decompressing"
-				pv -p -b -r -c -N "[🗜] ${filename}" "${filename}" | xz -dc | tar xp --xattrs --no-same-owner --overwrite
+				pv -p -b -r -c -N "$(logging_echo_prefix_for_pv "decompress") ${filename}" "${filename}" | xz -dc | tar xp --xattrs --no-same-owner --overwrite
 				[[ $? -eq 0 ]] && touch "${localdir}/${dirname}/.download-complete"
 			fi
 		else

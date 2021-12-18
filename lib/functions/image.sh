@@ -81,7 +81,7 @@ PRE_INSTALL_DISTRIBUTION_SPECIFIC
 		start_fel_boot
 	else
 		LOG_SECTION="partitioning" do_with_logging prepare_partitions # do_with_logging
-		LOG_SECTION="image" do_with_logging create_image # do_with_logging where is LOOP?
+		LOG_SECTION="image" do_with_logging create_image              # do_with_logging where is LOOP?
 	fi
 
 	# stage: unmount tmpfs
@@ -260,7 +260,9 @@ PREPARE_IMAGE_SIZE
 		truncate --size=${sdsize}M ${SDCARD}.raw # sometimes results in fs corruption, revert to previous know to work solution
 		sync
 	else
-		dd if=/dev/zero bs=1M status=none count=$sdsize | pv -p -b -r -s $(($sdsize * 1024 * 1024)) -N "[🤓] dd" | dd status=none of=${SDCARD}.raw
+		dd if=/dev/zero bs=1M status=none count=$sdsize |
+			pv -p -b -r -s $(($sdsize * 1024 * 1024)) -N "$(logging_echo_prefix_for_pv "zero") zero" |
+			dd status=none of=${SDCARD}.raw
 	fi
 
 	# stage: calculate boot partition size
@@ -482,14 +484,13 @@ update_initramfs() {
 	cp /usr/bin/$QEMU_BINARY $chroot_target/usr/bin/
 	mount_chroot "$chroot_target/"
 
-	chroot $chroot_target /bin/bash -c "$update_initramfs_cmd" >> $DEST/${LOG_SUBPATH}/install.log 2>&1 || {
-		display_alert "Updating initramfs FAILED, see:" "$DEST/${LOG_SUBPATH}/install.log" "err"
-		exit 23
+	chroot $chroot_target /bin/bash -c "$update_initramfs_cmd" 2>&1 || {
+		exit_with_error "Updating initramfs FAILED"
 	}
 	display_alert "Updated initramfs." "for details see: $DEST/${LOG_SUBPATH}/install.log" "info"
 
 	display_alert "Re-enabling" "initramfs-tools hook for kernel"
-	chroot $chroot_target /bin/bash -c "chmod -v +x /etc/kernel/postinst.d/initramfs-tools" >> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+	chroot $chroot_target /bin/bash -c "chmod -v +x /etc/kernel/postinst.d/initramfs-tools" 2>&1
 
 	umount_chroot "$chroot_target/"
 	rm $chroot_target/usr/bin/$QEMU_BINARY
@@ -523,7 +524,10 @@ create_image() {
 	else
 		display_alert "Creating rootfs archive" "rootfs.tgz" "info"
 		tar cp --xattrs --directory=$SDCARD/ --exclude='./boot/*' --exclude='./dev/*' --exclude='./proc/*' --exclude='./run/*' --exclude='./tmp/*' \
-			--exclude='./sys/*' . | pv -p -b -r -s $(du -sb $SDCARD/ | cut -f1) -N "rootfs.tgz" | gzip -c > $DEST/images/${version}-rootfs.tgz
+			--exclude='./sys/*' . |
+			pv -p -b -r -s "$(du -sb "$SDCARD"/ | cut -f1)" \
+				-N "$(logging_echo_prefix_for_pv "create_rootfs_archive") rootfs.tgz" |
+			gzip -c > "$DEST/images/${version}-rootfs.tgz"
 	fi
 
 	# stage: rsync /boot
@@ -711,7 +715,7 @@ POST_BUILD_IMAGE
 		display_alert "Writing image" "$CARD_DEVICE ${readsha}" "info"
 
 		# write to SD card
-		pv -p -b -r -c -N "[💾] dd" ${FINALDEST}/${version}.img | dd of=$CARD_DEVICE bs=1M iflag=fullblock oflag=direct status=none
+		pv -p -b -r -c -N "$(logging_echo_prefix_for_pv "write_device") dd" ${FINALDEST}/${version}.img | dd of=$CARD_DEVICE bs=1M iflag=fullblock oflag=direct status=none
 
 		call_extension_method "post_write_sdcard" <<- 'POST_BUILD_IMAGE'
 			*run after writing img to sdcard*

@@ -44,6 +44,8 @@ fi
 ### Logging system
 # shellcheck source=functions/logging.sh
 source "${SRC}"/lib/functions/logging.sh # Logging subsystem.
+logging_init # and initialize it.
+
 
 ### Single-build. This in turn sources most of everything else. Reusable.
 # shellcheck source=lib/single.sh

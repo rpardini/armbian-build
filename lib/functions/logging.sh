@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 
+function logging_init() {
+	export padding="" left_marker="" right_marker="" # global.
+}
+
 function logging_error_show_log() {
+	# Do nothing if we're already showing the log on stderr.
+	[[ "${SHOW_LOG}" == "yes" ]] && return 0
+
 	local message="$1"
 	local context="$2"
 	local stacktrace="$3"
@@ -35,7 +42,7 @@ function do_with_logging() {
 	# So whatever is being called, should prevent rogue stuff writing to stderr.
 	# this is mostly handled by redirecting stderr to stdout: 2>&1
 
-	local prefix_sed_contents="[🔨]   "
+	local prefix_sed_contents="$(logging_echo_prefix_for_pv "tool")   "
 	local prefix_sed_cmd="s/^/${prefix_sed_contents}/;"
 	local FAILED=1
 	if [[ "${SHOW_LOG}" == "yes" ]]; then
@@ -61,10 +68,9 @@ display_alert() {
 		echo "(=-Armbian-: " "$@" >> "${CURRENT_LOGFILE}"
 	fi
 
-	local normal_color="\x1B[0m"                      # const
-	local padding="" left_marker="[" right_marker="]" # global.
-	local message="$1" level="$3"                     # params
-	local level_indicator="" main_color="" extra=""   # this log
+	local normal_color="\x1B[0m"                    # const
+	local message="$1" level="$3"                   # params
+	local level_indicator="" main_color="" extra="" # this log
 	case "${level}" in
 		err | error)
 			level_indicator="💥"
@@ -94,4 +100,27 @@ display_alert() {
 	[[ -n $2 ]] && extra=" [${main_color}${2}${normal_color}]"
 
 	echo -e "${normal_color}${left_marker}${padding}${level_indicator}${padding}${right_marker} ${normal_color}${message}${extra}${normal_color}" >&2
+}
+
+function logging_echo_prefix_for_pv() {
+	local what="$1"
+	local indicator="🤓" # you guess who this is
+	case $what in
+		extract_rootfs)
+			indicator="💖"
+			;;
+		tool)
+			indicator="🔨"
+			;;
+		write_device)
+			indicator="💾"
+			;;
+		create_rootfs_archive | decompress | compress_kernel_sources)
+			indicator="🗜"
+			;;
+	esac
+
+	echo -n "${left_marker}${padding}${indicator}${padding}${right_marker}"
+	return 0
+
 }
