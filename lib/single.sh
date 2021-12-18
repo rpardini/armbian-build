@@ -9,7 +9,8 @@
 # This file is a part of the Armbian build script
 # https://github.com/armbian/build/
 
-if [[ $(basename "$0") == main.sh ]]; then
+# Users should not start here, but instead use ./compile.sh at the root.
+if [[ $(basename "$0") == single.sh ]]; then
 	echo "Please use compile.sh to start the build process"
 	exit 255
 fi

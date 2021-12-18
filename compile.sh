@@ -50,8 +50,8 @@ source "${SRC}"/lib/functions/logging.sh # Logging subsystem.
 source "${SRC}"/lib/single.sh
 
 ### Multi-build. (sourced even if not used, for consistency)
-# shellcheck source=lib/functions/build-all-ng.sh
-source "${SRC}"/lib/functions/build-all-ng.sh
+# shellcheck source=lib/functions/build-multi.sh
+source "${SRC}"/lib/functions/build-multi.sh
 
 check_args "$@"
 
@@ -219,6 +219,7 @@ CONFIG_PATH=$(dirname "${CONFIG_FILE}")
 # This allows early calls to enable_extension(), but initialization proper is done later.
 # shellcheck source=lib/extensions.sh
 source "${SRC}"/lib/extensions.sh
+internal_init_extension_manager # and call its global initializer. @TODO: could be avoided?
 
 display_alert "Using config file" "${CONFIG_FILE}" "info"
 pushd "${CONFIG_PATH}" > /dev/null || exit
