@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 function logging_init() {
-	export padding="" left_marker="[" right_marker="]" normal_color="\x1B[0m" # globals
+	# globals
+	export padding="" left_marker="[" right_marker="]"
+	export normal_color="\x1B[0m" gray_color="\e[1;30m" # "bright black", which is grey
 }
 
 function logging_error_show_log() {
@@ -49,8 +51,7 @@ function do_with_logging() {
 	# this is mostly handled by redirecting stderr to stdout: 2>&1
 
 	local exit_code=1                  # fail by default...
-	local inline_logs_color="\e[1;30m" # color inline logs "bright black", which is grey
-	local prefix_sed_contents="$(logging_echo_prefix_for_pv "tool")   $(echo -n -e "${inline_logs_color}")"
+	local prefix_sed_contents="$(logging_echo_prefix_for_pv "tool")   $(echo -n -e "${gray_color}")"
 	local prefix_sed_cmd="s/^/${prefix_sed_contents}/;"
 	if [[ "${SHOW_LOG}" == "yes" ]]; then
 		# This is sick. Create a 3rd file descriptor sending it to sed. https://unix.stackexchange.com/questions/174849/redirecting-stdout-to-terminal-and-file-without-using-a-pipe
@@ -110,7 +111,7 @@ display_alert() {
 	esac
 	[[ -n $2 ]] && extra=" [${inline_logs_color}${2}${normal_color}]"
 
-	echo -e "${normal_color}${left_marker}${padding}${level_indicator}${padding}${right_marker} ${normal_color}${message}${extra}${normal_color}" >&2
+	echo -e "${normal_color}${left_marker}${padding}${level_indicator}${padding}${gray_color}${right_marker} ${normal_color}${message}${extra}${normal_color}" >&2
 }
 
 function logging_echo_prefix_for_pv() {
@@ -131,7 +132,7 @@ function logging_echo_prefix_for_pv() {
 			;;
 	esac
 
-	echo -n -e "${normal_color}${left_marker}${padding}${indicator}${padding}${right_marker}"
+	echo -n -e "${normal_color}${left_marker}${padding}${indicator}${padding}${gray_color}${right_marker}${normal_color}"
 	return 0
 
 }

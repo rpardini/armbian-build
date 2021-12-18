@@ -183,8 +183,6 @@ function fetch_and_build_host_tools() {
 }
 
 function prepare_and_config_main_build_single() {
-	set -e
-
 	# default umask for root is 022 so parent directories won't be group writeable without this
 	# this is used instead of making the chmod in prepare_host() recursive
 	umask 002

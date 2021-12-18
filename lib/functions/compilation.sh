@@ -229,7 +229,6 @@ compile_uboot() {
 		[[ ${EVALPIPE[0]} -ne 0 ]] && exit_with_error "U-boot compilation failed"
 
 		if [[ $(type -t uboot_custom_postprocess) == function ]]; then
-			set -e # Insist, errors are not tolerated.
 			display_alert "Postprocessing u-boot" "${version}${BOOTCONFIG} ${target_make}" "info"
 			uboot_custom_postprocess 2>&1
 		fi
