@@ -242,7 +242,6 @@ if [[ "${BUILD_ALL}" == "yes" || "${BUILD_ALL}" == "demo" ]]; then
 	do_main_build_all_ng
 else
 	# Errors during execution are not tolerated.
-	set -x
 	set -e
 
 	# configuration etc

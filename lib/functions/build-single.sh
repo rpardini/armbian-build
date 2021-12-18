@@ -183,6 +183,8 @@ function fetch_and_build_host_tools() {
 }
 
 function prepare_and_config_main_build_single() {
+	set -e
+
 	# default umask for root is 022 so parent directories won't be group writeable without this
 	# this is used instead of making the chmod in prepare_host() recursive
 	umask 002
@@ -213,15 +215,21 @@ function prepare_and_config_main_build_single() {
 
 	# set log path
 	LOG_SUBPATH=${LOG_SUBPATH:=debug}
+	mkdir -p "${DEST}/${LOG_SUBPATH}" # This creates the logging output.
 
-	# compress and remove old logs # @TODO: logging, this is essential...
-	mkdir -p "${DEST}"/${LOG_SUBPATH}
-	(cd "${DEST}"/${LOG_SUBPATH} && tar -czf logs-"$(< timestamp)".tgz ./*.log) > /dev/null 2>&1
-	rm -f "${DEST}"/${LOG_SUBPATH}/*.log > /dev/null 2>&1
+	# compress and remove old logs, if they exist.
+	if [[ -f "${DEST}/${LOG_SUBPATH}/timestamp" ]]; then
+		if ls "${DEST}/${LOG_SUBPATH}/"*.log &> /dev/null; then
+			display_alert "Archiving previous build logs..." "${DEST}/${LOG_SUBPATH}" "info"
+			(cd "${DEST}/${LOG_SUBPATH}" && tar -czf logs-"$(< timestamp)".tgz ./*.log) # > /dev/null 2>&1
+			rm -f "${DEST}/${LOG_SUBPATH}"/*.log
+		fi
+		# delete compressed logs older than 7 days
+		find "${DEST}"/${LOG_SUBPATH} -name '*.tgz' -mtime +7 -delete
+	fi
+
+	# Mark a timestamp, for next build.
 	date +"%d_%m_%Y-%H_%M_%S" > "${DEST}"/${LOG_SUBPATH}/timestamp
-
-	# delete compressed logs older than 7 days
-	(cd "${DEST}"/${LOG_SUBPATH} && find . -name '*.tgz' -mtime +7 -delete) > /dev/null
 
 	if [[ $PROGRESS_DISPLAY == none ]]; then
 		display_alert "Output will be silenced." "PROGRESS_DISPLAY=none" "warning"

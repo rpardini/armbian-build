@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function logging_init() {
-	export padding="" left_marker="" right_marker="" # global.
+	export padding="" left_marker="[" right_marker="]" # global.
 }
 
 function logging_error_show_log() {
@@ -14,12 +14,13 @@ function logging_error_show_log() {
 	local logfile_to_show="$4"
 
 	if [[ -f "${logfile_to_show}" ]]; then
-		local prefix_sed_contents="[👉]   "
+
+		local prefix_sed_contents="${left_marker}${padding}👉${padding}${right_marker}    "
 		local prefix_sed_cmd="s/^/${prefix_sed_contents}/;"
-		display_alert "   👇👇👇 Showing logfile below 👇👇👇" "${logfile_to_show}" "err"
+		display_alert "    👇👇👇 Showing logfile below 👇👇👇" "${logfile_to_show}" "err"
 		# shellcheck disable=SC2002 # my cat is great. thank you, shellcheck.
 		cat "${logfile_to_show}" | grep -v -e "^$" | sed -e "${prefix_sed_cmd}" 1>&2 # write it TO stderr!!
-		display_alert "   👆👆👆 Showing logfile above 👆👆👆" "${logfile_to_show}" "err"
+		display_alert "    👆👆👆 Showing logfile above 👆👆👆" "${logfile_to_show}" "err"
 		display_alert "🦞 Error Msg" "$message" "err"
 		display_alert "🐞 Error stacktrace" "$stacktrace" "err"
 	else
@@ -42,7 +43,8 @@ function do_with_logging() {
 	# So whatever is being called, should prevent rogue stuff writing to stderr.
 	# this is mostly handled by redirecting stderr to stdout: 2>&1
 
-	local prefix_sed_contents="$(logging_echo_prefix_for_pv "tool")   "
+	inline_logs_color="\e[1;30m"
+	local prefix_sed_contents="$(logging_echo_prefix_for_pv "tool")   $(echo -n -e "${inline_logs_color}")"
 	local prefix_sed_cmd="s/^/${prefix_sed_contents}/;"
 	local FAILED=1
 	if [[ "${SHOW_LOG}" == "yes" ]]; then
@@ -50,7 +52,7 @@ function do_with_logging() {
 		# Also terrible: don't hold a reference to cwd by changing to SRC always
 		exec 3> >(
 			cd "${SRC}"
-			sed -e "${prefix_sed_cmd}"
+			grep --line-buffered -v "^$" | sed -e "${prefix_sed_cmd}"
 		)
 		{ "$@" && FAILED=0; } >&3
 		exec 3>&- # close the file descriptor, lest sed keeps running forever.
@@ -68,36 +70,36 @@ display_alert() {
 		echo "(=-Armbian-: " "$@" >> "${CURRENT_LOGFILE}"
 	fi
 
-	local normal_color="\x1B[0m"                    # const
-	local message="$1" level="$3"                   # params
-	local level_indicator="" main_color="" extra="" # this log
+	local normal_color="\x1B[0m"                           # const
+	local message="$1" level="$3"                          # params
+	local level_indicator="" inline_logs_color="" extra="" # this log
 	case "${level}" in
 		err | error)
 			level_indicator="💥"
-			main_color="\e[0;31m"
+			inline_logs_color="\e[0;31m"
 			;;
 
 		wrn | warn)
 			level_indicator="🚸"
-			main_color="\e[0;35m"
+			inline_logs_color="\e[0;35m"
 			;;
 
 		ext)
 			level_indicator="✅"
-			main_color="\e[1;32m"
+			inline_logs_color="\e[1;32m"
 			;;
 
 		info)
-			level_indicator="🌴"
-			main_color="\e[0;32m"
+			level_indicator="🌱" # "🌴" 🥑
+			inline_logs_color="\e[0;32m"
 			;;
 
 		*)
-			level_indicator="✨"
-			main_color="\e[0;32m"
+			level_indicator="🌿" #  "✨" 🌿 🪵
+			inline_logs_color="\e[0;32m"
 			;;
 	esac
-	[[ -n $2 ]] && extra=" [${main_color}${2}${normal_color}]"
+	[[ -n $2 ]] && extra=" [${inline_logs_color}${2}${normal_color}]"
 
 	echo -e "${normal_color}${left_marker}${padding}${level_indicator}${padding}${right_marker} ${normal_color}${message}${extra}${normal_color}" >&2
 }

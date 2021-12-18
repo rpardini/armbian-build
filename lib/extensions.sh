@@ -37,7 +37,8 @@ call_extension_method() {
 	for hook_name in "$@"; do
 		echo "-- Extension Method being called: ${hook_name}" >> "${EXTENSION_MANAGER_LOG_FILE}"
 		# shellcheck disable=SC2086
-		[[ $(type -t ${hook_name}) == function ]] && { ${hook_name}; }
+		# shellcheck disable=SC2015
+		[[ $(type -t ${hook_name}||true) == function ]] && { ${hook_name}; } || true
 	done
 }
 
@@ -100,7 +101,7 @@ initialize_extension_manager() {
 		# for now, just warn, but we could devise a way to actually integrate it in the call list.
 		# or: advise the user to rename their user_config() function to something like user_config__make_it_awesome()
 		local existing_hook_point_function
-		existing_hook_point_function="$(compgen -A function | grep "^${hook_point}\$")"
+		existing_hook_point_function="$(compgen -A function | grep "^${hook_point}\$" || true)"
 		if [[ "${existing_hook_point_function}" == "${hook_point}" ]]; then
 			echo "--- hook_point_functions (final sorted realnames): ${hook_point_functions}" >> "${EXTENSION_MANAGER_LOG_FILE}"
 			display_alert "Extension conflict" "function ${hook_point} already defined! ignoring functions: $(compgen -A function | grep "^${hook_point}${hook_extension_delimiter}")" "wrn"
