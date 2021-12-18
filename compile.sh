@@ -30,78 +30,23 @@ if [[ "${ARMBIAN_ENABLE_CALL_TRACING}" == "yes" ]]; then
 	trap 'echo "${BASH_LINENO[@]}|${BASH_SOURCE[@]}|${FUNCNAME[@]}" >> ${SRC}/output/debug/calls.txt ;' RETURN
 fi
 
-if [[ -f "${SRC}"/lib/general.sh ]]; then
-	# Source the logging library as early as possible.
-
-	# shellcheck source=functions/logging.sh
-	source "${SRC}"/lib/functions/logging.sh # Logging subsystem.
-
-	# shellcheck source=lib/general.sh
-	source "${SRC}"/lib/general.sh
-
-else
-
+# Sanity check.
+if [[ ! -f "${SRC}"/lib/general.sh ]]; then
 	echo "Error: missing build directory structure"
 	echo "Please clone the full repository https://github.com/armbian/build/"
 	exit 255
-
 fi
 
-#  Add the variables needed at the beginning of the path
-check_args() {
+# Source the rest of the build system.
 
-	for p in "$@"; do
-
-		case "${p%=*}" in
-			LIB_TAG)
-				# Take a variable if the branch exists locally
-				if [ "${p#*=}" == "$(git branch |
-					gawk -v b="${p#*=}" '{if ( $NF == b ) {print $NF}}')" ]; then
-					echo -e "[\e[0;35m warn \x1B[0m] Setting $p"
-					eval "$p"
-				else
-					echo -e "[\e[0;35m warn \x1B[0m] Skip $p setting as LIB_TAG=\"\""
-					eval LIB_TAG=""
-				fi
-				;;
-		esac
-
-	done
-
-}
+# shellcheck source=functions/logging.sh
+source "${SRC}"/lib/functions/logging.sh # Logging subsystem.
+# shellcheck source=functions/misc_compile.sh
+source "${SRC}"/lib/functions/misc_compile.sh # Misc functions previously found here.
+# shellcheck source=lib/general.sh
+source "${SRC}"/lib/general.sh # @TODO: isnt this sourced by main.sh ?
 
 check_args "$@"
-
-update_src() {
-
-	cd "${SRC}" || exit
-	if [[ ! -f "${SRC}"/.ignore_changes ]]; then
-		echo -e "[\e[0;32m o.k. \x1B[0m] This script will try to update"
-
-		CHANGED_FILES=$(git diff --name-only)
-		if [[ -n "${CHANGED_FILES}" ]]; then
-			echo -e "[\e[0;35m warn \x1B[0m] Can't update since you made changes to: \e[0;32m\n${CHANGED_FILES}\x1B[0m"
-			while true; do
-				echo -e "Press \e[0;33m<Ctrl-C>\x1B[0m or \e[0;33mexit\x1B[0m to abort compilation" \
-					", \e[0;33m<Enter>\x1B[0m to ignore and continue, \e[0;33mdiff\x1B[0m to display changes"
-				read -r
-				if [[ "${REPLY}" == "diff" ]]; then
-					git diff
-				elif [[ "${REPLY}" == "exit" ]]; then
-					exit 1
-				elif [[ "${REPLY}" == "" ]]; then
-					break
-				else
-					echo "Unknown command!"
-				fi
-			done
-		elif [[ $(git branch | grep "*" | awk '{print $2}') != "${LIB_TAG}" && -n "${LIB_TAG}" ]]; then
-			git checkout "${LIB_TAG:-master}"
-			git pull
-		fi
-	fi
-
-}
 
 TMPFILE=$(mktemp)
 chmod 644 "${TMPFILE}"
@@ -139,18 +84,14 @@ else
 fi
 
 if [ "$OFFLINE_WORK" == "yes" ]; then
-
 	echo -e "\n"
 	display_alert "* " "You are working offline."
 	display_alert "* " "Sources, time and host will not be checked"
 	echo -e "\n"
 	sleep 3s
-
 else
-
-	# check and install the basic utilities here
+	# check and install the basic utilities here # @TODO: logging?
 	prepare_host_basic
-
 fi
 
 # Check for Vagrant
@@ -179,7 +120,6 @@ fi
 
 # Install Docker if not there but wanted. We cover only Debian based distro install. On other distros, manual Docker install is needed
 if [[ "${1}" == docker && -f /etc/debian_version && -z "$(command -v docker)" ]]; then
-
 	DOCKER_BINARY="docker-ce"
 
 	# add exception for Ubuntu Focal until Docker provides dedicated binary
@@ -253,7 +193,7 @@ if [[ -z "${CONFIG}" && -n "$1" && -f "${SRC}/userpatches/config-$1.conf" ]]; th
 	shift
 fi
 
-# usind default if custom not found
+# using default if custom not found
 if [[ -z "${CONFIG}" && -f "${SRC}/userpatches/config-default.conf" ]]; then
 	CONFIG="userpatches/config-default.conf"
 fi
@@ -283,23 +223,18 @@ popd > /dev/null || exit
 
 # Script parameters handling
 while [[ "${1}" == *=* ]]; do
-
 	parameter=${1%%=*}
 	value=${1##*=}
 	shift
 	display_alert "Command line: setting $parameter to" "${value:-(empty)}" "info"
 	eval "$parameter=\"$value\""
-
 done
 
+# @TODO: refactor into functions. Both should be sourceable without doing anything.
 if [[ "${BUILD_ALL}" == "yes" || "${BUILD_ALL}" == "demo" ]]; then
-
 	# shellcheck source=lib/build-all-ng.sh
 	source "${SRC}"/lib/build-all-ng.sh
-
 else
-
 	# shellcheck source=lib/main.sh
 	source "${SRC}"/lib/main.sh
-
 fi
