@@ -19,16 +19,17 @@ fi
 # shellcheck source=functions/build-single.sh
 source "${SRC}"/lib/functions/build-single.sh
 
-# shellcheck source=lib/functions/rootfs.sh
+# shellcheck source=functions/rootfs.sh
 source "${SRC}"/lib/functions/rootfs.sh
-# shellcheck source=lib/functions/image.sh
+# shellcheck source=functions/image.sh
 source "${SRC}"/lib/functions/image.sh
 
-# shellcheck source=lib/functions/misc_image.sh
+# shellcheck source=functions/misc_image.sh
 source "${SRC}"/lib/functions/misc_image.sh # helpers for OS image building
 
-# shellcheck source=distributions.sh
-source "${SRC}"/lib/distributions.sh # system specific install
+# shellcheck source=lib/functions/distro.sh
+source "${SRC}"/lib/functions/distro.sh # system specific install
+
 # shellcheck source=desktop.sh
 source "${SRC}"/lib/desktop.sh # desktop specific install
 # shellcheck source=compilation.sh
