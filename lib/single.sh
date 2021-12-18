@@ -24,8 +24,9 @@ source "${SRC}"/lib/functions/rootfs.sh
 # shellcheck source=lib/functions/image.sh
 source "${SRC}"/lib/functions/image.sh
 
-# shellcheck source=image-helpers.sh
-source "${SRC}"/lib/image-helpers.sh # helpers for OS image building
+# shellcheck source=lib/functions/misc_image.sh
+source "${SRC}"/lib/functions/misc_image.sh # helpers for OS image building
+
 # shellcheck source=distributions.sh
 source "${SRC}"/lib/distributions.sh # system specific install
 # shellcheck source=desktop.sh
