@@ -40,8 +40,8 @@ source "${SRC}"/lib/functions/compilation.sh # patching and compilation of kerne
 # shellcheck source=functions/extra-drivers.sh
 source "${SRC}"/lib/functions/extra-drivers.sh # drivers that are not upstreamed
 
-# shellcheck source=makeboarddeb.sh
-source "${SRC}"/lib/makeboarddeb.sh # board support package
+# shellcheck source=functions/bsp.sh
+source "${SRC}"/lib/functions/bsp.sh # board support package
 
 # shellcheck source=general.sh
 source "${SRC}"/lib/general.sh # general functions
