@@ -34,11 +34,11 @@ source "${SRC}"/lib/functions/distro.sh # system specific install
 # shellcheck source=functions/desktop.sh
 source "${SRC}"/lib/functions/desktop.sh # desktop specific install
 
-# shellcheck source=compilation.sh
-source "${SRC}"/lib/compilation.sh # patching and compilation of kernel, uboot, ATF
+# shellcheck source=functions/compilation.sh
+source "${SRC}"/lib/functions/compilation.sh # patching and compilation of kernel, uboot, ATF
 
-# shellcheck source=compilation-prepare.sh
-source "${SRC}"/lib/compilation-prepare.sh # drivers that are not upstreamed
+# shellcheck source=functions/extra-drivers.sh
+source "${SRC}"/lib/functions/extra-drivers.sh # drivers that are not upstreamed
 
 # shellcheck source=makeboarddeb.sh
 source "${SRC}"/lib/makeboarddeb.sh # board support package
