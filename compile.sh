@@ -13,6 +13,8 @@
 # use configuration files like config-default.conf to set the build configuration
 # check Armbian documentation https://docs.armbian.com/ for more info
 
+set -e # exit on errors.
+
 SRC="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
 # check for whitespace in ${SRC} and exit for safety reasons
@@ -37,14 +39,19 @@ if [[ ! -f "${SRC}"/lib/general.sh ]]; then
 	exit 255
 fi
 
-# Source the rest of the build system.
+# Source the meat of the build system.
 
+### Logging system
 # shellcheck source=functions/logging.sh
 source "${SRC}"/lib/functions/logging.sh # Logging subsystem.
-# shellcheck source=functions/misc_compile.sh
-source "${SRC}"/lib/functions/misc_compile.sh # Misc functions previously found here.
-# shellcheck source=lib/general.sh
-source "${SRC}"/lib/general.sh # @TODO: isnt this sourced by main.sh ?
+
+### Single-build. This in turn sources most of everything else. Reusable.
+# shellcheck source=lib/single.sh
+source "${SRC}"/lib/single.sh
+
+### Multi-build. (sourced even if not used, for consistency)
+# shellcheck source=lib/functions/build-all-ng.sh
+source "${SRC}"/lib/functions/build-all-ng.sh
 
 check_args "$@"
 
@@ -230,11 +237,16 @@ while [[ "${1}" == *=* ]]; do
 	eval "$parameter=\"$value\""
 done
 
-# @TODO: refactor into functions. Both should be sourceable without doing anything.
 if [[ "${BUILD_ALL}" == "yes" || "${BUILD_ALL}" == "demo" ]]; then
-	# shellcheck source=lib/build-all-ng.sh
-	source "${SRC}"/lib/build-all-ng.sh
+	do_main_build_all_ng
 else
-	# shellcheck source=lib/main.sh
-	source "${SRC}"/lib/main.sh
+	# configuration etc
+	prepare_and_config_main_build_single
+
+	# Allow for custom user-invoked functions. @TODO: check this with extensions usage?
+	if [[ -z $1 ]]; then
+		main_default_build_single
+	else
+		eval "$@"
+	fi
 fi
