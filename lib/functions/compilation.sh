@@ -208,9 +208,6 @@ function compile_uboot_target() {
 }
 
 compile_uboot() {
-	set -e # NO ERRORS tolerated in this function. handle your errors, if they're to be tolerated.
-	#set -x # help to find errors
-
 	# not optimal, but extra cleaning before overlayfs_wrapper should keep sources directory clean
 	if [[ $CLEAN_LEVEL == *make* ]]; then
 		display_alert "Cleaning" "$BOOTSOURCEDIR" "info"
@@ -501,11 +498,11 @@ compile_kernel() {
 		run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
 			make "$CTHREADS" "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" oldconfig
 
-		# No logging for this, the user is in control... or should be.
+		# No logging for this. this is UI piece
 		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
-			make "$CTHREADS" "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" "${KERNEL_MENUCONFIG:-menuconfig}"
-
-		[[ ${PIPESTATUS[0]} -ne 0 ]] && exit_with_error "Error kernel menuconfig failed"
+			make "$CTHREADS" "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" "${KERNEL_MENUCONFIG:-menuconfig}" || {
+			exit_with_error "Error kernel menuconfig failed"
+		}
 
 		# store kernel config in easily reachable place
 		display_alert "Exporting new kernel config" "$DEST/config/$LINUXCONFIG.config" "info"
@@ -535,10 +532,12 @@ compile_kernel() {
 	run_host_command_logged_long_running CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
 		make "$CTHREADS" "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" \
 		"$SRC_LOADADDR" "LOCALVERSION=\"-$LINUXFAMILY\"" \
-		$KERNEL_IMAGE_TYPE ${KERNEL_EXTRA_TARGETS:-modules dtbs}
+		$KERNEL_IMAGE_TYPE ${KERNEL_EXTRA_TARGETS:-modules dtbs} || {
+		exit_with_error "Failure during kernel compile" "@host"
+	}
 
-	if [[ ${PIPESTATUS[0]} -ne 0 || ! -f arch/$ARCHITECTURE/boot/$KERNEL_IMAGE_TYPE ]]; then
-		exit_with_error "Kernel was not built" "@host"
+	if [[ ! -f arch/$ARCHITECTURE/boot/$KERNEL_IMAGE_TYPE ]]; then
+		exit_with_error "Kernel was not built" "arch/$ARCHITECTURE/boot/$KERNEL_IMAGE_TYPE"
 	fi
 
 	# different packaging for 4.3+
@@ -564,16 +563,19 @@ compile_kernel() {
 		"CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\""
 
 	display_alert "Package building done" "${LINUXCONFIG} $kernel_packaging_target" "info"
+	set -x
 
 	cd .. || exit
-	# remove firmare image packages here - easier than patching ~40 packaging scripts at once
+	# remove firmware image packages here - easier than patching ~40 packaging scripts at once
 	rm -f linux-firmware-image-*.deb
 
 	rsync --remove-source-files -rq ./*.deb "${DEB_STORAGE}/" || exit_with_error "Failed moving kernel DEBs"
 
+	display_alert "Update Kernel hashes" "${LINUXCONFIG} $kernel_packaging_target" "info"
+
 	# store git hash to the file and create a change log
-	HASHTARGET="${SRC}/cache/hash"$([[ ${BETA} == yes ]] && echo "-beta")"/linux-image-${BRANCH}-${LINUXFAMILY}"
-	OLDHASHTARGET=$(head -1 "${HASHTARGET}.githash" 2> /dev/null)
+	HASHTARGET="${SRC}/cache/hash$([[ ${BETA} == yes ]] && echo "-beta")/linux-image-${BRANCH}-${LINUXFAMILY}"
+	OLDHASHTARGET=$(head -1 "${HASHTARGET}.githash" 2> /dev/null || true)
 
 	# check if OLDHASHTARGET commit exists otherwise use oldest
 	if [[ -z ${KERNEL_VERSION_LEVEL} ]]; then

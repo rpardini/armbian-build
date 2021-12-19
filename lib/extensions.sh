@@ -205,7 +205,6 @@ initialize_extension_manager() {
 
 			# output the call, passing arguments, and also logging the output to the extensions log.
 			# attention: don't pipe here (eg, capture output), otherwise hook function cant modify the environment (which is mostly the point)
-			# @TODO: better error handling. we have a good opportunity to 'set -e' here, and 'set +e' after, so that extension authors are encouraged to write error-free handling code
 			cat <<- FUNCTION_DEFINITION_CALLSITE >> "${temp_source_file_for_hook_point}"
 				hook_point_function_trace_sources["${hook_point}${hook_extension_delimiter}${hook_point_function}"]="\${BASH_SOURCE[*]}"
 				hook_point_function_trace_lines["${hook_point}${hook_extension_delimiter}${hook_point_function}"]="\${BASH_LINENO[*]}"
