@@ -136,23 +136,33 @@ check_loop_device() {
 write_uboot() {
 
 	local loop=$1 revision
-	display_alert "Writing U-boot bootloader" "$loop" "info"
+	display_alert "Preparing u-boot bootloader" "$loop" "info"
 	TEMP_DIR=$(mktemp -d || exit 1)
 	chmod 700 ${TEMP_DIR}
 	revision=${REVISION}
 	if [[ -n $UPSTREM_VER ]]; then
 		revision=${UPSTREM_VER}
-		dpkg -x "${DEB_STORAGE}/linux-u-boot-${BOARD}-${BRANCH}_${revision}_${ARCH}.deb" ${TEMP_DIR}/
+		dpkg -x "${DEB_STORAGE}/linux-u-boot-${BOARD}-${BRANCH}_${revision}_${ARCH}.deb" ${TEMP_DIR}/ 2>&1
 	else
-		dpkg -x "${DEB_STORAGE}/${CHOSEN_UBOOT}_${revision}_${ARCH}.deb" ${TEMP_DIR}/
+		dpkg -x "${DEB_STORAGE}/${CHOSEN_UBOOT}_${revision}_${ARCH}.deb" ${TEMP_DIR}/ 2>&1
 	fi
 
-	# source platform install to read $DIR
-	source ${TEMP_DIR}/usr/lib/u-boot/platform_install.sh
-	write_uboot_platform "${TEMP_DIR}${DIR}" "$loop"
-	[[ $? -ne 0 ]] && exit_with_error "U-boot bootloader failed to install" "@host"
+	if [[ ! -f "${TEMP_DIR}/usr/lib/u-boot/platform_install.sh" ]]; then
+		exit_with_error "Missing ${TEMP_DIR}/usr/lib/u-boot/platform_install.sh"
+	fi
+
+	display_alert "Sourcing u-boot install functions" "$loop" "info"
+	source ${TEMP_DIR}/usr/lib/u-boot/platform_install.sh 2>&1
+
+	display_alert "Writing u-boot bootloader" "$loop" "info"
+	write_uboot_platform "${TEMP_DIR}${DIR}" "$loop" 2>&1
+	[[ $? -ne 0 ]] && {
+		rm -rf ${TEMP_DIR}
+		exit_with_error "U-boot bootloader failed to install" "@host"
+	}
 	rm -rf ${TEMP_DIR}
 
+	return 0
 }
 
 # copy_all_packages_files_for <folder> to package
@@ -227,14 +237,14 @@ function chroot_sdcard_apt_get() {
 function chroot_sdcard() {
 	# Log the command to the current logfile, so it has context of what was run.
 	if [[ -f "${CURRENT_LOGFILE}" ]]; then
-		echo "(=-A" >> "${CURRENT_LOGFILE}"                                                                    # blank line for reader's benefit
-		echo "(=-A-->" chroot "\${SDCARD}" /bin/bash -e -c "$*" " <- at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
+		echo "       " >> "${CURRENT_LOGFILE}"                                                             # blank line for reader's benefit
+		echo "-->" chroot "\${SDCARD}" /bin/bash -e -c "$*" " <- at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
 	fi
 	local exit_code=666
 	chroot "${SDCARD}" /bin/bash -e -c "$*" 2>&1 # redirect stderr to stdout. $* is NOT $@!
 	exit_code=$?
 	if [[ -f "${CURRENT_LOGFILE}" ]]; then
-		echo "(=-A--> cmd exited with code ${exit_code} at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
+		echo "--> cmd exited with code ${exit_code} at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
 	fi
 	return $exit_code
 }

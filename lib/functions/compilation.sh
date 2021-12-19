@@ -129,7 +129,7 @@ compile_uboot() {
 	version=$(grab_version "$ubootdir")
 	hash=$(improved_git --git-dir="$ubootdir"/.git rev-parse HEAD)
 
-	display_alert "Compiling u-boot" "$version" "info"
+	display_alert "Compiling u-boot" "$version ${ubootdir}" "info"
 
 	# build aarch64
 	if [[ $(dpkg --print-architecture) == amd64 ]]; then
@@ -225,11 +225,11 @@ compile_uboot() {
 		[[ ${EVALPIPE[0]} -ne 0 ]] && exit_with_error "U-boot compilation failed"
 
 		if [[ $(type -t uboot_custom_postprocess) == function ]]; then
-			display_alert "Postprocessing u-boot" "${version} ${target_make}" "info"
+			display_alert "Postprocessing u-boot" "${version} ${target_make}"
 			uboot_custom_postprocess 2>&1
 		fi
 
-		display_alert "Preparing u-boot targets packaging" "${version} ${target_make}" "info"
+		display_alert "Preparing u-boot targets packaging" "${version} ${target_make}"
 		# copy files to build directory
 		for f in $target_files; do
 			local f_src
@@ -246,7 +246,9 @@ compile_uboot() {
 		done
 	done <<< "$UBOOT_TARGET_MAP" # this overrides stdin in the loop. be aware.
 
-	# set up postinstall script
+	display_alert "Preparing u-boot general packaging" "${version} ${target_make}"
+
+	# set up postinstall script # @todo: extract into a tinkerboard extension
 	if [[ $BOARD == tinkerboard ]]; then
 		cat <<- EOF > "$uboottempdir/${uboot_name}/DEBIAN/postinst"
 			#!/bin/bash
@@ -302,7 +304,7 @@ compile_uboot() {
 	[[ -f Licenses/README ]] && cp Licenses/README "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE" 2>&1
 	[[ -n $atftempdir && -f $atftempdir/license.md ]] && cp "${atftempdir}/license.md" "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE.atf" 2>&1
 
-	display_alert "Building u-boot deb" "${uboot_name}.deb" "info"
+	display_alert "Building u-boot deb" "${uboot_name}.deb"
 	fakeroot dpkg-deb -b -Z${DEB_COMPRESS} "$uboottempdir/${uboot_name}" "$uboottempdir/${uboot_name}.deb" 2>&1
 	rm -rf "$uboottempdir/${uboot_name}"
 	[[ -n $atftempdir ]] && rm -rf "${atftempdir}"
@@ -312,6 +314,7 @@ compile_uboot() {
 	rsync --remove-source-files -rq "$uboottempdir/${uboot_name}.deb" "${DEB_STORAGE}/" 2>&1
 	rm -rf "$uboottempdir"
 
+	display_alert "Built u-boot deb OK" "${uboot_name}.deb" "info"
 	return 0 # success
 }
 
