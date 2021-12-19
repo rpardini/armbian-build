@@ -187,7 +187,7 @@ compile_uboot() {
 			rm -rf "${atftempdir}"
 		fi
 
-		display_alert "Preparing u-boot config" "${version}${BOOTCONFIG} ${target_make}" "info"
+		display_alert "Preparing u-boot config" "${version} ${target_make}" "info"
 		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
 			make $CTHREADS $BOOTCONFIG CROSS_COMPILE="$CCACHE $UBOOT_COMPILER" 2>&1
 
@@ -218,18 +218,18 @@ compile_uboot() {
 		cross_compile="CROSS_COMPILE=$CCACHE $UBOOT_COMPILER"
 		[[ -n $UBOOT_TOOLCHAIN2 ]] && cross_compile="ARMBIAN=foe" # empty parameter is not allowed
 
-		display_alert "Compiling u-boot" "${version}${BOOTCONFIG} ${target_make}" "info"
+		display_alert "Compiling u-boot" "${version} ${target_make}" "info"
 		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
 			make $target_make $CTHREADS "${cross_compile}" 2>&1
 
 		[[ ${EVALPIPE[0]} -ne 0 ]] && exit_with_error "U-boot compilation failed"
 
 		if [[ $(type -t uboot_custom_postprocess) == function ]]; then
-			display_alert "Postprocessing u-boot" "${version}${BOOTCONFIG} ${target_make}" "info"
+			display_alert "Postprocessing u-boot" "${version} ${target_make}" "info"
 			uboot_custom_postprocess 2>&1
 		fi
 
-		display_alert "Preparing u-boot targets packaging" "${version}${BOOTCONFIG} ${target_make}" "info"
+		display_alert "Preparing u-boot targets packaging" "${version} ${target_make}" "info"
 		# copy files to build directory
 		for f in $target_files; do
 			local f_src
@@ -892,8 +892,7 @@ process_patch_file() {
 	# detect and remove files which patch will create
 	lsdiff -s --strip=1 "${patch}" | grep '^+' | awk '{print $2}' | xargs -I % sh -c 'rm -f %'
 
-	echo "Processing patch file $patch"
-	patch --batch --silent -p1 -N < "${patch}" 2>&1
+	patch --batch -p1 -N < "${patch}" 2>&1
 
 	if [[ $? -ne 0 ]]; then
 		display_alert "* $status $(basename "${patch}")" "failed" "wrn"
