@@ -266,13 +266,12 @@ create_sources_list() {
 # This function retries Git operations to avoid failure in case remote is borked
 #
 improved_git() {
-
 	local realgit=$(command -v git)
 	local retries=3
 	local delay=10
 	local count=1
 	while [ $count -lt $retries ]; do
-		$realgit "$@"
+		$realgit "$@" 2>&1
 		if [[ $? -eq 0 || -f .git/index.lock ]]; then
 			retries=0
 			break
@@ -280,7 +279,6 @@ improved_git() {
 		let count=$count+1
 		sleep $delay
 	done
-
 }
 
 clean_up_repo() {
@@ -490,12 +488,12 @@ fetch_from_repo() {
 
 	if [[ "$(improved_git rev-parse --git-dir 2> /dev/null)" == ".git" &&
 	"$url" != *"$(improved_git remote get-url origin | sed 's/^.*@//' | sed 's/^.*\/\///' 2> /dev/null)" ]]; then
-		display_alert "Remote URL does not match, removing existing local copy"
+		display_alert "Remote URL does not match, removing existing local copy" "$dir $ref_name"
 		rm -rf .git ./*
 	fi
 
 	if [[ "$(improved_git rev-parse --git-dir 2> /dev/null)" != ".git" ]]; then
-		display_alert "Creating local copy"
+		display_alert "Creating local copy" "$dir $ref_name"
 		improved_git init -q .
 		improved_git remote add origin "${url}"
 		# Here you need to upload from a new address
@@ -516,7 +514,6 @@ fetch_from_repo() {
 				remote_hash=$(improved_git ls-remote -h "${url}" "$ref_name" | head -1 | cut -f1)
 				[[ -z $local_hash || "${local_hash}" != "${remote_hash}" ]] && changed=true
 				;;
-
 			tag)
 				local remote_hash
 				remote_hash=$(improved_git ls-remote -t "${url}" "$ref_name" | cut -f1)
@@ -525,13 +522,11 @@ fetch_from_repo() {
 					[[ -z $remote_hash || "${local_hash}" != "${remote_hash}" ]] && changed=true
 				fi
 				;;
-
 			head)
 				local remote_hash
 				remote_hash=$(improved_git ls-remote "${url}" HEAD | cut -f1)
 				[[ -z $local_hash || "${local_hash}" != "${remote_hash}" ]] && changed=true
 				;;
-
 			commit)
 				[[ -z $local_hash || $local_hash == "@" ]] && changed=true
 				;;
@@ -540,9 +535,8 @@ fetch_from_repo() {
 	fi # offline
 
 	if [[ $changed == true ]]; then
-
 		# remote was updated, fetch and check out updates
-		display_alert "Fetching updates"
+		display_alert "Fetching updates" "$dir $ref_name"
 		case $ref_type in
 			branch) improved_git fetch --depth 200 origin "${ref_name}" ;;
 			tag) improved_git fetch --depth 200 origin tags/"${ref_name}" ;;
@@ -551,30 +545,23 @@ fetch_from_repo() {
 
 		# commit type needs support for older git servers that doesn't support fetching id directly
 		if [[ $ref_type == commit ]]; then
-
 			improved_git fetch --depth 200 origin "${ref_name}"
 
 			# cover old type
 			if [[ $? -ne 0 ]]; then
-
 				display_alert "Commit checkout not supported on this repository. Doing full clone." "" "wrn"
 				improved_git pull
 				improved_git checkout -fq "${ref_name}"
 				display_alert "Checkout out to" "$(improved_git --no-pager log -2 --pretty=format:"$ad%s [%an]" | head -1)" "info"
-
 			else
-
-				display_alert "Checking out"
+				display_alert "Checking out" "$dir $ref_name"
 				improved_git checkout -f -q FETCH_HEAD
 				improved_git clean -qdf
-
 			fi
 		else
-
-			display_alert "Checking out"
+			display_alert "Checking out" "$dir $ref_name"
 			improved_git checkout -f -q FETCH_HEAD
 			improved_git clean -qdf
-
 		fi
 	elif [[ -n $(improved_git status -uno --porcelain --ignore-submodules=all) ]]; then
 		# working directory is not clean
