@@ -238,6 +238,42 @@ function chroot_sdcard() {
 	run_host_command_logged_raw chroot "${SDCARD}" /bin/bash -e -c "$*"
 }
 
+function chroot_custom_long_running() {
+	local target=$1
+	shift
+	local _exit_code=1
+	if [[ "${SHOW_LOG}" == "yes" ]]; then
+		run_host_command_logged_raw chroot "${target}" /bin/bash -e -c "$*"
+		_exit_code=$?
+	else
+		run_host_command_logged_raw chroot "${target}" /bin/bash -e -c "$*" | pv -N "$(logging_echo_prefix_for_pv "${INDICATOR:-compile}")" --progress --timer --line-mode --force --cursor --delay-start 0 -i "0.5"
+		_exit_code=$?
+	fi
+	return $_exit_code
+}
+
+function chroot_custom() {
+	local target=$1
+	shift
+	run_host_command_logged_raw chroot "${target}" /bin/bash -e -c "$*"
+}
+
+# for long-running, host-side expanded bash invocations.
+# the user gets a pv-based spinner based on the number of lines that flows to stdout (log messages).
+# the raw version is already redirect stderr to stdout, and we'll be running under do_with_logging,
+# so: _the stdout must flow_!!!
+function run_host_command_logged_long_running() {
+	local _exit_code=1
+	if [[ "${SHOW_LOG}" == "yes" ]]; then
+		run_host_command_logged_raw /bin/bash -e -c "$*"
+		_exit_code=$?
+	else
+		run_host_command_logged_raw /bin/bash -e -c "$*" | pv -N "$(logging_echo_prefix_for_pv "${INDICATOR:-compile}")" --progress --timer --line-mode --force --cursor --delay-start 0 -i "0.5"
+		_exit_code=$?
+	fi
+	return $_exit_code
+}
+
 # run_host_command_logged is the very basic, should be used for everything, but, please use helpers above, this is very low-level.
 function run_host_command_logged() {
 	run_host_command_logged_raw /bin/bash -e -c "$*"
@@ -252,7 +288,7 @@ function run_host_command_logged_raw() {
 	fi
 
 	# uncomment when desperate to understand what's going on
-	#display_alert "cmd about to run" "$*" "wrn"
+	# echo "cmd about to run" "$@" >&2
 
 	local exit_code=666
 	"$@" 2>&1 # redirect stderr to stdout. $* is NOT $@!
@@ -261,7 +297,7 @@ function run_host_command_logged_raw() {
 		echo "--> cmd exited with code ${exit_code} at $(date --utc)" >> "${CURRENT_LOGFILE}"
 	fi
 	if [[ $exit_code != 0 ]]; then
-		display_alert "cmd exited with code ${exit_code}" "$*" "err"
+		display_alert "cmd exited with code ${exit_code}" "$*" "wrn"
 	fi
 	return $exit_code
 }

@@ -176,7 +176,7 @@ function compile_uboot_target() {
 	[[ -n $UBOOT_TOOLCHAIN2 ]] && cross_compile="ARMBIAN=foe" # empty parameter is not allowed
 
 	display_alert "${uboot_prefix}Compiling u-boot" "${version} ${target_make}" "info"
-	run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" make "$target_make" "$CTHREADS" "${cross_compile}" || {
+	run_host_command_logged_long_running CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" make "$target_make" "$CTHREADS" "${cross_compile}" || {
 		exit_with_error "${uboot_prefix}Failed to build u-boot ${version} ${target_make}"
 	}
 
@@ -271,7 +271,7 @@ compile_uboot() {
 		compile_uboot_target || {
 			exit_with_error "Failed to compile u-boot target" "${target}"
 		}
-		uboot_target_counter=$((uboot_target_counter+1))
+		uboot_target_counter=$((uboot_target_counter + 1))
 		IFS="${_new_ifs}" # split on newlines only for rest of loop
 	done
 	IFS="${_old_ifs}"
@@ -441,19 +441,22 @@ compile_kernel() {
 
 	# compare with the architecture of the current Debian node
 	# if it matches we use the system compiler
-	if $(dpkg-architecture -e "${ARCH}"); then
-		display_alert "Native compilation"
+	if dpkg-architecture -e "${ARCH}"; then
+		display_alert "Native compilation" "target ${ARCH} on host $(dpkg --print-architecture)"
 	elif [[ $(dpkg --print-architecture) == amd64 ]]; then
+		display_alert "Cross compilation" "target ${ARCH} on host $(dpkg --print-architecture)"
 		local toolchain
 		toolchain=$(find_toolchain "$KERNEL_COMPILER" "$KERNEL_USE_GCC")
 		[[ -z $toolchain ]] && exit_with_error "Could not find required toolchain" "${KERNEL_COMPILER}gcc $KERNEL_USE_GCC"
 	else
+		display_alert "'Reverse Cross compilation'" "target ${ARCH} on host $(dpkg --print-architecture)"
 		exit_with_error "Architecture [$ARCH] is not supported"
 	fi
 
 	display_alert "Compiler version" "${KERNEL_COMPILER}gcc $(eval env PATH="${toolchain}:${PATH}" "${KERNEL_COMPILER}gcc" -dumpversion)" "info"
 
 	# copy kernel config
+	local COPY_CONFIG_BACK_TO=""
 	if [[ $KERNEL_KEEP_CONFIG == yes && -f "${DEST}"/config/$LINUXCONFIG.config ]]; then
 		display_alert "Using previous kernel config" "${DEST}/config/$LINUXCONFIG.config" "info"
 		cp -p "${DEST}/config/${LINUXCONFIG}.config" .config
@@ -464,6 +467,7 @@ compile_kernel() {
 		else
 			display_alert "Using kernel config file" "config/kernel/$LINUXCONFIG.config" "info"
 			cp -p "${SRC}/config/kernel/${LINUXCONFIG}.config" .config
+			COPY_CONFIG_BACK_TO="${SRC}/config/kernel/${LINUXCONFIG}.config"
 		fi
 	fi
 
@@ -486,28 +490,35 @@ compile_kernel() {
 	display_alert "Kernel configuration" "${LINUXCONFIG}" "info"
 	if [[ $KERNEL_CONFIGURE != yes ]]; then
 		if [[ $BRANCH == default ]]; then
-			eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
-				'make ARCH=$ARCHITECTURE CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" silentoldconfig'
+			run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
+				make "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" silentoldconfig
 		else
 			# TODO: check if required
-			eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
-				'make ARCH=$ARCHITECTURE CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" olddefconfig'
+			run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
+				make "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" olddefconfig
 		fi
 	else
-		eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
-			'make $CTHREADS ARCH=$ARCHITECTURE CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" oldconfig'
-		eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
-			'make $CTHREADS ARCH=$ARCHITECTURE CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" ${KERNEL_MENUCONFIG:-menuconfig}'
+		run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
+			make "$CTHREADS" "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" oldconfig
+
+		# No logging for this, the user is in control... or should be.
+		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
+			make "$CTHREADS" "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" "${KERNEL_MENUCONFIG:-menuconfig}"
 
 		[[ ${PIPESTATUS[0]} -ne 0 ]] && exit_with_error "Error kernel menuconfig failed"
 
 		# store kernel config in easily reachable place
 		display_alert "Exporting new kernel config" "$DEST/config/$LINUXCONFIG.config" "info"
 		cp .config "${DEST}/config/${LINUXCONFIG}.config"
+
+		# store back into original LINUXCONFIG too, if it came from there, so it's pending commits when done.
+		[[ "${COPY_CONFIG_BACK_TO}" != "" ]] && cp -v .config "${COPY_CONFIG_BACK_TO}"
+
 		# export defconfig too if requested
 		if [[ $KERNEL_EXPORT_DEFCONFIG == yes ]]; then
-			eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
-				'make ARCH=$ARCHITECTURE CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" savedefconfig'
+			run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
+				make "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" savedefconfig
+
 			[[ -f defconfig ]] && cp defconfig "${DEST}/config/${LINUXCONFIG}.defconfig"
 		fi
 	fi
@@ -520,12 +531,11 @@ compile_kernel() {
 	fi
 
 	display_alert "Compiling Kernel" "${LINUXCONFIG} ${KERNEL_IMAGE_TYPE}" "info"
-	CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
-		make $CTHREADS ARCH=$ARCHITECTURE \
-		CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" \
-		$SRC_LOADADDR \
-		LOCALVERSION="-$LINUXFAMILY" \
-		$KERNEL_IMAGE_TYPE ${KERNEL_EXTRA_TARGETS:-modules dtbs} 2>&1
+	# shellcheck disable=SC2086 # sorry gotta expand the targets somewhere
+	run_host_command_logged_long_running CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
+		make "$CTHREADS" "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" \
+		"$SRC_LOADADDR" "LOCALVERSION=\"-$LINUXFAMILY\"" \
+		$KERNEL_IMAGE_TYPE ${KERNEL_EXTRA_TARGETS:-modules dtbs}
 
 	if [[ ${PIPESTATUS[0]} -ne 0 || ! -f arch/$ARCHITECTURE/boot/$KERNEL_IMAGE_TYPE ]]; then
 		exit_with_error "Kernel was not built" "@host"
@@ -533,25 +543,27 @@ compile_kernel() {
 
 	# different packaging for 4.3+
 	if linux-version compare "${version}" ge 4.3; then
-		local kernel_packing="bindeb-pkg"
+		local kernel_packaging_target="bindeb-pkg"
 	else
-		local kernel_packing="deb-pkg"
+		local kernel_packaging_target="deb-pkg"
 	fi
 
-	display_alert "Creating kernel packages" "${LINUXCONFIG}" "info"
+	display_alert "Creating kernel packages" "${LINUXCONFIG} $kernel_packaging_target" "info"
 
 	# produce deb packages: image, headers, firmware, dtb
-	CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
-		make $CTHREADS $kernel_packing \
-		KDEB_PKGVERSION=$REVISION \
-		KDEB_COMPRESS=${DEB_COMPRESS} \
-		BRANCH=$BRANCH \
-		LOCALVERSION="-${LINUXFAMILY}" \
-		KBUILD_DEBARCH=$ARCH \
-		ARCH=$ARCHITECTURE \
-		DEBFULLNAME="$MAINTAINER" \
-		DEBEMAIL="$MAINTAINERMAIL" \
-		CROSS_COMPILE="$CCACHE $KERNEL_COMPILER" 2>&1
+	run_host_command_logged_long_running CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${PATH}" \
+		make "$CTHREADS" $kernel_packaging_target \
+		"KDEB_PKGVERSION=$REVISION" \
+		"KDEB_COMPRESS=${DEB_COMPRESS}" \
+		"BRANCH=$BRANCH" \
+		"LOCALVERSION=\"-${LINUXFAMILY}\"" \
+		"KBUILD_DEBARCH=$ARCH" \
+		"ARCH=$ARCHITECTURE" \
+		"DEBFULLNAME=\"$MAINTAINER\"" \
+		"DEBEMAIL=\"$MAINTAINERMAIL\"" \
+		"CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\""
+
+	display_alert "Package building done" "${LINUXCONFIG} $kernel_packaging_target" "info"
 
 	cd .. || exit
 	# remove firmare image packages here - easier than patching ~40 packaging scripts at once

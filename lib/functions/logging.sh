@@ -54,7 +54,7 @@ function do_with_logging() {
 	# So whatever is being called, should prevent rogue stuff writing to stderr.
 	# this is mostly handled by redirecting stderr to stdout: 2>&1
 
-	local exit_code=1 # fail by default...
+	local exit_code=176 # fail by default...
 	local prefix_sed_contents
 	prefix_sed_contents="$(logging_echo_prefix_for_pv "tool")   $(echo -n -e "${gray_color}")"
 	local prefix_sed_cmd="s/^/${prefix_sed_contents}/;"
@@ -63,13 +63,16 @@ function do_with_logging() {
 		# Also terrible: don't hold a reference to cwd by changing to SRC always
 		exec 3> >(
 			cd "${SRC}" || exit 2
-			grep --line-buffered -v "^$" | sed -e "${prefix_sed_cmd}"
+			#grep --line-buffered -v "^$" | \
+			sed -e "${prefix_sed_cmd}"
 		)
-		{ "$@" && exit_code=0; } >&3
-		exec 3>&- # close the file descriptor, lest sed keeps running forever.
+		"$@" >&3
+		exit_code=$? # hopefully this is the pipe
+		exec 3>&-    # close the file descriptor, lest sed keeps running forever.
 	else
 		# If not showing the log, just send stdout to logfile. stderr will flow to screen.
-		{ "$@" && exit_code=0; } >> "${CURRENT_LOGFILE}"
+		"$@" >> "${CURRENT_LOGFILE}"
+		exit_code=$?
 	fi
 
 	# Close opened CI group.
@@ -78,8 +81,7 @@ function do_with_logging() {
 	fi
 
 	if [[ $exit_code != 0 ]]; then
-		display_alert "group FAILED: exit code: ${exit_code}" "${CURRENT_LOGGING_SECTION}" "err"
-		# maybe just exit_with_error ?
+		display_alert "build group FAILED: exit code: ${exit_code}" "${CURRENT_LOGGING_SECTION}" "err"
 	fi
 
 	return $exit_code
@@ -140,6 +142,9 @@ function logging_echo_prefix_for_pv() {
 			;;
 		tool)
 			indicator="🔨"
+			;;
+		compile)
+			indicator="🐴"
 			;;
 		write_device)
 			indicator="💾"

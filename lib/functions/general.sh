@@ -148,7 +148,7 @@ function exit_with_error() {
 	flock -u "${FD}"
 
 	export ALREADY_EXITING_WITH_ERROR=yes # marker for future trap handlers. avoid showing errors twice.
-	exit 255
+	exit 43
 	display_alert "Never to be seen" "after exit and traps" "bye"
 }
 
