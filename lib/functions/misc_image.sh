@@ -28,43 +28,85 @@ mount_chroot() {
 # helper to reduce code duplication
 #
 umount_chroot() {
-
 	local target=$1
 	display_alert "Unmounting" "$target" "info"
 	while grep -Eq "${target}.*(dev|proc|sys)" /proc/mounts; do
-		umount -l --recursive "${target}"/dev > /dev/null 2>&1
-		umount -l "${target}"/proc > /dev/null 2>&1
-		umount -l "${target}"/sys > /dev/null 2>&1
-		sleep 5
+		umount --recursive "${target}"/dev > /dev/null 2>&1
+		umount "${target}"/proc > /dev/null 2>&1
+		umount "${target}"/sys > /dev/null 2>&1
+		sync
+	done
+}
+
+# demented recursive version, for final umount.
+umount_chroot_recursive() {
+	set +e # really, ignore errors. we wanna unmount everything and will try very hard.
+	local target="$1"
+
+	if [[ ! -d "${target}" ]]; then # only even try if target is a directory
+		return 0                       # success, nothing to do.
+	fi
+	display_alert "Unmounting recursively" "$target" ""
+	sync # sync. coalesce I/O. wait for writes to flush to disk. it might take a second.
+	# First, try to umount some well-known dirs, in a certain order. for speed.
+	local -a well_known_list=("dev/pts" "dev" "proc" "sys" "boot/efi" "boot/firmware" "boot" "tmp" ".")
+	for well_known in "${well_known_list[@]}"; do
+		umount --recursive "${target}${well_known}" &> /dev/null && sync
 	done
 
+	# now try in a loop to unmount all that's still mounted under the target
+	local -i tries=1 # the first try above
+	mapfile -t current_mount_list < <(cut -d " " -f 2 "/proc/mounts" | grep "^${target}")
+	while [[ ${#current_mount_list[@]} -gt 0 ]]; do
+		if [[ $tries -gt 10 ]]; then
+			display_alert "${#current_mount_list[@]} dirs still mounted after ${tries} tries:" "${current_mount_list[*]}" "wrn"
+		fi
+		cut -d " " -f 2 "/proc/mounts" | grep "^${target}" | xargs -n1 umount --recursive &> /dev/null
+		sync # wait for fsync, then count again for next loop.
+		mapfile -t current_mount_list < <(cut -d " " -f 2 "/proc/mounts" | grep "^${target}")
+		tries=$((tries + 1))
+	done
+
+	display_alert "Unmounted OK after ${tries} attempt(s)" "$target" "info"
+	return 0
 }
 
 # unmount_on_exit
 #
 unmount_on_exit() {
+	set +e               # we just wanna plow through this, ignoring errors.
 	trap - INT TERM EXIT # remove the trap
-	local stacktrace="$(get_extension_hook_stracktrace "${BASH_SOURCE[*]}" "${BASH_LINENO[*]}")"
+
+	local stacktrace
+	stacktrace="$(get_extension_hook_stracktrace "${BASH_SOURCE[*]}" "${BASH_LINENO[*]}")"
+	display_alert "trap caught, shutting down" "${stacktrace}" "err"
 	if [[ "${ERROR_DEBUG_SHELL}" == "yes" ]]; then
 		ERROR_DEBUG_SHELL=no # dont do it twice
 		display_alert "MOUNT" "${MOUNT}" "err"
 		display_alert "SDCARD" "${SDCARD}" "err"
 		display_alert "ERROR_DEBUG_SHELL=yes, starting a shell." "ERROR_DEBUG_SHELL" "err"
-		bash < /dev/tty || true
+		bash < /dev/tty >&2 || true
 	fi
 
-	umount_chroot "${SDCARD}/"
-	mountpoint -q "${SRC}"/cache/toolchain && umount -l "${SRC}"/cache/toolchain
-	mountpoint -q "${SRC}"/cache/rootfs && umount -l "${SRC}"/cache/rootfs
-	umount -l "${SDCARD}"/tmp > /dev/null 2>&1
-	umount -l "${SDCARD}" > /dev/null 2>&1
-	umount -l "${MOUNT}"/boot > /dev/null 2>&1
-	umount -l "${MOUNT}" > /dev/null 2>&1
-	[[ $CRYPTROOT_ENABLE == yes ]] && cryptsetup luksClose "${ROOT_MAPPER}"
-	losetup -d "${LOOP}" > /dev/null 2>&1
-	rm -rf --one-file-system "${SDCARD}"
+	cd "${SRC}" || echo "Failed to cwd to ${SRC}" # Move pwd away, so unmounts work
+	# those will loop until they're unmounted.
+	umount_chroot_recursive "${SDCARD}/"
+	umount_chroot_recursive "${MOUNT}/"
 
-	# if we've been called by exit_with_error itself, don't recurse. it makes no sense.
+	mountpoint -q "${SRC}"/cache/toolchain && umount -l "${SRC}"/cache/toolchain >&2 # @TODO: why does Igor uses lazy umounts? nfs?
+	mountpoint -q "${SRC}"/cache/rootfs && umount -l "${SRC}"/cache/rootfs >&2
+	[[ $CRYPTROOT_ENABLE == yes ]] && cryptsetup luksClose "${ROOT_MAPPER}" >&2
+
+	# shellcheck disable=SC2153 # global var. also a local 'loop' in another function. sorry.
+	if [[ -b "${LOOP}" ]]; then
+		display_alert "Freeing loop" "unmount_on_exit ${LOOP}" "wrn"
+		losetup -d "${LOOP}" >&2
+	fi
+
+	[[ -d "${SDCARD}" ]] && rm -rf --one-file-system "${SDCARD}"
+	[[ -d "${MOUNT}" ]] && rm -rf --one-file-system "${MOUNT}"
+
+	# if we've been called by exit_with_error itself, don't recurse.
 	if [[ "${ALREADY_EXITING_WITH_ERROR:-no}" != "yes" ]]; then
 		exit_with_error "generic error during build_rootfs_image: ${stacktrace}" || true # but don't trigger error again
 	fi
@@ -179,13 +221,14 @@ function chroot_sdcard_apt_get() {
 function chroot_sdcard() {
 	# Log the command to the current logfile, so it has context of what was run.
 	if [[ -f "${CURRENT_LOGFILE}" ]]; then
-		echo "(=-Armbian-->" chroot "\${SDCARD}" /bin/bash -e -c "$*" " <- at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
+		echo "(=-A" >> "${CURRENT_LOGFILE}"                                                                    # blank line for reader's benefit
+		echo "(=-A-->" chroot "\${SDCARD}" /bin/bash -e -c "$*" " <- at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
 	fi
 	local exit_code=666
 	chroot "${SDCARD}" /bin/bash -e -c "$*" 2>&1 # redirect stderr to stdout. $* is NOT $@!
 	exit_code=$?
 	if [[ -f "${CURRENT_LOGFILE}" ]]; then
-		echo "(=-Armbian--> cmd exited with code ${exit_code} at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
+		echo "(=-A--> cmd exited with code ${exit_code} at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
 	fi
 	return $exit_code
 }

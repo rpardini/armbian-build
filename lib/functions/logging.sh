@@ -78,7 +78,7 @@ function do_with_logging() {
 display_alert() {
 	# We'll be writing to stderr (" >&2"), so also write the message to the generic logfile, for context.
 	if [[ -f "${CURRENT_LOGFILE}" ]]; then
-		echo "(=-Armbian-: " "$@" >> "${CURRENT_LOGFILE}"
+		echo "(=-A-: [" "$@" "]" >> "${CURRENT_LOGFILE}"
 	fi
 
 	local message="$1" level="$3"                          # params
