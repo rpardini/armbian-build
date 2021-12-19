@@ -101,7 +101,7 @@ display_alert() {
 
 		info)
 			level_indicator="🌱" # "🌴" 🥑
-			inline_logs_color="\e[0;32m"
+			inline_logs_color="\e[1;37m"
 			;;
 
 		*)
@@ -111,7 +111,7 @@ display_alert() {
 	esac
 	[[ -n $2 ]] && extra=" [${inline_logs_color}${2}${normal_color}]"
 
-	echo -e "${normal_color}${left_marker}${padding}${level_indicator}${padding}${gray_color}${right_marker} ${normal_color}${message}${extra}${normal_color}" >&2
+	echo -e "${normal_color}${left_marker}${padding}${level_indicator}${padding}${normal_color}${right_marker} ${normal_color}${message}${extra}${normal_color}" >&2
 }
 
 function logging_echo_prefix_for_pv() {
@@ -132,7 +132,7 @@ function logging_echo_prefix_for_pv() {
 			;;
 	esac
 
-	echo -n -e "${normal_color}${left_marker}${padding}${indicator}${padding}${gray_color}${right_marker}${normal_color}"
+	echo -n -e "${normal_color}${left_marker}${padding}${indicator}${padding}${normal_color}${right_marker}"
 	return 0
 
 }
