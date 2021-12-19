@@ -85,7 +85,9 @@ compile_atf() {
 
 	atftempdir=$(mktemp -d)
 	chmod 700 ${atftempdir}
-	trap "rm -rf \"${atftempdir}\" ; exit 0" 0 1 2 3 15
+
+	# @TODO: these traps are a real trap.
+	#trap "rm -rf \"${atftempdir}\" ; exit 0" 0 1 2 3 15
 
 	# copy files to temp directory
 	for f in $target_files; do
@@ -106,7 +108,109 @@ compile_atf() {
 	[[ -f license.md ]] && cp license.md "${atftempdir}"/
 }
 
+# this receives version  target uboot_name uboottempdir uboot_target_counter toolchain as variables.
+function compile_uboot_target() {
+	local uboot_prefix="{u-boot:${uboot_target_counter}} "
+
+	local target_make target_patchdir target_files
+	target_make=$(cut -d';' -f1 <<< "${target}")
+	target_patchdir=$(cut -d';' -f2 <<< "${target}")
+	target_files=$(cut -d';' -f3 <<< "${target}")
+
+	# needed for multiple targets and for calling compile_uboot directly
+	display_alert "${uboot_prefix} Checking out to clean sources" "{$BOOTSOURCEDIR} for ${target_make}"
+	improved_git checkout -f -q HEAD
+
+	if [[ $CLEAN_LEVEL == *make* ]]; then
+		display_alert "${uboot_prefix}Cleaning" "${BOOTSOURCEDIR}" "info"
+		(
+			cd "${SRC}/cache/sources/${BOOTSOURCEDIR}"
+			make clean 2>&1
+		)
+	fi
+
+	advanced_patch "u-boot" "$BOOTPATCHDIR" "$BOARD" "$target_patchdir" "$BRANCH" "${LINUXFAMILY}-${BOARD}-${BRANCH}"
+
+	# create patch for manual source changes
+	[[ $CREATE_PATCHES == yes ]] && userpatch_create "u-boot"
+
+	if [[ -n $ATFSOURCE ]]; then
+		cp -Rv "${atftempdir}"/*.bin .
+		rm -rf "${atftempdir}"
+	fi
+
+	display_alert "${uboot_prefix}Preparing u-boot config" "${version} ${target_make}" "info"
+	run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
+		make "$CTHREADS" "$BOOTCONFIG" "CROSS_COMPILE=\"$CCACHE $UBOOT_COMPILER\"" || {
+		exit_with_error "${uboot_prefix}Failed to configure u-boot ${version} $BOOTCONFIG ${target_make}"
+	}
+
+	# armbian specifics u-boot settings
+	[[ -f .config ]] && sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-armbian"/g' .config
+	[[ -f .config ]] && sed -i 's/CONFIG_LOCALVERSION_AUTO=.*/# CONFIG_LOCALVERSION_AUTO is not set/g' .config
+
+	# for modern (? 2018-2019?) kernel and non spi targets
+	if [[ ${BOOTBRANCH} =~ ^tag:v201[8-9](.*) && ${target} != "spi" && -f .config ]]; then
+		sed -i 's/^.*CONFIG_ENV_IS_IN_FAT.*/# CONFIG_ENV_IS_IN_FAT is not set/g' .config
+		sed -i 's/^.*CONFIG_ENV_IS_IN_EXT4.*/CONFIG_ENV_IS_IN_EXT4=y/g' .config
+		sed -i 's/^.*CONFIG_ENV_IS_IN_MMC.*/# CONFIG_ENV_IS_IN_MMC is not set/g' .config
+		sed -i 's/^.*CONFIG_ENV_IS_NOWHERE.*/# CONFIG_ENV_IS_NOWHERE is not set/g' .config
+		echo "# CONFIG_ENV_IS_NOWHERE is not set" >> .config
+		echo 'CONFIG_ENV_EXT4_INTERFACE="mmc"' >> .config
+		echo 'CONFIG_ENV_EXT4_DEVICE_AND_PART="0:auto"' >> .config
+		echo 'CONFIG_ENV_EXT4_FILE="/boot/boot.env"' >> .config
+	fi
+
+	# @TODO: this does not belong here
+	[[ -f tools/logos/udoo.bmp ]] && cp "${SRC}"/packages/blobs/splash/udoo.bmp tools/logos/udoo.bmp
+
+	# @TODO: why?
+	touch .scmversion
+
+	# $BOOTDELAY can be set in board family config, ensure autoboot can be stopped even if set to 0
+	[[ $BOOTDELAY == 0 ]] && echo -e "CONFIG_ZERO_BOOTDELAY_CHECK=y" >> .config
+	[[ -n $BOOTDELAY ]] && sed -i "s/^CONFIG_BOOTDELAY=.*/CONFIG_BOOTDELAY=${BOOTDELAY}/" .config || [[ -f .config ]] && echo "CONFIG_BOOTDELAY=${BOOTDELAY}" >> .config
+
+	# workaround when two compilers are needed
+	cross_compile="CROSS_COMPILE=\"$CCACHE $UBOOT_COMPILER\""
+	[[ -n $UBOOT_TOOLCHAIN2 ]] && cross_compile="ARMBIAN=foe" # empty parameter is not allowed
+
+	display_alert "${uboot_prefix}Compiling u-boot" "${version} ${target_make}" "info"
+	run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" make "$target_make" "$CTHREADS" "${cross_compile}" || {
+		exit_with_error "${uboot_prefix}Failed to build u-boot ${version} ${target_make}"
+	}
+
+	if [[ $(type -t uboot_custom_postprocess) == function ]]; then
+		display_alert "${uboot_prefix}Postprocessing u-boot" "${version} ${target_make}"
+		uboot_custom_postprocess 2>&1
+	fi
+
+	display_alert "${uboot_prefix}Preparing u-boot targets packaging" "${version} ${target_make}"
+	# copy files to build directory
+	for f in $target_files; do
+		local f_src
+		f_src=$(cut -d':' -f1 <<< "${f}")
+		if [[ $f == *:* ]]; then
+			local f_dst
+			f_dst=$(cut -d':' -f2 <<< "${f}")
+		else
+			local f_dst
+			f_dst=$(basename "${f_src}")
+		fi
+		display_alert "${uboot_prefix}Deploying u-boot binary target" "${version} ${target_make} :: ${f_dst}"
+		[[ ! -f $f_src ]] && exit_with_error "U-boot artifact not found" "$(basename "${f_src}")"
+		run_host_command_logged cp -v "${f_src}" "$uboottempdir/${uboot_name}/usr/lib/${uboot_name}/${f_dst}"
+		#display_alert "Done with binary target" "${version} ${target_make} :: ${f_dst}"
+	done
+
+	display_alert "${uboot_prefix}Done with u-boot target" "${version} ${target_make}"
+	return 0
+}
+
 compile_uboot() {
+	set -e # NO ERRORS tolerated in this function. handle your errors, if they're to be tolerated.
+	#set -x # help to find errors
+
 	# not optimal, but extra cleaning before overlayfs_wrapper should keep sources directory clean
 	if [[ $CLEAN_LEVEL == *make* ]]; then
 		display_alert "Cleaning" "$BOOTSOURCEDIR" "info"
@@ -150,103 +254,29 @@ compile_uboot() {
 	display_alert "Compiler version" "${UBOOT_COMPILER}gcc $(eval env PATH="${toolchain}:${toolchain2}:${PATH}" "${UBOOT_COMPILER}gcc" -dumpversion)" "info"
 	[[ -n $toolchain2 ]] && display_alert "Additional compiler version" "${toolchain2_type}gcc $(eval env PATH="${toolchain}:${toolchain2}:${PATH}" "${toolchain2_type}gcc" -dumpversion)" "info"
 
+	local uboot_name="${CHOSEN_UBOOT}_${REVISION}_${ARCH}"
+
 	# create directory structure for the .deb package
 	uboottempdir="$(mktemp -d)"
 	chmod 700 "${uboottempdir}"
-	trap "rm -rf \"${uboottempdir}\" ; exit 0" 0 1 2 3 15
-	local uboot_name=${CHOSEN_UBOOT}_${REVISION}_${ARCH}
-	rm -rf "$uboottempdir/$uboot_name"
-	mkdir -p "$uboottempdir/$uboot_name/usr/lib/{u-boot,$uboot_name}" "$uboottempdir/$uboot_name/DEBIAN"
+	mkdir -p "$uboottempdir/$uboot_name/usr/lib/u-boot" "$uboottempdir/$uboot_name/usr/lib/$uboot_name" "$uboottempdir/$uboot_name/DEBIAN"
 
-	# process compilation for one or multiple targets
-	while read -r target; do
-		local target_make target_patchdir target_files
-		target_make=$(cut -d';' -f1 <<< "${target}")
-		target_patchdir=$(cut -d';' -f2 <<< "${target}")
-		target_files=$(cut -d';' -f3 <<< "${target}")
+	# Try very hard, to fault even, to avoid using subshells while reading a newline-delimited string.
+	# Sorry for the juggling with IFS.
+	local _old_ifs="${IFS}" _new_ifs=$'\n' uboot_target_counter=1
+	IFS="${_new_ifs}" # split on newlines only
+	for target in ${UBOOT_TARGET_MAP}; do
+		IFS="${_old_ifs}" # restore for the body of loop
+		export target uboot_name uboottempdir toolchain version uboot_target_counter
+		compile_uboot_target || {
+			exit_with_error "Failed to compile u-boot target" "${target}"
+		}
+		uboot_target_counter=$((uboot_target_counter+1))
+		IFS="${_new_ifs}" # split on newlines only for rest of loop
+	done
+	IFS="${_old_ifs}"
 
-		# needed for multiple targets and for calling compile_uboot directly
-		display_alert "Checking out to clean sources"
-		improved_git checkout -f -q HEAD
-
-		if [[ $CLEAN_LEVEL == *make* ]]; then
-			display_alert "Cleaning" "$BOOTSOURCEDIR" "info"
-			(
-				cd "${SRC}/cache/sources/${BOOTSOURCEDIR}"
-				make clean 2>&1
-			)
-		fi
-
-		advanced_patch "u-boot" "$BOOTPATCHDIR" "$BOARD" "$target_patchdir" "$BRANCH" "${LINUXFAMILY}-${BOARD}-${BRANCH}"
-
-		# create patch for manual source changes
-		[[ $CREATE_PATCHES == yes ]] && userpatch_create "u-boot"
-
-		if [[ -n $ATFSOURCE ]]; then
-			cp -Rv "${atftempdir}"/*.bin .
-			rm -rf "${atftempdir}"
-		fi
-
-		display_alert "Preparing u-boot config" "${version} ${target_make}" "info"
-		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
-			make $CTHREADS $BOOTCONFIG CROSS_COMPILE="$CCACHE $UBOOT_COMPILER" 2>&1
-
-		# armbian specifics u-boot settings
-		[[ -f .config ]] && sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="-armbian"/g' .config
-		[[ -f .config ]] && sed -i 's/CONFIG_LOCALVERSION_AUTO=.*/# CONFIG_LOCALVERSION_AUTO is not set/g' .config
-
-		# for modern (? 2018-2019?) kernel and non spi targets
-		if [[ ${BOOTBRANCH} =~ ^tag:v201[8-9](.*) && ${target} != "spi" && -f .config ]]; then
-			sed -i 's/^.*CONFIG_ENV_IS_IN_FAT.*/# CONFIG_ENV_IS_IN_FAT is not set/g' .config
-			sed -i 's/^.*CONFIG_ENV_IS_IN_EXT4.*/CONFIG_ENV_IS_IN_EXT4=y/g' .config
-			sed -i 's/^.*CONFIG_ENV_IS_IN_MMC.*/# CONFIG_ENV_IS_IN_MMC is not set/g' .config
-			sed -i 's/^.*CONFIG_ENV_IS_NOWHERE.*/# CONFIG_ENV_IS_NOWHERE is not set/g' .config
-			echo "# CONFIG_ENV_IS_NOWHERE is not set" >> .config
-			echo 'CONFIG_ENV_EXT4_INTERFACE="mmc"' >> .config
-			echo 'CONFIG_ENV_EXT4_DEVICE_AND_PART="0:auto"' >> .config
-			echo 'CONFIG_ENV_EXT4_FILE="/boot/boot.env"' >> .config
-		fi
-
-		[[ -f tools/logos/udoo.bmp ]] && cp "${SRC}"/packages/blobs/splash/udoo.bmp tools/logos/udoo.bmp
-		touch .scmversion
-
-		# $BOOTDELAY can be set in board family config, ensure autoboot can be stopped even if set to 0
-		[[ $BOOTDELAY == 0 ]] && echo -e "CONFIG_ZERO_BOOTDELAY_CHECK=y" >> .config
-		[[ -n $BOOTDELAY ]] && sed -i "s/^CONFIG_BOOTDELAY=.*/CONFIG_BOOTDELAY=${BOOTDELAY}/" .config || [[ -f .config ]] && echo "CONFIG_BOOTDELAY=${BOOTDELAY}" >> .config
-
-		# workaround when two compilers are needed
-		cross_compile="CROSS_COMPILE=$CCACHE $UBOOT_COMPILER"
-		[[ -n $UBOOT_TOOLCHAIN2 ]] && cross_compile="ARMBIAN=foe" # empty parameter is not allowed
-
-		display_alert "Compiling u-boot" "${version} ${target_make}" "info"
-		CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
-			make $target_make $CTHREADS "${cross_compile}" 2>&1
-
-		[[ ${EVALPIPE[0]} -ne 0 ]] && exit_with_error "U-boot compilation failed"
-
-		if [[ $(type -t uboot_custom_postprocess) == function ]]; then
-			display_alert "Postprocessing u-boot" "${version} ${target_make}"
-			uboot_custom_postprocess 2>&1
-		fi
-
-		display_alert "Preparing u-boot targets packaging" "${version} ${target_make}"
-		# copy files to build directory
-		for f in $target_files; do
-			local f_src
-			f_src=$(cut -d':' -f1 <<< "${f}")
-			if [[ $f == *:* ]]; then
-				local f_dst
-				f_dst=$(cut -d':' -f2 <<< "${f}")
-			else
-				local f_dst
-				f_dst=$(basename "${f_src}")
-			fi
-			[[ ! -f $f_src ]] && exit_with_error "U-boot file not found" "$(basename "${f_src}")"
-			cp -v "${f_src}" "$uboottempdir/${uboot_name}/usr/lib/${uboot_name}/${f_dst}" 2>&1
-		done
-	done <<< "$UBOOT_TARGET_MAP" # this overrides stdin in the loop. be aware.
-
-	display_alert "Preparing u-boot general packaging" "${version} ${target_make}"
+	display_alert "Preparing u-boot general packaging. all_worked:${all_worked}  any_worked:${any_worked} " "${version} ${target_make}"
 
 	# set up postinstall script # @todo: extract into a tinkerboard extension
 	if [[ $BOARD == tinkerboard ]]; then
@@ -322,7 +352,9 @@ create_linux-source_package() {
 	ts=$(date +%s)
 	local sources_pkg_dir tmp_src_dir
 	tmp_src_dir=$(mktemp -d)
-	trap "rm -rf \"${tmp_src_dir}\" ; exit 0" 0 1 2 3 15
+
+	# @TODO: these traps are a real trap.
+	#trap "rm -rf \"${tmp_src_dir}\" ; exit 0" 0 1 2 3 15
 	sources_pkg_dir=${tmp_src_dir}/${CHOSEN_KSRC}_${REVISION}_all
 	mkdir -p "${sources_pkg_dir}"/usr/src/ \
 		"${sources_pkg_dir}"/usr/share/doc/linux-source-${version}-${LINUXFAMILY} \
@@ -569,7 +601,9 @@ compile_firmware() {
 
 	firmwaretempdir=$(mktemp -d)
 	chmod 700 ${firmwaretempdir}
-	trap "rm -rf \"${firmwaretempdir}\" ; exit 0" 0 1 2 3 15
+
+	# @TODO: these traps are a real trap.
+	#trap "rm -rf \"${firmwaretempdir}\" ; exit 0" 0 1 2 3 15
 	plugin_dir="armbian-firmware${FULL}"
 	mkdir -p "${firmwaretempdir}/${plugin_dir}/lib/firmware"
 
@@ -617,7 +651,9 @@ compile_armbian-zsh() {
 	local tmp_dir armbian_zsh_dir
 	tmp_dir=$(mktemp -d)
 	chmod 700 ${tmp_dir}
-	trap "rm -rf \"${tmp_dir}\" ; exit 0" 0 1 2 3 15
+
+	# @TODO: these traps are a real trap.
+	#trap "rm -rf \"${tmp_dir}\" ; exit 0" 0 1 2 3 15
 	armbian_zsh_dir=armbian-zsh_${REVISION}_all
 	display_alert "Building deb" "armbian-zsh" "info"
 
@@ -692,7 +728,9 @@ compile_armbian-config() {
 	local tmp_dir armbian_config_dir
 	tmp_dir=$(mktemp -d)
 	chmod 700 ${tmp_dir}
-	trap "rm -rf \"${tmp_dir}\" ; exit 0" 0 1 2 3 15
+
+	# @TODO: these traps are a real trap.
+	#trap "rm -rf \"${tmp_dir}\" ; exit 0" 0 1 2 3 15
 	armbian_config_dir=armbian-config_${REVISION}_all
 	display_alert "Building deb" "armbian-config" "info"
 

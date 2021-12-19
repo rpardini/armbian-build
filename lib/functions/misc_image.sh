@@ -235,16 +235,33 @@ function chroot_sdcard_apt_get() {
 
 # please, please, unify around this function. if SDCARD is not enough, I'll make a mount version.
 function chroot_sdcard() {
+	run_host_command_logged_raw chroot "${SDCARD}" /bin/bash -e -c "$*"
+}
+
+# run_host_command_logged is the very basic, should be used for everything, but, please use helpers above, this is very low-level.
+function run_host_command_logged() {
+	run_host_command_logged_raw /bin/bash -e -c "$*"
+}
+
+# do NOT use directly, it does NOT expand the way it should (through bash)
+function run_host_command_logged_raw() {
 	# Log the command to the current logfile, so it has context of what was run.
 	if [[ -f "${CURRENT_LOGFILE}" ]]; then
-		echo "       " >> "${CURRENT_LOGFILE}"                                                             # blank line for reader's benefit
-		echo "-->" chroot "\${SDCARD}" /bin/bash -e -c "$*" " <- at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
+		echo "       " >> "${CURRENT_LOGFILE}" # blank line for reader's benefit
+		echo "-->" "$*" " <- at $(date --utc)" >> "${CURRENT_LOGFILE}"
 	fi
+
+	# uncomment when desperate to understand what's going on
+	#display_alert "cmd about to run" "$*" "wrn"
+
 	local exit_code=666
-	chroot "${SDCARD}" /bin/bash -e -c "$*" 2>&1 # redirect stderr to stdout. $* is NOT $@!
+	"$@" 2>&1 # redirect stderr to stdout. $* is NOT $@!
 	exit_code=$?
 	if [[ -f "${CURRENT_LOGFILE}" ]]; then
-		echo "--> cmd exited with code ${exit_code} at $(date --utc)" >> "${CURRENT_LOGFILE}" # SDCARD's $ is escaped on purpose here.
+		echo "--> cmd exited with code ${exit_code} at $(date --utc)" >> "${CURRENT_LOGFILE}"
+	fi
+	if [[ $exit_code != 0 ]]; then
+		display_alert "cmd exited with code ${exit_code}" "$*" "err"
 	fi
 	return $exit_code
 }

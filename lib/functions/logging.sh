@@ -77,6 +77,11 @@ function do_with_logging() {
 		echo "::endgroup::"
 	fi
 
+	if [[ $exit_code != 0 ]]; then
+		display_alert "group FAILED: exit code: ${exit_code}" "${CURRENT_LOGGING_SECTION}" "err"
+		# maybe just exit_with_error ?
+	fi
+
 	return $exit_code
 }
 
