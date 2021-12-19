@@ -272,7 +272,7 @@ compile_uboot() {
 	fi
 
 	# declare -f on non-defined function does not do anything
-	cat <<- EOF > "$uboottempdir/${uboot_name}/usr/lib/u-boot/platform_install.sh"
+	cat <<- EOF > "$uboottempdir/${uboot_name}/usr/lib/u-boot/platform_install.sh" 2>&1
 		DIR=/usr/lib/$uboot_name
 		$(declare -f write_uboot_platform)
 		$(declare -f write_uboot_platform_mtd)
@@ -280,7 +280,7 @@ compile_uboot() {
 	EOF
 
 	# set up control file
-	cat <<- EOF > "$uboottempdir/${uboot_name}/DEBIAN/control"
+	cat <<- EOF > "$uboottempdir/${uboot_name}/DEBIAN/control" 2>&1
 		Package: linux-u-boot-${BOARD}-${BRANCH}
 		Version: $REVISION
 		Architecture: $ARCH
@@ -296,11 +296,11 @@ compile_uboot() {
 
 	# copy config file to the package
 	# useful for FEL boot with overlayfs_wrapper
-	[[ -f .config && -n $BOOTCONFIG ]] && cp .config "$uboottempdir/${uboot_name}/usr/lib/u-boot/${BOOTCONFIG}"
+	[[ -f .config && -n $BOOTCONFIG ]] && cp .config "$uboottempdir/${uboot_name}/usr/lib/u-boot/${BOOTCONFIG}" 2>&1
 	# copy license files from typical locations
-	[[ -f COPYING ]] && cp COPYING "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE"
-	[[ -f Licenses/README ]] && cp Licenses/README "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE"
-	[[ -n $atftempdir && -f $atftempdir/license.md ]] && cp "${atftempdir}/license.md" "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE.atf"
+	[[ -f COPYING ]] && cp COPYING "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE" 2>&1
+	[[ -f Licenses/README ]] && cp Licenses/README "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE" 2>&1
+	[[ -n $atftempdir && -f $atftempdir/license.md ]] && cp "${atftempdir}/license.md" "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE.atf" 2>&1
 
 	display_alert "Building u-boot deb" "${uboot_name}.deb" "info"
 	fakeroot dpkg-deb -b -Z${DEB_COMPRESS} "$uboottempdir/${uboot_name}" "$uboottempdir/${uboot_name}.deb" 2>&1
@@ -309,7 +309,7 @@ compile_uboot() {
 
 	[[ ! -f $uboottempdir/${uboot_name}.deb ]] && exit_with_error "Building u-boot package failed"
 
-	rsync --remove-source-files -rq "$uboottempdir/${uboot_name}.deb" "${DEB_STORAGE}/"
+	rsync --remove-source-files -rq "$uboottempdir/${uboot_name}.deb" "${DEB_STORAGE}/" 2>&1
 	rm -rf "$uboottempdir"
 
 	return 0 # success
