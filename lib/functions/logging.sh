@@ -10,8 +10,12 @@ function logging_error_show_log() {
 	# Do nothing if we're already showing the log on stderr.
 	[[ "${SHOW_LOG}" == "yes" ]] && return 0
 
+	# Close opened CI group, even if there is none; errors would be buried otherwise.
+	if [[ "${CI}" == "true" ]]; then
+		echo "::endgroup::"
+	fi
+
 	local message="$1"
-	local context="$2"
 	local stacktrace="$3"
 	local logfile_to_show="$4"
 
@@ -42,7 +46,7 @@ function do_with_logging() {
 
 	# Markers for CI (GitHub Actions); CI env var comes predefined as true there.
 	if [[ "${CI}" == "true" ]]; then
-		echo "::group::${CURRENT_LOGGING_SECTION}"
+		echo "::group::[🥑] Group ${CURRENT_LOGGING_SECTION}"
 	fi
 
 	# We now execute whatever was passed as parameters, in some different conditions:
@@ -50,14 +54,15 @@ function do_with_logging() {
 	# So whatever is being called, should prevent rogue stuff writing to stderr.
 	# this is mostly handled by redirecting stderr to stdout: 2>&1
 
-	local exit_code=1                  # fail by default...
-	local prefix_sed_contents="$(logging_echo_prefix_for_pv "tool")   $(echo -n -e "${gray_color}")"
+	local exit_code=1 # fail by default...
+	local prefix_sed_contents
+	prefix_sed_contents="$(logging_echo_prefix_for_pv "tool")   $(echo -n -e "${gray_color}")"
 	local prefix_sed_cmd="s/^/${prefix_sed_contents}/;"
 	if [[ "${SHOW_LOG}" == "yes" ]]; then
 		# This is sick. Create a 3rd file descriptor sending it to sed. https://unix.stackexchange.com/questions/174849/redirecting-stdout-to-terminal-and-file-without-using-a-pipe
 		# Also terrible: don't hold a reference to cwd by changing to SRC always
 		exec 3> >(
-			cd "${SRC}"
+			cd "${SRC}" || exit 2
 			grep --line-buffered -v "^$" | sed -e "${prefix_sed_cmd}"
 		)
 		{ "$@" && exit_code=0; } >&3
@@ -81,37 +86,44 @@ display_alert() {
 		echo "(=-A-: [" "$@" "]" >> "${CURRENT_LOGFILE}"
 	fi
 
-	local message="$1" level="$3"                          # params
-	local level_indicator="" inline_logs_color="" extra="" # this log
+	local message="$1" level="$3"                                    # params
+	local level_indicator="" inline_logs_color="" extra="" ci_log="" # this log
 	case "${level}" in
 		err | error)
 			level_indicator="💥"
-			inline_logs_color="\e[0;31m"
+			inline_logs_color="\e[1;31m"
+			ci_log="error"
 			;;
 
 		wrn | warn)
 			level_indicator="🚸"
-			inline_logs_color="\e[0;35m"
+			inline_logs_color="\e[1;35m"
+			ci_log="warning"
 			;;
 
 		ext)
 			level_indicator="✅"
 			inline_logs_color="\e[1;32m"
+			ci_log="notice"
 			;;
 
 		info)
 			level_indicator="🌱" # "🌴" 🥑
-			inline_logs_color="\e[1;37m"
+			inline_logs_color="\e[0;32m"
 			;;
 
 		*)
 			level_indicator="🌿" #  "✨" 🌿 🪵
-			inline_logs_color="\e[0;32m"
+			inline_logs_color="\e[1;37m"
 			;;
 	esac
-	[[ -n $2 ]] && extra=" [${inline_logs_color}${2}${normal_color}]"
-
+	[[ -n $2 ]] && extra=" [${inline_logs_color} ${2} ${normal_color}]"
 	echo -e "${normal_color}${left_marker}${padding}${level_indicator}${padding}${normal_color}${right_marker} ${normal_color}${message}${extra}${normal_color}" >&2
+
+	# Now write to CI, if we're running on it
+	if [[ "${CI}" == "true" ]] && [[ "${ci_log}" != "" ]]; then
+		echo "::${ci_log} ::" "$@" >&2
+	fi
 }
 
 function logging_echo_prefix_for_pv() {

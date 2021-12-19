@@ -29,7 +29,7 @@ compile_atf() {
 		display_alert "Cleaning" "$ATFSOURCEDIR" "info"
 		(
 			cd "${SRC}/cache/sources/${ATFSOURCEDIR}"
-			make distclean > /dev/null 2>&1
+			make distclean 2>&1
 		)
 	fi
 
@@ -73,19 +73,15 @@ compile_atf() {
 	# create patch for manual source changes
 	[[ $CREATE_PATCHES == yes ]] && userpatch_create "atf"
 
-	echo -e "\n\t==  atf  ==\n" >> "${DEST}"/${LOG_SUBPATH}/compilation.log
 	# ENABLE_BACKTRACE="0" has been added to workaround a regression in ATF.
 	# Check: https://github.com/armbian/build/issues/1157
-	eval CCACHE_BASEDIR="$(pwd)" env PATH="${toolchain}:${toolchain2}:${PATH}" \
-		'make ENABLE_BACKTRACE="0" $target_make $CTHREADS \
-		CROSS_COMPILE="$CCACHE $ATF_COMPILER"' \
-		${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/compilation.log'} \
-		${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Compiling ATF..." $TTY_Y $TTY_X'} \
-		${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} 2>> "${DEST}"/${LOG_SUBPATH}/compilation.log
+	CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
+		make ENABLE_BACKTRACE="0" $target_make $CTHREADS \
+		CROSS_COMPILE=$CCACHE $ATF_COMPILER 2>&1 || {
+		exit_with_error "ATF compilation failed"
+	}
 
-	[[ ${PIPESTATUS[0]} -ne 0 ]] && exit_with_error "ATF compilation failed"
-
-	[[ $(type -t atf_custom_postprocess) == function ]] && atf_custom_postprocess
+	[[ $(type -t atf_custom_postprocess) == function ]] && atf_custom_postprocess 2>&1
 
 	atftempdir=$(mktemp -d)
 	chmod 700 ${atftempdir}
@@ -307,7 +303,7 @@ compile_uboot() {
 	[[ -n $atftempdir && -f $atftempdir/license.md ]] && cp "${atftempdir}/license.md" "$uboottempdir/${uboot_name}/usr/lib/u-boot/LICENSE.atf"
 
 	display_alert "Building u-boot deb" "${uboot_name}.deb" "info"
-	fakeroot dpkg-deb -b -Z${DEB_COMPRESS} "$uboottempdir/${uboot_name}" "$uboottempdir/${uboot_name}.deb" >> "${DEST}"/${LOG_SUBPATH}/output.log 2>&1
+	fakeroot dpkg-deb -b -Z${DEB_COMPRESS} "$uboottempdir/${uboot_name}" "$uboottempdir/${uboot_name}.deb" 2>&1
 	rm -rf "$uboottempdir/${uboot_name}"
 	[[ -n $atftempdir ]] && rm -rf "${atftempdir}"
 
@@ -605,7 +601,7 @@ compile_firmware() {
 	# pack
 	mv "armbian-firmware${FULL}" "armbian-firmware${FULL}_${REVISION}_all"
 	display_alert "Building firmware package" "armbian-firmware${FULL}_${REVISION}_all" "info"
-	fakeroot dpkg-deb -b -Z${DEB_COMPRESS} "armbian-firmware${FULL}_${REVISION}_all" >> "${DEST}"/${LOG_SUBPATH}/install.log 2>&1
+	fakeroot dpkg-deb -b -Z${DEB_COMPRESS} "armbian-firmware${FULL}_${REVISION}_all" 2>&1
 	mv "armbian-firmware${FULL}_${REVISION}_all" "armbian-firmware${FULL}"
 	rsync -rq "armbian-firmware${FULL}_${REVISION}_all.deb" "${DEB_STORAGE}/"
 
@@ -682,7 +678,7 @@ compile_armbian-zsh() {
 
 	chmod 755 "${tmp_dir}/${armbian_zsh_dir}"/DEBIAN/postinst
 
-	fakeroot dpkg-deb -b -Z${DEB_COMPRESS} "${tmp_dir}/${armbian_zsh_dir}" >> "${DEST}"/${LOG_SUBPATH}/output.log 2>&1
+	fakeroot dpkg-deb -b -Z${DEB_COMPRESS} "${tmp_dir}/${armbian_zsh_dir}" 2>&1
 	rsync --remove-source-files -rq "${tmp_dir}/${armbian_zsh_dir}.deb" "${DEB_STORAGE}/"
 	rm -rf "${tmp_dir}"
 
@@ -805,14 +801,6 @@ find_toolchain() {
 		fi
 	done
 	echo "$toolchain"
-	# logging a stack of used compilers.
-	if [[ -f "${DEST}"/${LOG_SUBPATH}/compiler.log ]]; then
-		if ! grep -q "$toolchain" "${DEST}"/${LOG_SUBPATH}/compiler.log; then
-			echo "$toolchain" >> "${DEST}"/${LOG_SUBPATH}/compiler.log
-		fi
-	else
-		echo "$toolchain" >> "${DEST}"/${LOG_SUBPATH}/compiler.log
-	fi
 }
 
 # advanced_patch <dest> <family> <board> <target> <branch> <description>
@@ -904,8 +892,8 @@ process_patch_file() {
 	# detect and remove files which patch will create
 	lsdiff -s --strip=1 "${patch}" | grep '^+' | awk '{print $2}' | xargs -I % sh -c 'rm -f %'
 
-	echo "Processing file $patch" >> "${DEST}"/${LOG_SUBPATH}/patching.log
-	patch --batch --silent -p1 -N < "${patch}" >> "${DEST}"/${LOG_SUBPATH}/patching.log 2>&1
+	echo "Processing patch file $patch"
+	patch --batch --silent -p1 -N < "${patch}" 2>&1
 
 	if [[ $? -ne 0 ]]; then
 		display_alert "* $status $(basename "${patch}")" "failed" "wrn"
@@ -913,7 +901,6 @@ process_patch_file() {
 	else
 		display_alert "* $status $(basename "${patch}")" "" "info"
 	fi
-	echo >> "${DEST}"/${LOG_SUBPATH}/patching.log
 }
 
 # apply_patch_series <target dir> <full path to series file>

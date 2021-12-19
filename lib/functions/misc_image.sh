@@ -168,6 +168,12 @@ copy_all_packages_files_for() {
 	done
 }
 
+apt_purge_unneeded_packages() {
+	# remove packages that are no longer needed. rootfs cache + uninstall might have leftovers.
+	display_alert "No longer needed packages" "purge" "info"
+	chroot_sdcard_apt_get autoremove
+}
+
 customize_image() {
 
 	# for users that need to prepare files at host
@@ -271,6 +277,5 @@ install_deb_chroot() {
 
 # @TODO: logging: used by desktop.sh exclusively. let's unify?
 run_on_sdcard() {
-	# Lack of quotes allows for redirections and pipes easily.
-	chroot "${SDCARD}" /bin/bash -c "${@}" >> "${DEST}/${LOG_SUBPATH}/install.log"
+	chroot_sdcard "${@}"
 }

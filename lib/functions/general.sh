@@ -588,7 +588,7 @@ fetch_from_repo() {
 		improved_git clean -qdf
 	else
 		# working directory is clean, nothing to do
-		display_alert "Up to date"
+		display_alert "Up to date" "$dir $ref_name"
 	fi
 
 	if [[ -f .gitmodules ]]; then
@@ -1334,11 +1334,14 @@ prepare_host() {
 			display_alert "Installing build dependencies"
 			# don't prompt for apt cacher selection
 			sudo echo "apt-cacher-ng    apt-cacher-ng/tunnelenable      boolean false" | sudo debconf-set-selections
-			apt-get -q update
+			apt-get -q update  2>&1
+
 			# @TODO: DO NOT COMMIT THIS
 			display_alert "NOT upgrading host-side packages" "apt upgrade" "wrn"
-			#apt-get -y upgrade
-			apt-get -q -y --no-install-recommends install -o Dpkg::Options::='--force-confold' "${deps[@]}" | tee -a "${DEST}"/${LOG_SUBPATH}/hostdeps.log
+			#apt-get -y upgrade  2>&1
+
+			display_alert "Installing host-side dependency packages" "apt upgrade" "info"
+			apt-get -q -y --no-install-recommends install -o Dpkg::Options::='--force-confold' "${deps[@]}" 2>&1
 			update-ccache-symlinks
 		fi
 
@@ -1425,7 +1428,7 @@ prepare_host() {
 					fi
 				done
 			else
-				display_alert "Ignoring toolchains" "SKIP_EXTERNAL_TOOLCHAINS: ${SKIP_EXTERNAL_TOOLCHAINS}" "info"
+				display_alert "Ignoring toolchains" "SKIP_EXTERNAL_TOOLCHAINS=${SKIP_EXTERNAL_TOOLCHAINS}" "info"
 			fi
 		fi # check offline
 

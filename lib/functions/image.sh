@@ -41,7 +41,7 @@ function build_rootfs_image() {
 	[[ $use_tmpfs == yes ]] && mount -t tmpfs -o size=${phymem}M tmpfs $SDCARD
 
 	# stage: prepare basic rootfs: unpack cache or create from scratch
-	LOG_SECTION="rootfs" do_with_logging create_rootfs_cache
+	LOG_SECTION="create_rootfs_cache" do_with_logging create_rootfs_cache
 
 	call_extension_method "pre_install_distribution_specific" "config_pre_install_distribution_specific" << 'PRE_INSTALL_DISTRIBUTION_SPECIFIC'
 *give config a chance to act before install_distribution_specific*
@@ -64,12 +64,11 @@ PRE_INSTALL_DISTRIBUTION_SPECIFIC
 	# NOTE: installing too many packages may fill tmpfs mount
 	LOG_SECTION="custom" do_with_logging customize_image
 
-	# remove packages that are no longer needed. Since we have intrudoced uninstall feature, we might want to clean things that are no longer needed
-	display_alert "No longer needed packages" "purge" "info"
-	LOG_SECTION="rootfs" do_with_logging chroot $SDCARD /bin/bash -c "apt-get  -y autoremove" # YES! THIS NEVER WORKED BEFORE!
+	# remove packages that are no longer needed. rootfs cache + uninstall might have leftovers.
+	LOG_SECTION="rootfs_apt_get_autoremove" do_with_logging apt_purge_unneeded_packages
 
 	# create list of installed packages for debug purposes
-	chroot $SDCARD /bin/bash -c "dpkg --get-selections" | grep -v deinstall | awk '{print $1}' | cut -f1 -d':' > $DEST/${LOG_SUBPATH}/installed-packages-${RELEASE}$([[ ${BUILD_MINIMAL} == yes ]] && echo "-minimal")$([[ ${BUILD_DESKTOP} == yes ]] && echo "-desktop").list 2>&1
+	chroot $SDCARD /bin/bash -c "dpkg --get-selections" | grep -v deinstall | awk '{print $1}' | cut -f1 -d':' > $DEST/${LOG_SUBPATH}/installed-packages-${RELEASE}$([[ ${BUILD_MINIMAL} == yes ]] && echo "-minimal")$([[ ${BUILD_DESKTOP} == yes ]] && echo "-desktop").list.log 2>&1
 
 	# clean up / prepare for making the image
 	umount_chroot "$SDCARD"
@@ -487,7 +486,7 @@ update_initramfs() {
 	chroot $chroot_target /bin/bash -c "$update_initramfs_cmd" 2>&1 || {
 		exit_with_error "Updating initramfs FAILED"
 	}
-	display_alert "Updated initramfs." "for details see: $DEST/${LOG_SUBPATH}/install.log" "info"
+	display_alert "Updated initramfs." "${update_initramfs_cmd}" "info"
 
 	display_alert "Re-enabling" "initramfs-tools hook for kernel"
 	chroot $chroot_target /bin/bash -c "chmod -v +x /etc/kernel/postinst.d/initramfs-tools" 2>&1
@@ -536,12 +535,12 @@ create_image() {
 		# fat32
 		rsync -rLtWh \
 			--info=progress0,stats1 \
-			--log-file="${DEST}"/${LOG_SUBPATH}/install.log $SDCARD/boot $MOUNT 2>&1
+			--log-file="${DEST}"/${LOG_SUBPATH}/install.log $SDCARD/boot $MOUNT 2>&1 #@TODO: log to stdout, terse?
 	else
 		# ext4
 		rsync -aHWXh \
 			--info=progress0,stats1 \
-			--log-file="${DEST}"/${LOG_SUBPATH}/install.log $SDCARD/boot $MOUNT 2>&1
+			--log-file="${DEST}"/${LOG_SUBPATH}/install.log $SDCARD/boot $MOUNT 2>&1 #@TODO: log to stdout, terse?
 	fi
 
 	call_extension_method "pre_update_initramfs" "config_pre_update_initramfs" << 'PRE_UPDATE_INITRAMFS'
