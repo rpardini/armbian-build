@@ -31,9 +31,9 @@ umount_chroot() {
 	local target=$1
 	display_alert "Unmounting" "$target" "info"
 	while grep -Eq "${target}.*(dev|proc|sys)" /proc/mounts; do
-		umount --recursive "${target}"/dev > /dev/null 2>&1
-		umount "${target}"/proc > /dev/null 2>&1
-		umount "${target}"/sys > /dev/null 2>&1
+		umount --recursive "${target}"/dev > /dev/null 2>&1 || true
+		umount "${target}"/proc > /dev/null 2>&1 || true
+		umount "${target}"/sys > /dev/null 2>&1 || true
 		sync
 	done
 }
