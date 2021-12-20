@@ -122,7 +122,7 @@ function exit_with_error() {
 	local _highlight=$2
 	_file=$(basename "${BASH_SOURCE[1]}")
 	local stacktrace logfile
-	stacktrace="$(get_extension_hook_stracktrace "${BASH_SOURCE[*]}" "${BASH_LINENO[*]}")"
+	stacktrace="$(get_extension_hook_stracktrace "${BASH_SOURCE[*]}" "${BASH_LINENO[*]}" || true)"
 
 	local logfile_to_show="${CURRENT_LOGFILE}" # store it
 	unset CURRENT_LOGFILE                      # stop logging, otherwise crazy
@@ -505,7 +505,7 @@ fetch_from_repo() {
 	# when we work offline we simply return the sources to their original state
 	if ! $offline; then
 		local local_hash
-		local_hash=$(git rev-parse @ 2> /dev/null)
+		local_hash=$(git rev-parse @ 2> /dev/null || true)
 
 		case $ref_type in
 			branch)
@@ -649,6 +649,11 @@ fingerprint_image() {
 # and place to the file /lib/firmware/bootsplash
 #--------------------------------------------------------------------------------------------------------------------------------
 function boot_logo() {
+	if [[ $(dpkg --print-architecture) != amd64 ]]; then
+		display_alert "Can't build boot_logo throbber using this arch" "$(dpkg --print-architecture)"
+		return 0
+	fi
+
 	display_alert "Building kernel splash logo" "$RELEASE" "info"
 
 	LOGO=${SRC}/packages/blobs/splash/logo.png
@@ -659,6 +664,7 @@ function boot_logo() {
 	THROBBER_HEIGHT=$(identify $THROBBER | head -1 | cut -d " " -f 3 | cut -d x -f 2)
 	convert -alpha remove -background "#000000" $LOGO "${SDCARD}"/tmp/logo.rgb
 	convert -alpha remove -background "#000000" $THROBBER "${SDCARD}"/tmp/throbber%02d.rgb
+	# @TODO I guess this is a x86 binary?
 	${SRC}/packages/blobs/splash/bootsplash-packer \
 		--bg_red 0x00 \
 		--bg_green 0x00 \
@@ -758,9 +764,9 @@ function boot_logo() {
 		[[ -f "${SDCARD}"/boot/boot.ini ]] && sed -i 's/^setenv bootlogo.*/setenv bootlogo "true"/' "${SDCARD}"/boot/boot.ini
 	fi
 	# enable additional services
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable bootsplash-ask-password-console.path >/dev/null 2>&1"
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable bootsplash-hide-when-booted.service >/dev/null 2>&1"
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable bootsplash-show-on-shutdown.service >/dev/null 2>&1"
+	chroot_sdcard systemctl --no-reload enable bootsplash-ask-password-console.path || true
+	chroot_sdcard systemctl --no-reload enable bootsplash-hide-when-booted.service || true
+	chroot_sdcard systemctl --no-reload enable bootsplash-show-on-shutdown.service || true
 	return 0
 }
 
@@ -793,7 +799,6 @@ function distros_options() {
 }
 
 function set_distribution_status() {
-
 	local distro_support_desc_filepath="${SRC}/${DISTRIBUTIONS_DESC_DIR}/${RELEASE}/support"
 	if [[ ! -f "${distro_support_desc_filepath}" ]]; then
 		exit_with_error "Distribution ${distribution_name} does not exist"
@@ -803,6 +808,7 @@ function set_distribution_status() {
 
 	[[ "${DISTRIBUTION_STATUS}" != "supported" ]] && [[ "${EXPERT}" != "yes" ]] && exit_with_error "Armbian ${RELEASE} is unsupported and, therefore, only available to experts (EXPERT=yes)"
 
+	return 0 # due to last stmt above being a shortcut conditional
 }
 
 adding_packages() {
@@ -1321,7 +1327,7 @@ prepare_host() {
 			display_alert "Installing build dependencies"
 			# don't prompt for apt cacher selection
 			sudo echo "apt-cacher-ng    apt-cacher-ng/tunnelenable      boolean false" | sudo debconf-set-selections
-			apt-get -q update  2>&1
+			apt-get -q update 2>&1
 
 			# @TODO: DO NOT COMMIT THIS
 			display_alert "NOT upgrading host-side packages" "apt upgrade" "wrn"
@@ -1492,8 +1498,11 @@ download_and_verify() {
 		return
 	fi
 
+	# allow errors here, too hackish to actually handle them
+	set +e
+
 	# switch to china mirror if US timeouts
-	timeout 10 curl --head --fail --silent ${server}${remotedir}/${filename} 2>&1 > /dev/null
+	timeout 10 curl --head --fail --silent "${server}${remotedir}/${filename}" 2>&1 > /dev/null || true
 	if [[ $? -ne 7 && $? -ne 22 && $? -ne 0 ]]; then
 		display_alert "Timeout from $server" "retrying" "info"
 		server="https://mirrors.tuna.tsinghua.edu.cn/armbian-releases/"
@@ -1505,6 +1514,8 @@ download_and_verify() {
 			server="https://mirrors.bfsu.edu.cn/armbian-releases/"
 		fi
 	fi
+
+	set -e # Back to normal
 
 	# check if file exists on remote server before running aria2 downloader
 	[[ ! $(timeout 10 curl --head --fail --silent ${server}${remotedir}/${filename}) ]] && return

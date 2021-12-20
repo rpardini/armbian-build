@@ -11,6 +11,16 @@ cleanup_list() {
 	echo ${list_to_clean}
 }
 
+function main_error_monitor() {
+	trap - ERR # remove this trap
+	local stacktrace
+	stacktrace="$(get_extension_hook_stracktrace "${BASH_SOURCE[*]}" "${BASH_LINENO[*]}" || true)"
+	display_alert "main_error_monitor! '$*'" "${stacktrace}" "err"
+	show_caller_full >&2 || true
+	display_alert "main_error_monitor2! '$*'" "${stacktrace}" "err"
+	exit 46
+}
+
 # This does NOT run under the logging manager. We should invoke the do_with_logging wrapper for
 # strategic parts of this. Attention: build_rootfs_image does it's own logging, so just let that be.
 main_default_build_single() {
@@ -22,6 +32,9 @@ main_default_build_single() {
 	if [[ "${JUST_INIT}" == "yes" ]]; then
 		exit 0
 	fi
+
+	trap 'main_error_monitor $?' ERR
+
 
 	if [[ $CLEAN_LEVEL == *sources* ]]; then
 		cleaning "sources"

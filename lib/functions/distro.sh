@@ -418,6 +418,8 @@ POST_INSTALL_KERNEL_DEBS
 	# copy boot splash images
 	cp "${SRC}"/packages/blobs/splash/armbian-u-boot.bmp "${SDCARD}"/boot/boot.bmp
 
+	display_alert "Running tweaks" "$BOARD :: $LINUXFAMILY" "info"
+
 	# execute $LINUXFAMILY-specific tweaks
 	[[ $(type -t family_tweaks) == function ]] && family_tweaks
 
@@ -428,13 +430,13 @@ It allows implementors access to the rootfs (`${SDCARD}`) in its pristine state 
 FAMILY_TWEAKS
 
 	# enable additional services
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable armbian-firstrun.service >/dev/null 2>&1"
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable armbian-firstrun-config.service >/dev/null 2>&1"
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable armbian-zram-config.service >/dev/null 2>&1"
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable armbian-hardware-optimize.service >/dev/null 2>&1"
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable armbian-ramlog.service >/dev/null 2>&1"
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable armbian-resize-filesystem.service >/dev/null 2>&1"
-	chroot "${SDCARD}" /bin/bash -c "systemctl --no-reload enable armbian-hardware-monitor.service >/dev/null 2>&1"
+	chroot_sdcard systemctl --no-reload enable armbian-firstrun.service || true
+	chroot_sdcard systemctl --no-reload enable armbian-firstrun-config.service || true
+	chroot_sdcard systemctl --no-reload enable armbian-zram-config.service || true
+	chroot_sdcard systemctl --no-reload enable armbian-hardware-optimize.service || true
+	chroot_sdcard systemctl --no-reload enable armbian-ramlog.service || true
+	chroot_sdcard systemctl --no-reload enable armbian-resize-filesystem.service || true
+	chroot_sdcard systemctl --no-reload enable armbian-hardware-monitor.service || true
 
 	# copy "first run automated config, optional user configured"
 	cp "${SRC}"/packages/bsp/armbian_first_run.txt.template "${SDCARD}"/boot/armbian_first_run.txt.template

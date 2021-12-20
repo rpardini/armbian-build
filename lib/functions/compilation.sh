@@ -300,16 +300,16 @@ compile_uboot() {
 		chmod 755 "$uboottempdir/${uboot_name}/DEBIAN/postinst"
 	fi
 
-	# declare -f on non-defined function does not do anything
-	cat <<- EOF > "$uboottempdir/${uboot_name}/usr/lib/u-boot/platform_install.sh" 2>&1
+	# declare -f on non-defined function does not do anything (but exits with errors, so ignore them with "|| true")
+	cat <<- EOF > "$uboottempdir/${uboot_name}/usr/lib/u-boot/platform_install.sh"
 		DIR=/usr/lib/$uboot_name
-		$(declare -f write_uboot_platform)
-		$(declare -f write_uboot_platform_mtd)
-		$(declare -f setup_write_uboot_platform)
+		$(declare -f write_uboot_platform || true)
+		$(declare -f write_uboot_platform_mtd || true)
+		$(declare -f setup_write_uboot_platform || true)
 	EOF
 
 	# set up control file
-	cat <<- EOF > "$uboottempdir/${uboot_name}/DEBIAN/control" 2>&1
+	cat <<- EOF > "$uboottempdir/${uboot_name}/DEBIAN/control"
 		Package: linux-u-boot-${BOARD}-${BRANCH}
 		Version: $REVISION
 		Architecture: $ARCH
@@ -485,6 +485,7 @@ compile_kernel() {
 	cp "${SRC}"/patch/misc/headers-debian-byteshift.patch /tmp
 
 	display_alert "Kernel configuration" "${LINUXCONFIG}" "info"
+
 	if [[ $KERNEL_CONFIGURE != yes ]]; then
 		if [[ $BRANCH == default ]]; then
 			run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
@@ -492,7 +493,9 @@ compile_kernel() {
 		else
 			# TODO: check if required
 			run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
-				make "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" olddefconfig
+				make "ARCH=$ARCHITECTURE" "CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" olddefconfig || {
+				exit_with_error "Error kernel olddefconfig"
+			}
 		fi
 	else
 		run_host_command_logged CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${PATH}" \
@@ -560,10 +563,11 @@ compile_kernel() {
 		"ARCH=$ARCHITECTURE" \
 		"DEBFULLNAME=\"$MAINTAINER\"" \
 		"DEBEMAIL=\"$MAINTAINERMAIL\"" \
-		"CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\""
+		"CROSS_COMPILE=\"$CCACHE $KERNEL_COMPILER\"" || {
+		exit_with_error "Failure during kernel packaging" "@host"
+	}
 
 	display_alert "Package building done" "${LINUXCONFIG} $kernel_packaging_target" "info"
-	set -x
 
 	cd .. || exit
 	# remove firmware image packages here - easier than patching ~40 packaging scripts at once
@@ -574,7 +578,7 @@ compile_kernel() {
 	display_alert "Update Kernel hashes" "${LINUXCONFIG} $kernel_packaging_target" "info"
 
 	# store git hash to the file and create a change log
-	HASHTARGET="${SRC}/cache/hash$([[ ${BETA} == yes ]] && echo "-beta")/linux-image-${BRANCH}-${LINUXFAMILY}"
+	HASHTARGET="${SRC}/cache/hash$([[ ${BETA} == yes ]] && echo "-beta" || true)/linux-image-${BRANCH}-${LINUXFAMILY}"
 	OLDHASHTARGET=$(head -1 "${HASHTARGET}.githash" 2> /dev/null || true)
 
 	# check if OLDHASHTARGET commit exists otherwise use oldest
@@ -813,11 +817,12 @@ compile_xilinx_bootgen() {
 
 grab_version() {
 	local ver=()
-	ver[0]=$(grep "^VERSION" "${1}"/Makefile | head -1 | awk '{print $(NF)}' | grep -oE '^[[:digit:]]+')
-	ver[1]=$(grep "^PATCHLEVEL" "${1}"/Makefile | head -1 | awk '{print $(NF)}' | grep -oE '^[[:digit:]]+')
-	ver[2]=$(grep "^SUBLEVEL" "${1}"/Makefile | head -1 | awk '{print $(NF)}' | grep -oE '^[[:digit:]]+')
-	ver[3]=$(grep "^EXTRAVERSION" "${1}"/Makefile | head -1 | awk '{print $(NF)}' | grep -oE '^-rc[[:digit:]]+')
+	ver[0]=$(grep "^VERSION" "${1}"/Makefile | head -1 | awk '{print $(NF)}' | grep -oE '^[[:digit:]]+' || true)
+	ver[1]=$(grep "^PATCHLEVEL" "${1}"/Makefile | head -1 | awk '{print $(NF)}' | grep -oE '^[[:digit:]]+' || true)
+	ver[2]=$(grep "^SUBLEVEL" "${1}"/Makefile | head -1 | awk '{print $(NF)}' | grep -oE '^[[:digit:]]+' || true)
+	ver[3]=$(grep "^EXTRAVERSION" "${1}"/Makefile | head -1 | awk '{print $(NF)}' | grep -oE '^-rc[[:digit:]]+' || true)
 	echo "${ver[0]:-0}${ver[1]:+.${ver[1]}}${ver[2]:+.${ver[2]}}${ver[3]}"
+	return 0
 }
 
 # find_toolchain <compiler_prefix> <expression>

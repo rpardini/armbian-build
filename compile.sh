@@ -13,7 +13,8 @@
 # use configuration files like config-default.conf to set the build configuration
 # check Armbian documentation https://docs.armbian.com/ for more info
 
-set +e
+set -e # disallow errors
+set -o errtrace # error trace
 
 SRC="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
@@ -238,6 +239,7 @@ while [[ "${1}" == *=* ]]; do
 	eval "$parameter=\"$value\""
 done
 
+set -e # no errors...
 if [[ "${BUILD_ALL}" == "yes" || "${BUILD_ALL}" == "demo" ]]; then
 	do_main_build_all_ng
 else

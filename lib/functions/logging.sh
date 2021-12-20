@@ -131,6 +131,8 @@ display_alert() {
 	if [[ "${CI}" == "true" ]] && [[ "${ci_log}" != "" ]]; then
 		echo "::${ci_log} ::" "$@" >&2
 	fi
+
+	return 0 # make sure to exit with success, always
 }
 
 function logging_echo_prefix_for_pv() {

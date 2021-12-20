@@ -74,6 +74,7 @@ umount_chroot_recursive() {
 # unmount_on_exit
 #
 unmount_on_exit() {
+	trap - ERR           # Also remove any error trap. it's too late for that.
 	set +e               # we just wanna plow through this, ignoring errors.
 	trap - INT TERM EXIT # remove the trap
 
@@ -111,7 +112,7 @@ unmount_on_exit() {
 		exit_with_error "generic error during build_rootfs_image: ${stacktrace}" || true # but don't trigger error again
 	fi
 
-	return 0 # exit successfully. we're already handling a trap here.
+	return 47 # trap returns error. # exit successfully. we're already handling a trap here.
 }
 
 # check_loop_device <device_node>
