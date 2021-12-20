@@ -243,7 +243,7 @@ function chroot_custom_long_running() {
 	local target=$1
 	shift
 	local _exit_code=1
-	if [[ "${SHOW_LOG}" == "yes" ]]; then
+	if [[ "${SHOW_LOG}" == "yes" ]] || [[ "${CI}" == "true" ]]; then
 		run_host_command_logged_raw chroot "${target}" /bin/bash -e -c "$*"
 		_exit_code=$?
 	else
@@ -265,7 +265,7 @@ function chroot_custom() {
 # so: _the stdout must flow_!!!
 function run_host_command_logged_long_running() {
 	local _exit_code=1
-	if [[ "${SHOW_LOG}" == "yes" ]]; then
+	if [[ "${SHOW_LOG}" == "yes" ]] || [[ "${CI}" == "true" ]]; then
 		run_host_command_logged_raw /bin/bash -e -c "$*"
 		_exit_code=$?
 	else
