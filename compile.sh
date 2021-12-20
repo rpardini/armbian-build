@@ -13,7 +13,7 @@
 # use configuration files like config-default.conf to set the build configuration
 # check Armbian documentation https://docs.armbian.com/ for more info
 
-set -e # disallow errors
+set -e          # disallow errors
 set -o errtrace # error trace
 
 SRC="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
@@ -42,18 +42,9 @@ fi
 
 # Source the meat of the build system.
 
-### Logging system
-# shellcheck source=functions/logging.sh
-source "${SRC}"/lib/functions/logging.sh # Logging subsystem.
-logging_init                             # and initialize it.
-
-### Single-build. This in turn sources most of everything else. Reusable.
 # shellcheck source=lib/single.sh
 source "${SRC}"/lib/single.sh
-
-### Multi-build. (sourced even if not used, for consistency)
-# shellcheck source=lib/functions/build-multi.sh
-source "${SRC}"/lib/functions/build-multi.sh
+logging_init # and initialize logging.
 
 check_args "$@"
 
