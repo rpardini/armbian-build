@@ -11,9 +11,9 @@ function do_capturing_defs() {
 
 	for onevar in ${new_vars_list}; do
 		# @TODO: rpardini: handle arrays and maps specially?
-		all_vars_array+=("$(declare -p "${onevar}" | tr "\n" " ")")
+		all_vars_array+=("$(declare -p "${onevar}")")
 	done
-	IFS=$'\n'
+	#IFS=$'\n'
 	CAPTURED_VARS="${all_vars_array[*]}"
 	#display_alert "Vars defined during ${*@Q}:" "${CAPTURED_VARS}" "debug"
 	unset all_vars_array post_exec_vars new_vars_list pre_exec_vars onevar join_by
