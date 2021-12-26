@@ -377,7 +377,7 @@ desktop/${RELEASE}/environments/${DESKTOP_ENVIRONMENT}/appgroups
 	# Dependent desktop packages
 	# Myy : Sources packages from file here
 
-	# Myy : FIXME Rename aggregate_all to aggregate_all_desktop
+	# Myy : FIXME Rename aggregate_all to aggregate_all_desktop # @TODO: rpardini: already done?
 	if [[ $BUILD_DESKTOP == "yes" ]]; then
 		PACKAGE_LIST_DESKTOP+="$(one_line aggregate_all_desktop "packages" " ")"
 		echo -e "\nGroups selected ${DESKTOP_APPGROUPS_SELECTED} -> PACKAGES :" >> "${LOG_OUTPUT_FILE}"
