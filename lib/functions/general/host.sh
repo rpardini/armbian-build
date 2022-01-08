@@ -394,7 +394,8 @@ install_pkg_deb() {
 	# This is necessary first when there is no apt cache.
 	if $need_upgrade; then
 		apt-get -q update || echo "apt cannot update" >> $tmp_file
-		apt-get -y upgrade || echo "apt cannot upgrade" >> $tmp_file
+		# @TODO: DO NOT PR THIS
+		#apt-get -y upgrade || echo "apt cannot upgrade" >> $tmp_file
 	fi
 
 	# If the package is not installed, check the latest
@@ -423,7 +424,8 @@ install_pkg_deb() {
 	if [ -n "$for_install" ]; then
 		if $need_autoup; then
 			apt-get -q update
-			apt-get -y upgrade
+			# @TODO: do NOT PR this
+			#apt-get -y upgrade
 		fi
 		apt-get install -qq -y --no-install-recommends $for_install
 		echo -e "\nPackages installed:" >> $log_file
