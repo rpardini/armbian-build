@@ -163,6 +163,10 @@ config_pre_install_distribution_specific__preserve_pristine_etc_systemd() {
 }
 
 pre_customize_image__restore_preserved_systemd_and_netplan_stuff() {
+	# Enable motd, that is disabled in distro-agnostic because will enabled by firstrun.
+	# cloud-init has no firstrun, but I want motd, so
+	chmod +x "${SDCARD}"/etc/update-motd.d/*
+
 	# Restore some stuff we preserved in config_pre_install_distribution_specific()
 	cp -p "${SDCARD}"/etc/systemd.orig/journald.conf "${SDCARD}"/etc/systemd/journald.conf
 	if [[ "${CLOUD_INIT_USE_NETPLAN}" == "yes" ]]; then
