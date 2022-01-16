@@ -15,27 +15,30 @@ BOOTPATCHDIR="u-boot-rockchip64"
 PACKAGE_LIST_FAMILY="ethtool"
 
 RKBIN_DIR="$SRC/cache/sources/rkbin-tools"
+if [ "$(uname -m)" = "aarch64" ]; then
+	case "$(lsb_release -sc)" in
+		"bullseye" | "focal" | "hirsute" | "impish" | "jammy")
+			PKG_PREFIX="qemu-x86_64-static -L /usr/x86_64-linux-gnu "
+			;;
+		*)
+			PKG_PREFIX="qemu-x86_64 -L /usr/x86_64-linux-gnu "
+			;;
+	esac
+else
+	PKG_PREFIX=""
+fi
 
-#BOOT_SOC=`expr $BOOTCONFIG : '.*\(rk[[:digit:]]\+.*\)_.*'`
-BOOT_SOC=${BOOT_SOC:=$(expr $BOOTCONFIG : '.*\(rk[[:digit:]]\+.*\)_.*')}
-
-CPUMIN=${CPUMIN:="408000"}
+BOOT_SOC=$(expr $BOOTCONFIG : '.*\(rk[[:digit:]]\+.*\)_.*')
 
 if [[ $BOOT_SOC == rk3399 ]]; then
 
+	CPUMIN=${CPUMIN:="408000"}
 	CPUMAX=${CPUMAX:="2016000"}
 
-elif [[ $BOOT_SOC == rk3328 || $BOOT_SOC == rk3308 ]]; then
+else # rk3308, rk3328
 
+	CPUMIN=${CPUMIN:="408000"}
 	CPUMAX=${CPUMAX:="1296000"}
-
-elif [[ "${BOOT_SOC}" == rk3566 ]]; then
-
-	CPUMAX=${CPUMAX:="1800000"}
-
-elif [[ "${BOOT_SOC}" == rk3568 ]]; then
-
-	CPUMAX=${CPUMAX:="1992000"}
 
 fi
 
@@ -60,18 +63,6 @@ elif [[ $BOOT_SOC == rk3399pro ]]; then
 	MINILOADER_BLOB='rk33/rk3399pro_miniloader_v1.26.bin'
 	BL31_BLOB='rk33/rk3399pro_bl31_v1.35.elf'
 
-elif [[ $BOOT_SOC == rk3566 ]]; then
-
-	BOOT_SCENARIO="${BOOT_SCENARIO:=spl-blobs}"
-	DDR_BLOB='rk35/rk3566_ddr_1056MHz_v1.10.bin'
-	BL31_BLOB='rk35/rk3568_bl31_v1.29.elf'
-
-elif [[ $BOOT_SOC == rk3568 ]]; then
-
-	BOOT_SCENARIO="${BOOT_SCENARIO:=spl-blobs}"
-	DDR_BLOB='rk35/rk3568_ddr_1560MHz_v1.10.bin'
-	BL31_BLOB='rk35/rk3568_bl31_v1.28.elf'
-
 elif [[ $BOARD == rockpi-s ]]; then
 
 	BOOT_SCENARIO="${BOOT_SCENARIO:=only-blobs}"
@@ -89,23 +80,24 @@ fi
 
 case $BRANCH in
 
-current)
+	current)
 
-	KERNELBRANCH="branch:linux-5.15.y"
-	KERNELBRANCH="tag:v5.15.35"
-	KERNELPATCHDIR='rockchip64-'$BRANCH
-	LINUXFAMILY=rockchip64
-	LINUXCONFIG='linux-rockchip64-'$BRANCH
-	;;
+		KERNELBRANCH="branch:linux-5.15.y"
+		KERNELBRANCH="tag:v5.15.35"
+		KERNELPATCHDIR='rockchip64-'$BRANCH
+		LINUXFAMILY=rockchip64
+		LINUXCONFIG='linux-rockchip64-'$BRANCH
+		;;
 
-edge)
+	edge)
 
-	KERNELPATCHDIR='rockchip64-'$BRANCH
-	KERNELBRANCH="branch:linux-5.18.y"
-	LINUXFAMILY=rockchip64
-	LINUXCONFIG='linux-rockchip64-'$BRANCH
+		KERNELPATCHDIR='rockchip64-'$BRANCH
+		KERNELBRANCH="branch:linux-5.17.y"
+		KERNELBRANCH="tag:v5.17.5"
+		LINUXFAMILY=rockchip64
+		LINUXCONFIG='linux-rockchip64-'$BRANCH
 
-	;;
+		;;
 
 esac
 
@@ -160,7 +152,7 @@ uboot_custom_postprocess() {
 
 		local tempfile=$(mktemp)
 		tools/mkimage -n $BOOT_SOC -T rksd -d $RKBIN_DIR/$DDR_BLOB idbloader.bin
-		cat $RKBIN_DIR/$MINILOADER_BLOB >>idbloader.bin
+		cat $RKBIN_DIR/$MINILOADER_BLOB >> idbloader.bin
 		$PKG_PREFIX$RKBIN_DIR/tools/loaderimage --pack --uboot ./u-boot-dtb.bin uboot.img 0x200000
 		$PKG_PREFIX$RKBIN_DIR/tools/trust_merger --replace bl31.elf $RKBIN_DIR/$BL31_BLOB trust.ini
 
@@ -180,18 +172,18 @@ uboot_custom_postprocess() {
 write_uboot_platform() {
 	if [[ -f $1/rksd_loader.img ]]; then # legacy rk3399 loader
 
-		dd if=$1/rksd_loader.img of=$2 seek=64 conv=notrunc status=none >/dev/null 2>&1
+		dd if=$1/rksd_loader.img of=$2 seek=64 conv=notrunc status=none > /dev/null 2>&1
 
 	elif [[ -f $1/u-boot.itb ]]; then # $BOOT_SCENARIO == "blobless" || $BOOT_SCENARIO == "tpl-spl-blob"
 
-		dd if=$1/idbloader.img of=$2 seek=64 conv=notrunc status=none >/dev/null 2>&1
-		dd if=$1/u-boot.itb of=$2 seek=16384 conv=notrunc status=none >/dev/null 2>&1
+		dd if=$1/idbloader.img of=$2 seek=64 conv=notrunc status=none > /dev/null 2>&1
+		dd if=$1/u-boot.itb of=$2 seek=16384 conv=notrunc status=none > /dev/null 2>&1
 
 	elif [[ -f $1/uboot.img ]]; then # $BOOT_SCENARIO == "only-blobs"
 
-		dd if=$1/idbloader.bin of=$2 seek=64 conv=notrunc status=none >/dev/null 2>&1
-		dd if=$1/uboot.img of=$2 seek=16384 conv=notrunc status=none >/dev/null 2>&1
-		dd if=$1/trust.bin of=$2 seek=24576 conv=notrunc status=none >/dev/null 2>&1
+		dd if=$1/idbloader.bin of=$2 seek=64 conv=notrunc status=none > /dev/null 2>&1
+		dd if=$1/uboot.img of=$2 seek=16384 conv=notrunc status=none > /dev/null 2>&1
+		dd if=$1/trust.bin of=$2 seek=24576 conv=notrunc status=none > /dev/null 2>&1
 
 	else
 		echo "Unsupported u-boot processing configuration!"
@@ -203,7 +195,7 @@ write_uboot_platform() {
 write_uboot_platform_mtd() {
 	if [[ -f $1/rkspi_loader.img ]]; then
 
-		dd if=$1/rkspi_loader.img of=$2 conv=notrunc status=none >/dev/null 2>&1
+		dd if=$1/rkspi_loader.img of=$2 conv=notrunc status=none > /dev/null 2>&1
 
 	else
 
@@ -220,8 +212,8 @@ setup_write_uboot_platform() {
 		local tmp=$(cat /proc/cmdline)
 		tmp="${tmp##*ubootpart=}"
 		tmp="${tmp%% *}"
-		[[ -n $tmp ]] && local part=$(findfs PARTUUID=$tmp 2>/dev/null)
-		[[ -n $part ]] && local dev=$(lsblk -n -o PKNAME $part 2>/dev/null)
+		[[ -n $tmp ]] && local part=$(findfs PARTUUID=$tmp 2> /dev/null)
+		[[ -n $part ]] && local dev=$(lsblk -n -o PKNAME $part 2> /dev/null)
 		[[ -n $dev ]] && DEVICE="/dev/$dev"
 
 	fi
@@ -238,7 +230,7 @@ family_tweaks() {
 
 		# rename USB based network to lan0
 		mkdir -p $SDCARD/etc/udev/rules.d/
-		echo 'SUBSYSTEM=="net", ACTION=="add", DRIVERS=="r8152", KERNEL=="eth1", NAME="lan0"' >$SDCARD/etc/udev/rules.d/70-rename-lan.rules
+		echo 'SUBSYSTEM=="net", ACTION=="add", DRIVERS=="r8152", KERNEL=="eth1", NAME="lan0"' > $SDCARD/etc/udev/rules.d/70-rename-lan.rules
 
 	elif [[ $BOARD == helios64 ]]; then
 
@@ -270,6 +262,8 @@ family_tweaks() {
 		cp -R $SRC/packages/blobs/rtl8723bt_fw/* $SDCARD/lib/firmware/rtl_bt/
 		cp -R $SRC/packages/blobs/station/firmware/* $SDCARD/lib/firmware/
 		if [[ $BRANCH == legacy && ($BOARD == station-m1) ]]; then
+			cp $SRC/packages/blobs/rtl8723bt_fw/rtl8723ds_config.bin $SDCARD/lib/firmware/rtlbt/rtl8723d_config
+			cp $SRC/packages/blobs/rtl8723bt_fw/rtl8723ds_fw.bin $SDCARD/lib/firmware/rtlbt/rtl8723d_fw
 			install -m 755 $SRC/packages/bsp/rk3328/m1/rtk_hciattach $SDCARD/usr/bin/rtk_hciattach
 			sed -e 's/exit 0//g' -i $SDCARD/etc/rc.local
 			echo "su -c '/usr/bin/rtk_hciattach -n -s 115200 /dev/ttyS2 rtk_h5 &'" >> $SDCARD/etc/rc.local
@@ -284,45 +278,13 @@ family_tweaks_bsp() {
 
 	if [[ $BOOTCONFIG == *3328* ]] && [[ $BRANCH != legacy ]]; then
 		mkdir -p "$destination"/etc/X11/xorg.conf.d
-		cat <<-EOF >"$destination"/etc/X11/xorg.conf.d/02-driver.conf
+		cat <<- EOF > "$destination"/etc/X11/xorg.conf.d/02-driver.conf
 			# set fbdev as default driver.
 			Section "Device"
 			         Identifier "NOGPU"
 			         Driver "fbdev"
 			EndSection
 		EOF
-	fi
-
-	if [[ $BOARD == clockworkpi-a06 ]]; then
-		# rotate screen & disable dpms
-		mkdir -p "$destination"/etc/X11/xorg.conf.d
-		cat <<-EOF >"$destination"/etc/X11/xorg.conf.d/10-monitor.conf
-			# set monitor
-			Section "Monitor"
-			        Identifier "DSI-1"
-			        Option "Rotate" "right"
-			        Option "DPMS" "false"
-			EndSection
-
-			Section "ServerLayout"
-			        Identifier "ServerLayout0"
-			        Option "BlankTime"  "0"
-			        Option "StandbyTime" "0"
-			        Option "SuspendTime" "0"
-			        Option "OffTime" "0"
-			EndSection
-		EOF
-		# fan support
-		install -Dm644 $SRC/packages/bsp/clockworkpi-a06/temp_fan_daemon_a06.py $destination/usr/share/clockworkpi-a06-fan-daemon/bin/temp_fan_daemon_a06.py
-		cp $SRC/packages/bsp/clockworkpi-a06/clockworkpi-a06-fan-daemon.service $destination/lib/systemd/system/
-
-		# alsa-ucm-conf profile for DevTerm A06
-		mkdir -p $destination/usr/share/alsa/ucm2/Rockchip/es8388
-		install -Dm644 $SRC/packages/bsp/clockworkpi-a06/es8388.conf $destination/usr/share/alsa/ucm2/Rockchip/es8388/es8388.conf
-		install -Dm644 $SRC/packages/bsp/clockworkpi-a06/HiFi.conf $destination/usr/share/alsa/ucm2/Rockchip/es8388/HiFi.conf
-		mkdir -p $destination/usr/share/alsa/ucm2/conf.d/simple-card
-		ln -sfv /usr/share/alsa/ucm2/Rockchip/es8388/es8388.conf \
-			$destination/usr/share/alsa/ucm2/conf.d/simple-card/rockchip,es8388-codec.conf
 	fi
 
 	if [[ $BOARD == z28pro ]]; then
