@@ -5,4 +5,3 @@ BUILD_DESKTOP="no"
 BOOTCONFIG="A33-OLinuXino_defconfig"
 OVERLAY_PREFIX="sun8i-a33"
 KERNEL_TARGET="legacy,current,edge"
-
