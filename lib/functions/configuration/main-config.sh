@@ -386,6 +386,7 @@ desktop/${RELEASE}/environments/${DESKTOP_ENVIRONMENT}/appgroups
 	unset aggregated_content
 
 	# @TODO: rpardini: this has to stop. refactor this into array or dict-based and stop the madness.
+	# @TODO: rpardini: this is pressing. many errors originate here.
 	if [[ -n $PACKAGE_LIST_RM ]]; then
 		# Turns out that \b can be tricked by dashes.
 		# So if you remove mesa-utils but still want to install "mesa-utils-extra"
