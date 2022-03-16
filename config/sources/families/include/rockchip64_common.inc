@@ -88,6 +88,14 @@ fi
 
 case $BRANCH in
 
+	classic)
+		export KERNEL_MAJOR_MINOR="5.10" # Major and minor versions of this kernel.
+		KERNELBRANCH="branch:linux-5.10.y"
+		KERNELPATCHDIR='archive/rockchip64-5.10'
+		LINUXFAMILY=rockchip64
+		LINUXCONFIG='linux-rockchip64-classic'
+		;;
+
 	current)
 
 		export KERNEL_MAJOR_MINOR="5.15" # Major and minor versions of this kernel.
@@ -289,8 +297,8 @@ family_tweaks_bsp() {
 		cat <<- EOF > "$destination"/etc/X11/xorg.conf.d/02-driver.conf
 			# set fbdev as default driver.
 			Section "Device"
-		         Identifier "NOGPU"
-		         Driver "fbdev"
+				Identifier "NOGPU"
+				Driver "fbdev"
 			EndSection
 		EOF
 	fi
