@@ -2,10 +2,10 @@ function extension_prepare_config__prepare_vlc_remote() {
 	display_alert "Adding VLC remote" "${EXTENSION}" "info"
 
 	# DISABLED: we use PulseAudio, but alsa-utils is essential for startup scrips and mixer fixups
-	# local PULSEAUDIO_PACKAGES="pulseaudio pavucontrol pulseaudio-module-bluetooth pulseaudio-module-zeroconf pulseaudio-utils"
+	local PULSEAUDIO_PACKAGES="pulseaudio pavucontrol pulseaudio-module-bluetooth pulseaudio-module-zeroconf pulseaudio-utils"
 
-	local VLC_PACKAGES="vlc vlc-plugin-access-extra xauth avahi-daemon libnss-mdns" # Disabled:  ${PULSEAUDIO_PACKAGES}
-	local EXTRA_PACKAGES="cloud-initramfs-growroot bluez"                           # this will grow root partition during initrd before mounting it
+	local VLC_PACKAGES="vlc vlc-plugin-access-extra xauth avahi-daemon libnss-mdns ${PULSEAUDIO_PACKAGES}"
+	local EXTRA_PACKAGES="cloud-initramfs-growroot bluez" # this will grow root partition during initrd before mounting it
 
 	export PACKAGE_LIST="${PACKAGE_LIST} ${VLC_PACKAGES} ${EXTRA_PACKAGES}" # To cached rootfs.
 
@@ -35,7 +35,7 @@ function pre_customize_image__060_vlc_service() {
 	chroot_sdcard adduser --quiet --gecos "VLC" --disabled-password --ingroup "vlc" --shell /bin/bash "vlc"
 	chroot_sdcard adduser "vlc" "video"
 	chroot_sdcard adduser "vlc" "audio"
-	# Disabled: chroot_sdcard adduser "vlc" "pulse-access"
+	chroot_sdcard adduser "vlc" "pulse-access"
 
 	declare WANTED_DEVICES_LIST="" WANTED_DEVICE=""
 	WANTED_DEVICES_LIST="$(echo -n "${VLC_WANTED_DEVICES}" | tr "," " ")"
@@ -80,9 +80,8 @@ function pre_customize_image__060_vlc_service() {
 	cat <<- EOD > "${SDCARD}/usr/lib/systemd/system/vlc.service"
 		[Unit]
 		Description=VLC
-		After=syslog.target audio.target
-		Requires=network.target
-		# Disabled: pulseaudio.service
+		After=syslog.target audio.target pulseaudio.service
+		Requires=network.target pulseaudio.service
 		StartLimitIntervalSec=0
 
 		[Service]
@@ -126,8 +125,7 @@ function pre_customize_image__065_add_media() {
 }
 
 # Setup pulseaudio system daemon. Always running and takes control of audio devices. Allows for Bluetooth audio.
-# @TODO: DISABLED, vlc now goes straight to ALSA
-function DISABLED_pre_customize_image__050_pulseaudio_system_wide() {
+function pre_customize_image__050_pulseaudio_system_wide() {
 	display_alert "Adding PulseAudio systemd service for VLC" "${EXTENSION}" "info"
 
 	# @TODO: possibly split pulseaudio off to its own extension. it's very useful for other stuff as well
@@ -146,8 +144,6 @@ function DISABLED_pre_customize_image__050_pulseaudio_system_wide() {
 		[Service]
 		ExecStart=/usr/bin/pulseaudio --system --disallow-exit --exit-idle-time=-1 --disable-shm --enable-memfd --verbose
 		Restart=on-failure
-		#Environment=PULSE_STATE_PATH=/storage/.config/pulse
-		#Environment=PULSE_CONFIG_PATH=/storage/.config/pulse
 
 		[Install]
 		WantedBy=multi-user.target
