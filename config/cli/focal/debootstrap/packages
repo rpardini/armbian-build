@@ -3,7 +3,6 @@ bzip2
 ca-certificates
 console-setup
 cpio
-crda
 cron
 dbus
 dbus-user-session
@@ -23,7 +22,6 @@ locales
 logrotate
 netbase
 netcat-openbsd
-rng-tools
 rsync
 rsyslog
 sudo
