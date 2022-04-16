@@ -1,0 +1,46 @@
+# Rockchip RK3568 quad core 4GB-8GB GBE PCIe USB3 SATA NVMe
+BOARD_NAME="ODROID M1"
+BOARDFAMILY="rk3568-odroid"                                  # Vendor kernel, has its own family. Uses rockchip64_common for most stuff.
+BOOT_SOC="rk3568"                                            # This determined BOOT_SCENARIO et al.
+BOOTCONFIG="odroid_rk3568_nomtd_defconfig"                   # This is patched on top of HK's defconfig, disabling SPI-NOR MTD, so we can boot from SD/eMMC directly
+KERNEL_TARGET="legacy"                                       # Only vendor kernel supported for now
+BOOT_FDT_FILE="rockchip/rk3568-odroid-m1.dtb"                # HK's DTB, quite incomplete, eg: there's no SPI-NOR support, etc.
+SRC_EXTLINUX="yes"                                           # Use extlinux, I don't wanna be writing bootscript for this
+ALLOW_EXTLINUX="yes"                                         # Allow extlinux.
+SRC_CMDLINE="console=tty0 console=ttyS02,1500000 loglevel=7" # Console on uart and HDMI, very high verbosity on uart
+ASOUND_STATE="asound.state.station-m2"                       # @TODO: probably should fix this later.
+IMAGE_PARTITION_TABLE="gpt"                                  # HK's bootloader in SPI requires GPT partition table.
+USE_HOOK_FOR_PARTITION=yes                                   # HK's bootloader requires a special partition for uboot, we do our own custom partitioning in create_partition_table() hook below
+EXTRA_ROOTFS_MIB_SIZE=512                                    # Compensate a bit for wasted space.
+DDR_BLOB="rk35/rk3568_ddr_1560MHz_v1.10.bin"                 # Real blob, is actually used. in rkbin repository. HK uses 1.09, 1.10 seems to work just as well.
+BL31_BLOB="rk35/rk356x_usbplug_v1.10.bin--FAKE"              # Not really used for anything, as the name proves.
+FULL_DESKTOP="yes"
+BOOT_LOGO="desktop"
+
+# @TODO: rpardini. lazy hack. call HK/RK's make.sh. That uses its own rkbins.
+function build_custom_uboot__odroidm1() {
+	export EXTENSION_BUILT_UBOOT="no, but is prepared" # Armbian still will build after this
+	display_alert "Preparing custom u-boot" "ODROID-M1" "info"
+	# @TODO: those use rkbin tools which are x86-only; they're pulled via git submodule.
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh odroid_rk3568
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --spl
+}
+
+# This is for compatibility with ODROID's default SPL in SPI-NOR flash, it looks for GPT partition labelled "uboot" to load 2nd stage u-boot from.
+# See https://wiki.odroid.com/odroid-m1/software/building_u-boot#installation_to_memory_card_directly
+# They do it via CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION=y, CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION=1 and CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION_NAME="uboot"
+# Armbian u-boot is patched to also try for the sector, but that is not the case with the SPL that is already in SPI.
+function create_partition_table__odroidm1_gpt_uboot() {
+	display_alert "Creating partition table" "odroidm1; rootstart=${rootstart}" "info"
+	rootpart=2 # rootfs is now the second partition
+	run_host_command_logged parted -s "${SDCARD}.raw" -- "mkpart uboot ext4 ${rootstart}s 32MiB"
+	run_host_command_logged parted -s "${SDCARD}.raw" -- "mkpart rootfs ext4 32MiB 100%"
+}
+
+# Hack alert: this only runs during build, not on the device.
+function post_write_uboot_platform__write_uboot_to_partition() {
+	local uboot_partition
+	uboot_partition="$(run_host_command_logged blkid | grep "^${LOOP}p" | grep 'PARTLABEL="uboot"' | cut -d ":" -f 1)"
+	display_alert "Writing u-boot to HardKernel-compatible GPT uboot partition" "odroidm1 - ${uboot_partition}" "info"
+	run_host_command_logged dd "if=${UBOOT_CHROOT_DIR}/u-boot.itb" "of=${uboot_partition}" conv=notrunc status=none
+}
