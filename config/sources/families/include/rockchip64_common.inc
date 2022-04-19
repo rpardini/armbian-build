@@ -142,6 +142,20 @@ prepare_boot_configuration() {
 	elif [[ $BOOT_SCENARIO == "spl-blobs" ]]; then
 
 		display_alert "BOOT Scenario is" "spl-blobs" "debug"
+		# here is the full invocation
+		# make clean; git clean -x -f -d; cp /root/configs_odroid_rk3568_nomtd_defconfig configs/odroid_rk3568_nomtd_defconfig; make odroid_rk3568_nomtd_defconfig; cp /opt/build_armbian/extensions/cache/sources/u-boot/odroidm1-v2017.09/rkbin/bin/rk35/rk3568_bl32_v1.05.bin tee.bin; cp /opt/build_armbian/extensions/cache/sources/u-boot/odroidm1-v2017.09/rkbin/bin/rk35/rk3568_bl31_v1.28.elf bl31.elf; make  V=1 BL31=/opt/build_armbian/extensions/cache/sources/rkbin-tools/rk35/rk356x_usbplug_v1.10.bin--FAKE all u-boot.dtb spl/u-boot-spl.bin u-boot.itb  CROSS_COMPILE="ccache aarch64-linux-gnu-"; echo $?
+		# full full, without rkbin
+		# make clean; git reset --hard; git clean -x -f -d; git submodule init; git submodule update; mv rkbin fodase; cp /root/configs_odroid_rk3568_nomtd_defconfig configs/odroid_rk3568_nomtd_defconfig; make odroid_rk3568_nomtd_defconfig; cp /opt/build_armbian/extensions/cache/sources/u-boot/odroidm1-v2017.09/fodase/bin/rk35/rk3568_bl32_v1.05.bin tee.bin; cp /opt/build_armbian/extensions/cache/sources/u-boot/odroidm1-v2017.09/fodase/bin/rk35/rk3568_bl31_v1.28.elf bl31.elf; make  V=1 BL31=/opt/build_armbian/extensions/cache/sources/rkbin-tools/rk35/rk356x_usbplug_v1.10.bin--FAKE all u-boot.dtb spl/u-boot-spl.bin u-boot.itb  CROSS_COMPILE="ccache aarch64-linux-gnu-"; echo $?
+
+		# To produce uboot.itb we need
+		# cp /opt/build_armbian/extensions/cache/sources/u-boot/odroidm1-v2017.09/rkbin/bin/rk35/rk3568_bl31_v1.28.elf bl31.elf
+		# cp /opt/build_armbian/extensions/cache/sources/u-boot/odroidm1-v2017.09/rkbin/bin/rk35/rk3568_bl32_v1.05.bin tee.bin
+
+		# This reads like:
+		# 1) run make with "spl/u-boot-spl.bin u-boot.dtb u-boot.itb" targets and a BL31 parameter
+		# 2) small detour, into spl-blobs variant of uboot_custom_postprocess() below, which uses the $DDR_BLOB and spl/u-boot-spl.bin to produce idbloader.img
+		# 3) copy both the idbloader.img (created by 2) and u-boot.itb (created by 1) files, without renaming them, directly to the output.
+		# 4) long detour to write_uboot_platform(), which writes idbloadder.img offset 64, and u-boot.itb offset 16384.
 		UBOOT_TARGET_MAP="BL31=$RKBIN_DIR/$BL31_BLOB spl/u-boot-spl.bin u-boot.dtb u-boot.itb;;idbloader.img u-boot.itb"
 		ATFSOURCE=''
 		ATF_COMPILE='no'
