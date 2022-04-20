@@ -110,11 +110,12 @@ process_patch_file() {
 			# Fix the dates on the patched files
 			set_files_modification_time "${patch_date}" "${patched_files[@]}"
 			display_alert "* $status ${relative_patch}" "" "info"
+			mark_fasthash_done "${patch_date}" # will do git commit, associate fasthash to real hash, using given date.
 		} || {
 			display_alert "* $status ${relative_patch}" "failed" "wrn"
+			mark_fasthash_failed "${patch_date}" # will not do git commit.
 			[[ $EXIT_PATCHING_ERROR == yes ]] && exit_with_error "Aborting due to" "EXIT_PATCHING_ERROR"
 		}
-		mark_fasthash_done # will do git commit, associate fasthash to real hash.
 	fi
 
 	return 0 # short-circuit above, avoid exiting with error
