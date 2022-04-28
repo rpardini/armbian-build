@@ -154,11 +154,12 @@ function pre_customize_image__071_setup_nm_dispatcher() {
 function board_side_nm_dispatcher() {
 	# Only act when Hotspot or WifiClient, and when 'up' or 'down'. Blinking on up, off when down.
 	# Restart avahi to workaround a long-standing bug.
-	declare restart_avahi="yes"
+	declare restart_avahi="yes" notify_cs="no"
 	case "${CONNECTION_ID}-${NM_DISPATCHER_ACTION}" in
 		WifiClient-up)
 			board_side_log "WifiClient is up!"
 			board_side_led green blink
+			notify_cs="yes"
 			;;
 		WifiClient-down)
 			board_side_log "WifiClient is down!"
@@ -181,6 +182,12 @@ function board_side_nm_dispatcher() {
 	if [[ "${restart_avahi}" == "yes" ]]; then
 		board_side_log "Restarting avahi from nmdispatcher."
 		systemctl --no-block restart avahi-daemon.service || board_side_log "Failed to restart avahi"
+	fi
+
+	if [[ "${notify_cs}" == "yes" ]]; then
+		board_side_log "Notifying CCS about Wifi being up, for sync."
+		cs_notify_out="$(curl --max-time 1 "http://localhost:8081/sync" 2>&1 || true)"
+		board_side_log "Notify CCS output: ${cs_notify_out}"
 	fi
 
 	exit 0
@@ -335,6 +342,10 @@ function board_side_improv_wifi_connect() {
 # 11 - Hotspot is setup but not connected
 # 55 - Unknown
 function board_side_improv_wifi_status() {
+	# First, log the iw status, for channel debugging etc.
+	declare iw_debug="$({ iw dev || true; } | tr "\t" " " | tr "\n" ";")"
+	board_side_log "Wifi IW debugging info: '${iw_debug}'"
+
 	if [[ ! -f /etc/NetworkManager/system-connections/WifiClient.nmconnection ]]; then
 		board_side_log "No Wifi config, checking hotspot for status"
 		if nmcli --get-values TYPE,NAME,STATE,ACTIVE,DEVICE,TIMESTAMP connection show | grep "802-11-wireless:Hotspot:activated:yes"; then

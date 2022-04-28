@@ -28,7 +28,7 @@ function extension_prepare_config__prepare_vlc_remote() {
 # Add vlc user to pulse-access group for pulseaudio access.
 # Setup systemd unit for cvlc
 
-function pre_customize_image__060_vlc_service() {
+function pre_customize_image__005_vlc_service() {
 	display_alert "Adding VLC user and group" "${EXTENSION}" "info"
 
 	chroot_sdcard addgroup --quiet "vlc"
@@ -105,31 +105,6 @@ function pre_customize_image__060_vlc_service() {
 	EOD
 	chroot_sdcard systemctl enable vlc.service
 
-}
-
-# Hack, add media to /media from the host.
-function pre_customize_image__065_add_media() {
-	local host_src="${VLC_MEDIA_HOST_PATH}"
-	local device_dest="${VLC_MEDIA_DEVICE_PATH}"
-
-	if [[ "${host_src}" == "" ]] && [[ "${device_dest}" == "" ]]; then
-		display_alert "VLC: no media found" "Set VLC_MEDIA_HOST_PATH and VLC_MEDIA_DEVICE_PATH" "warn"
-		#display_alert "Adding sample S3M media" "${EXTENSION}" "warn"
-		#run_host_command_logged wget -O "${SDCARD}${device_dest}"/PANIC.S3M "https://api.modarchive.org/downloads.php?moduleid=52695#PANIC.S3M"
-		#run_host_command_logged wget -O "${SDCARD}${device_dest}"/2NDPM.S3M "https://api.modarchive.org/downloads.php?moduleid=60395#2ND_PM.S3M"
-		return 0
-	fi
-
-	mkdir -p "${SDCARD}${device_dest}"
-	if [[ -d "${host_src}" ]]; then
-		display_alert "Adding media from host's ${host_src}" "${EXTENSION}" "info"
-		run_host_command_logged cp -rvp "${host_src}"/* "${SDCARD}${device_dest}"/
-	else
-		display_alert "Missing media at host's ${host_src}" "${EXTENSION}" "warn"
-	fi
-
-	display_alert "Making media folder owned by vlc" "${EXTENSION}" "info"
-	chroot_sdcard chown -v -R vlc:vlc "${device_dest}"
 }
 
 # Setup pulseaudio system daemon. Always running and takes control of audio devices. Allows for Bluetooth audio.
