@@ -1,0 +1,78 @@
+Module                  Size  Used by
+tls                   106496  0
+xt_MASQUERADE          20480  2
+xt_mark                16384  6
+nft_compat             20480  8
+nft_chain_nat          16384  2
+nf_nat                 49152  2 nft_chain_nat,xt_MASQUERADE
+nf_conntrack          163840  2 nf_nat,xt_MASQUERADE
+nf_defrag_ipv6         24576  1 nf_conntrack
+nf_defrag_ipv4         16384  1 nf_conntrack
+nft_counter            16384  19
+nf_tables             208896  49 nft_compat,nft_counter,nft_chain_nat
+nfnetlink              20480  2 nft_compat,nf_tables
+algif_hash             20480  1
+algif_skcipher         20480  1
+af_alg                 32768  6 algif_hash,algif_skcipher
+bnep                   32768  2
+governor_performance    16384  0
+btusb                  61440  0
+btrtl                  24576  1 btusb
+btbcm                  28672  1 btusb
+btintel                45056  1 btusb
+bluetooth             655360  28 btrtl,btintel,btbcm,bnep,btusb
+dw_hdmi_i2s_audio      16384  0
+dw_hdmi_cec            16384  0
+snd_soc_hdmi_codec     24576  1
+snd_usb_audio         311296  1
+snd_usbmidi_lib        36864  1 snd_usb_audio
+snd_hwdep              20480  1 snd_usb_audio
+snd_rawmidi            40960  1 snd_usbmidi_lib
+snd_seq_device         20480  1 snd_rawmidi
+rtw88_8822ce           16384  0
+rtw88_8822c           471040  1 rtw88_8822ce
+rtw88_pci              28672  1 rtw88_8822ce
+rtw88_core            151552  2 rtw88_pci,rtw88_8822c
+snd_soc_simple_card    24576  0
+mac80211              897024  2 rtw88_pci,rtw88_core
+snd_soc_simple_card_utils    28672  1 snd_soc_simple_card
+snd_soc_rockchip_i2s    20480  2
+panfrost               69632  0
+gpu_sched              49152  1 panfrost
+snd_soc_core          262144  4 snd_soc_hdmi_codec,snd_soc_simple_card_utils,snd_soc_rockchip_i2s,snd_soc_simple_card
+hantro_vpu            114688  0
+rockchip_iep           20480  0
+rockchip_rga           24576  0
+snd_pcm_dmaengine      20480  1 snd_soc_core
+rockchip_vdec          32768  0
+videobuf2_dma_sg       20480  1 rockchip_rga
+videobuf2_vmalloc      20480  1 hantro_vpu
+v4l2_h264              16384  2 rockchip_vdec,hantro_vpu
+cfg80211              884736  2 rtw88_core,mac80211
+videobuf2_dma_contig    24576  3 rockchip_vdec,hantro_vpu,rockchip_iep
+snd_pcm               135168  5 snd_usb_audio,snd_soc_hdmi_codec,snd_soc_core,snd_pcm_dmaengine
+v4l2_mem2mem           40960  4 rockchip_vdec,hantro_vpu,rockchip_rga,rockchip_iep
+videobuf2_memops       20480  3 videobuf2_vmalloc,videobuf2_dma_contig,videobuf2_dma_sg
+snd_timer              40960  1 snd_pcm
+snd                    94208  10 snd_seq_device,snd_hwdep,snd_usb_audio,snd_usbmidi_lib,snd_soc_hdmi_codec,snd_timer,snd_soc_core,snd_pcm,snd_rawmidi
+videobuf2_v4l2         32768  5 rockchip_vdec,hantro_vpu,rockchip_rga,rockchip_iep,v4l2_mem2mem
+videobuf2_common       61440  10 rockchip_vdec,videobuf2_vmalloc,videobuf2_dma_contig,videobuf2_v4l2,hantro_vpu,rockchip_rga,videobuf2_dma_sg,rockchip_iep,v4l2_mem2mem,videobuf2_memops
+soundcore              16384  1 snd
+videodev              253952  7 rockchip_vdec,videobuf2_v4l2,hantro_vpu,rockchip_rga,videobuf2_common,rockchip_iep,v4l2_mem2mem
+rfkill                 36864  5 bluetooth,cfg80211
+fusb302                28672  0
+tcpm                   65536  1 fusb302
+libarc4                16384  1 mac80211
+mc                     61440  7 rockchip_vdec,videodev,snd_usb_audio,videobuf2_v4l2,hantro_vpu,videobuf2_common,v4l2_mem2mem
+cpufreq_dt             20480  0
+typec                  61440  1 tcpm
+sunrpc                589824  1
+sch_fq_codel           24576  3
+ip_tables              32768  0
+x_tables               49152  4 nft_compat,ip_tables,xt_MASQUERADE,xt_mark
+autofs4                45056  2
+realtek                32768  1
+dwmac_rk               28672  0
+stmmac_platform        24576  1 dwmac_rk
+stmmac                237568  2 stmmac_platform,dwmac_rk
+pcs_xpcs               24576  1 stmmac
