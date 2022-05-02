@@ -245,6 +245,7 @@ function board_side_apply_autoconfig() {
 
 	# Feed the vendor info... VENDOR_INFO_DIR is set by launcher.
 	mkdir -p "${VENDOR_INFO_DIR}"
+	touch "${VENDOR_INFO_DIR}/${VENDOR_INFO_MARKER_FILE}"
 
 	# Always set the name, which is a file.
 	rm -f "${VENDOR_INFO_DIR}"/*.name || true
@@ -599,6 +600,7 @@ function helper_function2script() {
 		#set -x # GLOBAL DEBUG
 		export PRODUCT_VENDOR="${PRODUCT_VENDOR}"
 		export VENDOR_INFO_DIR="${VENDOR_INFO_DIR}"
+		export VENDOR_INFO_MARKER_FILE="${VENDOR_INFO_MARKER_FILE}"
 		export VENDOR_AVAHI_NAME="${VENDOR_AVAHI_NAME}"
 		export BOARD="${BOARD}"
 		board_side_log "SCRIPT: ${function_name} STARTING..."
