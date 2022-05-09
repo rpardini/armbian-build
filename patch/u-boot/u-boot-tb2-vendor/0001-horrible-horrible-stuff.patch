@@ -1,0 +1,80 @@
+From 00a4f619db0299a396255a558fd69e91160b8f71 Mon Sep 17 00:00:00 2001
+From: root <root@nullpointer.fritz.box>
+Date: Mon, 9 May 2022 22:40:03 +0200
+Subject: [PATCH] horrible horrible stuff
+
+---
+ arch/arm/dts/Makefile |  8 --------
+ make.sh               | 13 +++++++++++--
+ 2 files changed, 11 insertions(+), 10 deletions(-)
+
+diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
+index 594614a2c6..b1aab33dd1 100644
+--- a/arch/arm/dts/Makefile
++++ b/arch/arm/dts/Makefile
+@@ -28,11 +28,9 @@ dtb-$(CONFIG_EXYNOS5) += exynos5250-arndale.dtb \
+ 	exynos5422-odroidxu3.dtb
+ dtb-$(CONFIG_EXYNOS7420) += exynos7420-espresso7420.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
+-	rk3036-sdk.dtb \
+ 	rk3066a-mk808.dtb \
+ 	rk3126-evb.dtb \
+ 	rk3128-evb.dtb \
+-	rk3188-radxarock.dtb \
+ 	rk3288-evb.dtb \
+ 	rk3288-fennec.dtb \
+ 	rk3288-firefly.dtb \
+@@ -46,12 +44,6 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
+ 	rk3288-veyron-minnie.dtb \
+ 	rk3288-vyasa.dtb \
+ 	rk3308-evb.dtb \
+-	rk3328-evb.dtb \
+-	rk3368-lion.dtb \
+-	rk3368-sheep.dtb \
+-	rk3368-geekbox.dtb \
+-	rk3368-px5-evb.dtb \
+-	rk3399-evb.dtb \
+ 	rk3399-firefly.dtb \
+ 	rk3399-puma-ddr1333.dtb \
+ 	rk3399-puma-ddr1600.dtb \
+diff --git a/make.sh b/make.sh
+index 201d54df1b..2b9dbc1e61 100755
+--- a/make.sh
++++ b/make.sh
+@@ -68,8 +68,8 @@ NM_ARM32=arm-linux-gnueabihf-nm
+ NM_ARM64=aarch64-linux-gnu-nm
+ GCC_ARM32=arm-linux-gnueabihf-
+ GCC_ARM64=aarch64-linux-gnu-
+-TOOLCHAIN_ARM32=../prebuilts/gcc/linux-x86/arm/gcc-linaro-6.3.1-2017.05-x86_64_arm-linux-gnueabihf/bin
+-TOOLCHAIN_ARM64=../prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin
++TOOLCHAIN_ARM32="" #../prebuilts/gcc/linux-x86/arm/gcc-linaro-6.3.1-2017.05-x86_64_arm-linux-gnueabihf/bin
++TOOLCHAIN_ARM64="" #../prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin
+
+ ########################################### User not touch #############################################
+ # Declare global INI file searching index name for every chip, update in select_chip_info()
+@@ -273,6 +273,13 @@ function process_args()
+
+ function select_toolchain()
+ {
++			TOOLCHAIN_NM=${NM_ARM64}
++			TOOLCHAIN_GCC=${GCC_ARM64}
++			TOOLCHAIN_OBJDUMP=${OBJ_ARM64}
++			TOOLCHAIN_ADDR2LINE=${ADDR2LINE_ARM64}
++	echo "HACKED toolchain"
++	return 0
++
+ 	if grep -q '^CONFIG_ARM64=y' .config ; then
+ 		if [ -d ${TOOLCHAIN_ARM64} ]; then
+ 			absolute_path=$(cd `dirname ${TOOLCHAIN_ARM64}`; pwd)
+@@ -780,6 +787,8 @@ select_ini_file
+ handle_args_late
+ sub_commands
+ clean_files
++set -x
+ make PYTHON=python2 CROSS_COMPILE=${TOOLCHAIN_GCC} all --jobs=${JOB}
++set +x
+ pack_images
+ finish
+--
+2.32.0
+

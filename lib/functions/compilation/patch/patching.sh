@@ -18,6 +18,7 @@
 # $SRC/patch/<dest>/<family>
 #
 advanced_patch() {
+	display_alert "advanced_patch:" "$*" "debug"
 	local dest=$1
 	local family=$2
 	local board=$3

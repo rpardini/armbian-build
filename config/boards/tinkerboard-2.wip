@@ -6,9 +6,13 @@ KERNEL_TARGET="classic,current,edge"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
 BOOT_FDT_FILE="rockchip/rk3399-tinker-2.dtb"
-BOOT_SCENARIO="blobless"
+BOOT_SOC="rk3399" # This determined BOOT_SCENARIO et al.
+#BOOT_SCENARIO="blobless"
 SERIALCON="ttyS2"
 BOARD_FIRMWARE_INSTALL="-full" # Install full firmware, for rtl8822ce firmware and others
+
+DDR_BLOB="rk35/rk3568_ddr_1560MHz_v1.10.bin-NOTEXISTS" # Real blob, is actually used. in rkbin repository. HK uses 1.09, 1.10 seems to work just as well.
+BL31_BLOB="rk35/rk356x_usbplug_v1.10.bin--FAKE"        # Not really used for anything, as the name proves.
 
 function post_family_config__tb2_vendor_kernel() {
 	:
@@ -16,6 +20,11 @@ function post_family_config__tb2_vendor_kernel() {
 
 		legacy)
 			display_alert "Applying legacy kernel config" "tinkerboard-2" "warn"
+
+			BOOTSOURCE='https://github.com/TinkerBoard2/u-boot.git'
+			BOOTBRANCH='branch:linux4.4-rk3399-debian10'
+			BOOTPATCHDIR="u-boot-tb2-vendor"
+
 			KERNELDIR='linux-tb2-vendor'
 			KERNELSOURCE='https://github.com/TinkerBoard2/kernel.git'
 			#export KERNEL_MAJOR_MINOR="4.19" # Major and minor versions of this kernel.
@@ -33,4 +42,26 @@ function post_family_config__tb2_vendor_kernel() {
 
 	esac
 
+}
+
+# @TODO: rpardini. lazy hack. call RK's make.sh. That uses its own rkbins.
+function build_custom_uboot__tb2() {
+	export EXTENSION_BUILT_UBOOT="no, but is prepared" # Armbian still will build after this
+	display_alert "Preparing custom u-boot" "TB2" "warn"
+
+	# Patch first though, for fixes
+	advanced_patch "u-boot" "$BOOTPATCHDIR" "$BOARD" "" "$BRANCH" "${LINUXFAMILY}-${BOARD}-${BRANCH}"
+
+	git status || true
+
+	# @TODO: those use rkbin tools which are x86-only; they're pulled via git submodule.
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh tinker2
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --spl
+}
+
+declare -g UBOOT_GIT_SKIP_SUBMODULES="yes" # skip fetching submodules during uboot fetch
+function fetch_custom_uboot__tb2_vendor() {
+	display_alert "Fetching custom u-boot" "TB2: UBOOT_GIT_SKIP_SUBMODULES: '${UBOOT_GIT_SKIP_SUBMODULES}' BOOTDIR: '${BOOTDIR}'" "debug"
+	# Vendor source has bizarre submodule reference to it's own rkbins. Avoid with UBOOT_GIT_SKIP_SUBMODULES and fetch it ourselves.
+	fetch_from_repo "https://github.com/TinkerBoard2/rkbin.git" "${BOOTDIR}/linux4.4-rk3399-debian10/../rkbin" "branch:linux4.19-rk3399-debian10"
 }
