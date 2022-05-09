@@ -1,12 +1,17 @@
-From 00a4f619db0299a396255a558fd69e91160b8f71 Mon Sep 17 00:00:00 2001
+From 48c2757dcc148e01cab3392cbf625457ab981b6f Mon Sep 17 00:00:00 2001
 From: root <root@nullpointer.fritz.box>
 Date: Mon, 9 May 2022 22:40:03 +0200
 Subject: [PATCH] horrible horrible stuff
 
+lexer hack
+
+more hacks
 ---
- arch/arm/dts/Makefile |  8 --------
- make.sh               | 13 +++++++++++--
- 2 files changed, 11 insertions(+), 10 deletions(-)
+ arch/arm/dts/Makefile                |  8 --------
+ make.sh                              | 13 +++++++++++--
+ scripts/dtc/dtc-lexer.l              |  1 -
+ scripts/dtc/dtc-parser.tab.c_shipped |  1 -
+ 4 files changed, 11 insertions(+), 12 deletions(-)
 
 diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
 index 594614a2c6..b1aab33dd1 100644
@@ -75,6 +80,30 @@ index 201d54df1b..2b9dbc1e61 100755
 +set +x
  pack_images
  finish
+diff --git a/scripts/dtc/dtc-lexer.l b/scripts/dtc/dtc-lexer.l
+index fd825ebba6..24af549977 100644
+--- a/scripts/dtc/dtc-lexer.l
++++ b/scripts/dtc/dtc-lexer.l
+@@ -38,7 +38,6 @@ LINECOMMENT	"//".*\n
+ #include "srcpos.h"
+ #include "dtc-parser.tab.h"
+
+-YYLTYPE yylloc;
+ extern bool treesource_error;
+
+ /* CAUTION: this will stop working if we ever use yyless() or yyunput() */
+diff --git a/scripts/dtc/dtc-parser.tab.c_shipped b/scripts/dtc/dtc-parser.tab.c_shipped
+index aea514fa69..ad2a62f9f3 100644
+--- a/scripts/dtc/dtc-parser.tab.c_shipped
++++ b/scripts/dtc/dtc-parser.tab.c_shipped
+@@ -1202,7 +1202,6 @@ int yychar;
+ /* The semantic value of the lookahead symbol.  */
+ YYSTYPE yylval;
+ /* Location data for the lookahead symbol.  */
+-YYLTYPE yylloc
+ # if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
+   = { 1, 1, 1, 1 }
+ # endif
 --
 2.32.0
 
