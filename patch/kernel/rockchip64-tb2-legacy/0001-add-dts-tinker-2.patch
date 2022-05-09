@@ -1,0 +1,24 @@
+From c162a1306d4639dbef41f82be3d43c9afa5140d0 Mon Sep 17 00:00:00 2001
+From: root <root@nullpointer.fritz.box>
+Date: Mon, 9 May 2022 17:34:27 +0200
+Subject: [PATCH] add dts tinker-2
+
+---
+ arch/arm64/boot/dts/rockchip/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/rockchip/Makefile b/arch/arm64/boot/dts/rockchip/Makefile
+index bbba4717608e..9ee13a293b3f 100644
+--- a/arch/arm64/boot/dts/rockchip/Makefile
++++ b/arch/arm64/boot/dts/rockchip/Makefile
+@@ -65,6 +65,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-sapphire-excavator-edp-avb.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-sapphire-excavator-linux.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-sapphire-excavator-lp4-linux.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-tve1030g-avb.dtb
++dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-tinker_board_2.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399pro-evb-lp4-v11-linux.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399pro-evb-v10-linux.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399pro-evb-v11-linux.dtb
+-- 
+2.32.0
+
