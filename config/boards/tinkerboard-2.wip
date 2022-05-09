@@ -18,14 +18,16 @@ function post_family_config__tb2_vendor_kernel() {
 			display_alert "Applying legacy kernel config" "tinkerboard-2" "warn"
 			KERNELDIR='linux-tb2-vendor'
 			KERNELSOURCE='https://github.com/TinkerBoard2/kernel.git'
-			export KERNEL_MAJOR_MINOR="4.19" # Major and minor versions of this kernel.
-			KERNELBRANCH='branch:linux4.19-rk3399-debian10'
-			KERNELPATCHDIR='rockchip64-tb2-'$BRANCH
-			LINUXFAMILY="rockchip64-tb2-vendor"
-			LINUXCONFIG="rockchip64-tb2-vendor-legacy"
+			#export KERNEL_MAJOR_MINOR="4.19" # Major and minor versions of this kernel.
+			#KERNELBRANCH='branch:linux4.19-rk3399-debian10'
+			export KERNEL_MAJOR_MINOR="4.4" # Major and minor versions of this kernel.
+			KERNELBRANCH='branch:linux4.4-rk3399-debian10'
+			KERNELPATCHDIR='rockchip64-tb2o-'$BRANCH
+			LINUXFAMILY="rockchip64-tb2o-vendor"
+			LINUXCONFIG="rockchip64-tb2o-vendor-legacy"
 			BOOT_FDT_FILE="rockchip/rk3399-tinker_board_2.dtb"
-			SRC_EXTLINUX="yes"                                           # Use extlinux, I don't wanna be writing bootscript for this
-			ALLOW_EXTLINUX="yes"                                         # Allow extlinux.
+			SRC_EXTLINUX="yes"                                                                     # Use extlinux, I don't wanna be writing bootscript for this
+			ALLOW_EXTLINUX="yes"                                                                   # Allow extlinux.
 			SRC_CMDLINE="earlycon=uart8250,mmio32,0xff1a0000 swiotlb=1 console=ttyFIQ0 loglevel=7" # Console on uart and HDMI, very high verbosity on uart
 			;;
 

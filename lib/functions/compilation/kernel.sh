@@ -17,7 +17,7 @@ function run_kernel_make() {
 		"LOCALVERSION=-${LINUXFAMILY}" # Change the internal kernel version to include the family. Changing this causes recompiles # @TODO change to "localversion" file
 
 		"CROSS_COMPILE=${CCACHE} ${KERNEL_COMPILER}"                           # added as prefix to every compiler invocation by make
-		"KCFLAGS=-fdiagnostics-color=always -Wno-error=misleading-indentation" # Force GCC colored messages, downgrade misleading indentation to warning
+		"KCFLAGS=-fdiagnostics-color=always -Wno-error=misleading-indentation -Wno-error=array-bounds -Wno-error=restrict" # Force GCC colored messages, downgrade misleading indentation to warning
 
 		"SOURCE_DATE_EPOCH=${kernel_base_revision_ts}"        # https://reproducible-builds.org/docs/source-date-epoch/ and https://www.kernel.org/doc/html/latest/kbuild/reproducible-builds.html
 		"KBUILD_BUILD_TIMESTAMP=${kernel_base_revision_date}" # https://www.kernel.org/doc/html/latest/kbuild/kbuild.html#kbuild-build-timestamp
