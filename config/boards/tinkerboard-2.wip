@@ -7,12 +7,9 @@ FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
 BOOT_FDT_FILE="rockchip/rk3399-tinker-2.dtb"
 BOOT_SOC="rk3399" # This determined BOOT_SCENARIO et al.
-BOOT_SCENARIO="spl-blobs"
+BOOT_SCENARIO="only-blobs"
 SERIALCON="ttyS2"
 BOARD_FIRMWARE_INSTALL="-full" # Install full firmware, for rtl8822ce firmware and others
-
-DDR_BLOB="rk35/rk3568_ddr_1560MHz_v1.10.bin-NOTEXISTS" # Real blob, is actually used. in rkbin repository. HK uses 1.09, 1.10 seems to work just as well.
-BL31_BLOB="rk35/rk356x_usbplug_v1.10.bin--FAKE"        # Not really used for anything, as the name proves.
 
 function post_family_config__tb2_vendor_kernel() {
 	:
@@ -51,23 +48,24 @@ function build_custom_uboot__tb2() {
 	display_alert "Preparing custom u-boot" "TB2" "warn"
 
 	# Patch first though, for fixes
-	advanced_patch "u-boot" "$BOOTPATCHDIR" "$BOARD" "" "$BRANCH" "${LINUXFAMILY}-${BOARD}-${BRANCH}"
+	#advanced_patch "u-boot" "$BOOTPATCHDIR" "$BOARD" "" "$BRANCH" "${LINUXFAMILY}-${BOARD}-${BRANCH}"
 
-	git status || true
+	#git status || true
+	git clean -xfd # make it very clean
 
 	# install pyelftools
 	#curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
 	#python2 get-pip.py
 	#python2 -m pip install pyelftools
 
-	# @TODO: those use rkbin tools which are x86-only; they're pulled via git submodule.
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh tinker2
-	#KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --spl
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh uboot
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh loader
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh trust
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --idblock
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh itb # requires python2 pyelftools
+	## DISABLE ## # @TODO: those use rkbin tools which are x86-only; they're pulled via git submodule.
+	## DISABLE ## KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh tinker2
+	## DISABLE ## #KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --spl
+	## DISABLE ## KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh uboot
+	## DISABLE ## KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh loader
+	## DISABLE ## KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh trust
+	## DISABLE ## KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --idblock
+	## DISABLE ## KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh itb # requires python2 pyelftools
 
 	#display_alert "Showing make.sh help"
 	#KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --help || true
@@ -78,11 +76,30 @@ function build_custom_uboot__tb2() {
 		run_host_command_logged pwd
 		run_host_command_logged ls -laht || true
 		#run_host_command_logged cp -pv trust.img trust.bin
+
+		# 99% confident this is correct...
 		#run_host_command_logged cp -pv idblock.bin idbloader.bin
 
-		display_alert "mkimage for $BOOT_SOC with $BOOT_SCENARIO" "spl-blobs" "debug"
-		run_host_command_logged tools/mkimage -n $BOOT_SOC -T rksd -d /opt/build_armbian/extensions/cache/sources/u-boot/rkbin/bin/rk33/rk3399_ddr_800MHz_v1.26_115200.bin:spl/u-boot-spl.bin idbloader.img
+		#display_alert "mkimage for $BOOT_SOC with $BOOT_SCENARIO" "spl-blobs" "debug"
+		#run_host_command_logged tools/mkimage -n $BOOT_SOC -T rksd -d /opt/build_armbian/extensions/cache/sources/u-boot/rkbin/bin/rk33/rk3399_ddr_800MHz_v1.26_115200.bin:spl/u-boot-spl.bin idbloader.img
 
+		my_DDR_BLOB="/opt/build_armbian/extensions/cache/sources/u-boot/rkbin/bin/rk33/rk3399_ddr_800MHz_v1.26_115200.bin"
+		my_MINILOADER_BLOB="/opt/build_armbian/extensions/cache/sources/u-boot/rkbin/bin/rk33/rk3399_miniloader_v1.26.bin"
+		my_BL31_PATH="/opt/build_armbian/extensions/cache/sources/u-boot/rkbin/"
+
+		run_host_command_logged tools/mkimage -n $BOOT_SOC -T rksd -d "${my_DDR_BLOB}" idbloader.bin
+		cat "${my_MINILOADER_BLOB}" >> idbloader.bin
+		# above produces idbloader.bin
+
+		run_host_x86_binary_logged $RKBIN_DIR/tools/loaderimage --pack --uboot ./u-boot-dtb.bin uboot.img 0x200000 # produces uboot.img
+
+		run_host_command_logged cp -pv /opt/build_armbian/extensions/cache/sources/u-boot/rkbin/RKTRUST/RK3399TRUST.ini trust.ini
+
+		run_host_x86_binary_logged $RKBIN_DIR/tools/trust_merger --replace bl31.elf "${my_BL31_PATH}" trust.ini # produces trust.img
+
+		run_host_command_logged cp -pv trust.img trust.bin # this is mostly probably wrong
+
+		run_host_command_logged ls -laht || true
 
 	}
 
