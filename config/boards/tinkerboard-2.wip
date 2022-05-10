@@ -1,13 +1,13 @@
 # Rockchip RK3399 hexa core 2GB SoC GBe eMMC USB3 WiFi/BT
 BOARD_NAME="Tinker Board 2"
 BOARDFAMILY="rockchip64"
-BOOTCONFIG="tinker-2-rk3399_defconfig"
+BOOTCONFIG="tinker2_defconfig"
 KERNEL_TARGET="classic,current,edge"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
 BOOT_FDT_FILE="rockchip/rk3399-tinker-2.dtb"
 BOOT_SOC="rk3399" # This determined BOOT_SCENARIO et al.
-#BOOT_SCENARIO="blobless"
+BOOT_SCENARIO="only-blobs"
 SERIALCON="ttyS2"
 BOARD_FIRMWARE_INSTALL="-full" # Install full firmware, for rtl8822ce firmware and others
 
@@ -24,6 +24,7 @@ function post_family_config__tb2_vendor_kernel() {
 			BOOTSOURCE='https://github.com/TinkerBoard2/u-boot.git'
 			BOOTBRANCH='branch:linux4.4-rk3399-debian10'
 			BOOTPATCHDIR="u-boot-tb2-vendor"
+			BOOTCONFIG="tinker2_defconfig"
 
 			KERNELDIR='linux-tb2-vendor'
 			KERNELSOURCE='https://github.com/TinkerBoard2/kernel.git'
@@ -56,7 +57,23 @@ function build_custom_uboot__tb2() {
 
 	# @TODO: those use rkbin tools which are x86-only; they're pulled via git submodule.
 	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh tinker2
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --spl
+	#KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --spl
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh uboot
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh loader
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh trust
+
+	display_alert "Showing make.sh help"
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --help || true
+
+	run_host_command_logged ls -laht "|" head -30 || true
+
+	function uboot_custom_postprocess() {
+		run_host_command_logged pwd
+		run_host_command_logged ls -laht "|" head -20 || true
+		run_host_command_logged cp -pv trust.img trust.bin
+		run_host_command_logged cp -pv rk3399_loader_v1.26.126.bin idbloader.bin
+	}
+
 }
 
 declare -g UBOOT_GIT_SKIP_SUBMODULES="yes" # skip fetching submodules during uboot fetch

@@ -21,7 +21,7 @@ function compile_uboot_target() {
 
 	# needed for multiple targets and for calling compile_uboot directly
 	display_alert "${uboot_prefix} Checking out to clean sources" "{$BOOTSOURCEDIR} for ${target_make}"
-	git checkout -f -q HEAD # @TODO: this assumes way too much. should call the wrapper again, not directly
+	regular_git checkout -f -q HEAD # @TODO: this assumes way too much. should call the wrapper again, not directly
 
 	maybe_make_clean_uboot
 
@@ -73,7 +73,7 @@ function compile_uboot_target() {
 
 	display_alert "${uboot_prefix}Compiling u-boot" "${version} ${target_make}" "info"
 	export if_error_detail_message="${uboot_prefix}Failed to build u-boot ${version} ${target_make}"
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation" \
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation -Wno-error=address-of-packed-member" \
 		run_host_command_logged_long_running CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
 		make "$target_make" "$CTHREADS" "${cross_compile}"
 

@@ -122,6 +122,7 @@ case $BRANCH in
 esac
 
 prepare_boot_configuration() {
+	display_alert "prepare_boot_configuration called" "prepare_boot_configuration - rockchip64" "debug"
 	if [[ $BOOT_SCENARIO == "blobless" ]]; then
 
 		UBOOT_TARGET_MAP="BL31=bl31.bin idbloader.img u-boot.itb;;idbloader.img u-boot.itb"
@@ -148,6 +149,7 @@ prepare_boot_configuration() {
 
 	elif [[ $BOOT_SCENARIO == "only-blobs" ]]; then
 
+		display_alert "BOOT Scenario is" "only-blobs" "warn"
 		UBOOT_TARGET_MAP="u-boot-dtb.bin;;idbloader.bin uboot.img trust.bin"
 		ATFSOURCE=''
 		ATF_COMPILE='no'
