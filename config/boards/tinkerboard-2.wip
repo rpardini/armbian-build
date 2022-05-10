@@ -7,7 +7,7 @@ FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
 BOOT_FDT_FILE="rockchip/rk3399-tinker-2.dtb"
 BOOT_SOC="rk3399" # This determined BOOT_SCENARIO et al.
-BOOT_SCENARIO="only-blobs"
+BOOT_SCENARIO="spl-blobs"
 SERIALCON="ttyS2"
 BOARD_FIRMWARE_INSTALL="-full" # Install full firmware, for rtl8822ce firmware and others
 
@@ -55,23 +55,35 @@ function build_custom_uboot__tb2() {
 
 	git status || true
 
+	# install pyelftools
+	#curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+	#python2 get-pip.py
+	#python2 -m pip install pyelftools
+
 	# @TODO: those use rkbin tools which are x86-only; they're pulled via git submodule.
 	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh tinker2
 	#KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --spl
 	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh uboot
 	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh loader
 	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh trust
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --idblock
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=address-of-packed-member -Wno-error=maybe-uninitialized" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh itb # requires python2 pyelftools
 
-	display_alert "Showing make.sh help"
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --help || true
+	#display_alert "Showing make.sh help"
+	#KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation" PATH="/usr/bin/:${PATH}" run_host_command_logged ./make.sh --help || true
 
-	run_host_command_logged ls -laht "|" head -30 || true
+	run_host_command_logged ls -laht || true
 
 	function uboot_custom_postprocess() {
 		run_host_command_logged pwd
-		run_host_command_logged ls -laht "|" head -20 || true
-		run_host_command_logged cp -pv trust.img trust.bin
-		run_host_command_logged cp -pv rk3399_loader_v1.26.126.bin idbloader.bin
+		run_host_command_logged ls -laht || true
+		#run_host_command_logged cp -pv trust.img trust.bin
+		#run_host_command_logged cp -pv idblock.bin idbloader.bin
+
+		display_alert "mkimage for $BOOT_SOC with $BOOT_SCENARIO" "spl-blobs" "debug"
+		run_host_command_logged tools/mkimage -n $BOOT_SOC -T rksd -d /opt/build_armbian/extensions/cache/sources/u-boot/rkbin/bin/rk33/rk3399_ddr_800MHz_v1.26_115200.bin:spl/u-boot-spl.bin idbloader.img
+
+
 	}
 
 }
