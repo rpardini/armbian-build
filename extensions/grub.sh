@@ -1,13 +1,13 @@
 # This runs *after* user_config. Don't change anything not coming from other variables or meant to be configured by the user.
 function extension_prepare_config__prepare_flash_kernel() {
 	# Extension configuration defaults.
-	export DISTRO_GENERIC_KERNEL=${DISTRO_GENERIC_KERNEL:-no}                    # if yes, does not build our own kernel, instead, uses generic one from distro
-	export UEFI_GRUB_TERMINAL="${UEFI_GRUB_TERMINAL:-serial console}"            # 'serial' forces grub menu on serial console. empty to not include
-	export UEFI_GRUB_DISABLE_OS_PROBER="${UEFI_GRUB_DISABLE_OS_PROBER:-}"        # 'true' will disable os-probing, useful for SD cards.
-	export UEFI_GRUB_DISTRO_NAME="${UEFI_GRUB_DISTRO_NAME:-Armbian}"             # Will be used on grub menu display
-	export UEFI_GRUB_TIMEOUT=${UEFI_GRUB_TIMEOUT:-0}                             # Small timeout by default
-	export UEFI_ENABLE_BIOS_AMD64="${UEFI_ENABLE_BIOS_AMD64:-yes}"               # Enable BIOS too if target is amd64
-	export UEFI_EXPORT_KERNEL_INITRD="${UEFI_EXPORT_KERNEL_INITRD:-no}"          # Export kernel and initrd for direct kernel boot "kexec"
+	export DISTRO_GENERIC_KERNEL=${DISTRO_GENERIC_KERNEL:-no}             # if yes, does not build our own kernel, instead, uses generic one from distro
+	export UEFI_GRUB_TERMINAL="${UEFI_GRUB_TERMINAL:-serial console}"     # 'serial' forces grub menu on serial console. empty to not include
+	export UEFI_GRUB_DISABLE_OS_PROBER="${UEFI_GRUB_DISABLE_OS_PROBER:-}" # 'true' will disable os-probing, useful for SD cards.
+	export UEFI_GRUB_DISTRO_NAME="${UEFI_GRUB_DISTRO_NAME:-Armbian}"      # Will be used on grub menu display
+	export UEFI_GRUB_TIMEOUT=${UEFI_GRUB_TIMEOUT:-0}                      # Small timeout by default
+	export UEFI_ENABLE_BIOS_AMD64="${UEFI_ENABLE_BIOS_AMD64:-yes}"        # Enable BIOS too if target is amd64
+	export UEFI_EXPORT_KERNEL_INITRD="${UEFI_EXPORT_KERNEL_INITRD:-no}"   # Export kernel and initrd for direct kernel boot "kexec"
 	# User config overrides.
 	export BOOTCONFIG="none"                                                     # To try and convince lib/ to not build or install u-boot.
 	unset BOOTSOURCE                                                             # To try and convince lib/ to not build or install u-boot.
@@ -53,7 +53,6 @@ function extension_prepare_config__prepare_flash_kernel() {
 		unset KERNELSOURCE                 # This should make Armbian skip most stuff. At least, I hacked it to.
 		export INSTALL_ARMBIAN_FIRMWARE=no # Should skip build and install of Armbian-firmware.
 	else
-		export KERNELDIR="linux-uefi-${LINUXFAMILY}" # Avoid sharing a source tree with others, until we know it's safe.
 		# Don't install anything. Armbian handles everything.
 		DISTRO_KERNEL_PACKAGES=""
 		DISTRO_FIRMWARE_PACKAGES=""
@@ -76,6 +75,7 @@ post_family_tweaks_bsp__remove_uboot_grub() {
 pre_umount_final_image__remove_uboot_initramfs_hook_grub() {
 	# even if BSP still contained this (cached .deb), make sure by removing from ${MOUNT}
 	[[ -f "$MOUNT"/etc/initramfs/post-update.d/99-uboot ]] && rm -v "$MOUNT"/etc/initramfs/post-update.d/99-uboot
+	return 0 # shortcircuit above
 }
 
 pre_umount_final_image__install_grub() {
@@ -87,7 +87,7 @@ pre_umount_final_image__install_grub() {
 	rm -rf "$MOUNT"/boot/dtb* || true
 
 	# add config to disable os-prober, otherwise image will have the host's other OSes boot entries.
-	cat <<-grubCfgFragHostSide >>"${MOUNT}"/etc/default/grub.d/99-armbian-host-side.cfg
+	cat <<- grubCfgFragHostSide >> "${MOUNT}"/etc/default/grub.d/99-armbian-host-side.cfg
 		GRUB_DISABLE_OS_PROBER=true
 	grubCfgFragHostSide
 
@@ -96,14 +96,14 @@ pre_umount_final_image__install_grub() {
 
 	if [[ "${UEFI_GRUB_TARGET_BIOS}" != "" ]]; then
 		display_alert "Installing GRUB BIOS..." "${UEFI_GRUB_TARGET_BIOS} device ${LOOP}" ""
-		chroot "$chroot_target" /bin/bash -c "grub-install --verbose --target=${UEFI_GRUB_TARGET_BIOS} ${LOOP}" >>"$DEST"/"${LOG_SUBPATH}"/install.log 2>&1 || {
+		chroot_custom "$chroot_target" grub-install --target=${UEFI_GRUB_TARGET_BIOS} "${LOOP}" || {
 			exit_with_error "${install_grub_cmdline} failed!"
 		}
 	fi
 
-	local install_grub_cmdline="update-initramfs -c -k all && update-grub && grub-install --verbose --target=${UEFI_GRUB_TARGET} --no-nvram --removable" # nvram is global to the host, even across chroot. take care.
+	local install_grub_cmdline="update-initramfs -c -k all && update-grub && grub-install --target=${UEFI_GRUB_TARGET} --no-nvram --removable" # nvram is global to the host, even across chroot. take care.
 	display_alert "Installing GRUB EFI..." "${UEFI_GRUB_TARGET}" ""
-	chroot "$chroot_target" /bin/bash -c "$install_grub_cmdline" >>"$DEST"/"${LOG_SUBPATH}"/install.log 2>&1 || {
+	chroot_custom "$chroot_target" "$install_grub_cmdline" || {
 		exit_with_error "${install_grub_cmdline} failed!"
 	}
 
@@ -114,7 +114,7 @@ pre_umount_final_image__install_grub() {
 	root_uuid=$(blkid -s UUID -o value "${LOOP}p1") # get the uuid of the root partition, this has been transposed
 
 	# Create /boot/efi/EFI/BOOT/grub.cfg (EFI/ESP) which will load /boot/grub/grub.cfg (in the rootfs, generated by update-grub)
-	cat <<-grubEfiCfg >"${MOUNT}"/boot/efi/EFI/BOOT/grub.cfg
+	cat <<- grubEfiCfg > "${MOUNT}"/boot/efi/EFI/BOOT/grub.cfg
 		search.fs_uuid ${root_uuid} root
 		set prefix=(\$root)'/boot/grub'
 		configfile \$prefix/grub.cfg
@@ -129,34 +129,35 @@ pre_umount_final_image__900_export_kernel_and_initramfs() {
 		display_alert "Exporting Kernel and Initrd for" "kexec" "info"
 		# this writes to ${DESTIMG} directly, since debootstrap.sh will move them later.
 		# capture the $MOUNT/boot/vmlinuz and initrd and send it out ${DESTIMG}
-		cp "$MOUNT"/boot/vmlinuz-* "${DESTIMG}/${version}.kernel"
-		cp "$MOUNT"/boot/initrd.img-* "${DESTIMG}/${version}.initrd"
+		run_host_command_logged ls -la "${MOUNT}"/boot/vmlinuz-* "${MOUNT}"/boot/initrd.img-* || true
+		run_host_command_logged cp -pv "${MOUNT}"/boot/vmlinuz-* "${DESTIMG}/${version}.kernel" || true
+		run_host_command_logged cp -pv "${MOUNT}"/boot/initrd.img-* "${DESTIMG}/${version}.initrd" || true
 	fi
 }
 
 configure_grub() {
-	display_alert "GRUB EFI kernel cmdline" "console=${SERIALCON} distro=${UEFI_GRUB_DISTRO_NAME} timeout=${UEFI_GRUB_TIMEOUT}" ""
+	display_alert "GRUB EFI kernel cmdline" "console=${SERIALCON} distro=${UEFI_GRUB_DISTRO_NAME} timeout=${UEFI_GRUB_TIMEOUT} grub terminal=${UEFI_GRUB_TERMINAL}" ""
 
 	if [[ "_${SERIALCON}_" != "__" ]]; then
-		cat <<-grubCfgFrag >>"${MOUNT}"/etc/default/grub.d/98-armbian.cfg
+		cat <<- grubCfgFrag >> "${MOUNT}"/etc/default/grub.d/98-armbian.cfg
 			GRUB_CMDLINE_LINUX_DEFAULT="console=${SERIALCON}"        # extra Kernel cmdline is configured here
 		grubCfgFrag
 	fi
 
-	cat <<-grubCfgFrag >>"${MOUNT}"/etc/default/grub.d/98-armbian.cfg
+	cat <<- grubCfgFrag >> "${MOUNT}"/etc/default/grub.d/98-armbian.cfg
 		GRUB_TIMEOUT_STYLE=menu                                  # Show the menu with Kernel options (Armbian or -generic)...
 		GRUB_TIMEOUT=${UEFI_GRUB_TIMEOUT}                        # ... for ${UEFI_GRUB_TIMEOUT} seconds, then boot the Armbian default.
 		GRUB_DISTRIBUTOR="${UEFI_GRUB_DISTRO_NAME}"              # On GRUB menu will show up as "Armbian GNU/Linux" (will show up in some UEFI BIOS boot menu (F8?) as "armbian", not on others)
 	grubCfgFrag
 
 	if [[ "a${UEFI_GRUB_DISABLE_OS_PROBER}" != "a" ]]; then
-		cat <<-grubCfgFragHostSide >>"${MOUNT}"/etc/default/grub.d/98-armbian.cfg
+		cat <<- grubCfgFragHostSide >> "${MOUNT}"/etc/default/grub.d/98-armbian.cfg
 			GRUB_DISABLE_OS_PROBER=${UEFI_GRUB_DISABLE_OS_PROBER}
 		grubCfgFragHostSide
 	fi
 
 	if [[ "a${UEFI_GRUB_TERMINAL}" != "a" ]]; then
-		cat <<-grubCfgFragTerminal >>"${MOUNT}"/etc/default/grub.d/98-armbian.cfg
+		cat <<- grubCfgFragTerminal >> "${MOUNT}"/etc/default/grub.d/98-armbian.cfg
 			GRUB_TERMINAL="${UEFI_GRUB_TERMINAL}"
 		grubCfgFragTerminal
 	fi
