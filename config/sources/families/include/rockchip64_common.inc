@@ -105,22 +105,24 @@ fi
 
 case $BRANCH in
 
-current)
+	current)
 
-	KERNELBRANCH="branch:linux-5.15.y"
-	KERNELPATCHDIR='rockchip64-'$BRANCH
-	LINUXFAMILY=rockchip64
-	LINUXCONFIG='linux-rockchip64-'$BRANCH
-	;;
+		export KERNEL_MAJOR_MINOR="5.15" # Major and minor versions of this kernel.
+		KERNELBRANCH="branch:linux-5.15.y"
+		KERNELPATCHDIR='rockchip64-'$BRANCH
+		LINUXFAMILY=rockchip64
+		LINUXCONFIG='linux-rockchip64-'$BRANCH
+		;;
 
-edge)
+	edge)
 
-	KERNELPATCHDIR='rockchip64-'$BRANCH
-	KERNELBRANCH="branch:linux-5.18.y"
-	LINUXFAMILY=rockchip64
-	LINUXCONFIG='linux-rockchip64-'$BRANCH
+		KERNELPATCHDIR='rockchip64-'$BRANCH
+		export KERNEL_MAJOR_MINOR="5.18" # Major and minor versions of this kernel.
+		KERNELBRANCH="branch:linux-5.18.y"
+		LINUXFAMILY=rockchip64
+		LINUXCONFIG='linux-rockchip64-'$BRANCH
 
-	;;
+		;;
 
 esac
 
@@ -174,16 +176,16 @@ uboot_custom_postprocess() {
 	if [[ $BOOT_SCENARIO == "blobless" || $BOOT_SCENARIO == "tpl-spl-blob" ]]; then
 		:
 	elif [[ $BOOT_SCENARIO == "spl-blobs" || $BOOT_SCENARIO == "tpl-blob-atf-mainline" ]]; then
-
-		tools/mkimage -n $BOOT_SOC -T rksd -d $RKBIN_DIR/$DDR_BLOB:spl/u-boot-spl.bin idbloader.img
+		display_alert "mkimage for $BOOT_SOC with $BOOT_SCENARIO" "spl-blobs/tpl-blob-atf-mainline" "debug"
+		run_host_command_logged tools/mkimage -n $BOOT_SOC -T rksd -d $RKBIN_DIR/$DDR_BLOB:spl/u-boot-spl.bin idbloader.img
 
 	elif [[ $BOOT_SCENARIO == "only-blobs" ]]; then
 
 		local tempfile=$(mktemp)
-		tools/mkimage -n $BOOT_SOC -T rksd -d $RKBIN_DIR/$DDR_BLOB idbloader.bin
-		cat $RKBIN_DIR/$MINILOADER_BLOB >>idbloader.bin
-		$PKG_PREFIX$RKBIN_DIR/tools/loaderimage --pack --uboot ./u-boot-dtb.bin uboot.img 0x200000
-		$PKG_PREFIX$RKBIN_DIR/tools/trust_merger --replace bl31.elf $RKBIN_DIR/$BL31_BLOB trust.ini
+		run_host_command_logged tools/mkimage -n $BOOT_SOC -T rksd -d $RKBIN_DIR/$DDR_BLOB idbloader.bin
+		cat $RKBIN_DIR/$MINILOADER_BLOB >> idbloader.bin
+		run_host_x86_binary_logged $RKBIN_DIR/tools/loaderimage --pack --uboot ./u-boot-dtb.bin uboot.img 0x200000
+		run_host_x86_binary_logged $RKBIN_DIR/tools/trust_merger --replace bl31.elf $RKBIN_DIR/$BL31_BLOB trust.ini
 
 	else
 		echo "Unsupported u-boot processing configuration!"
@@ -213,32 +215,29 @@ uboot_custom_postprocess() {
 }
 
 write_uboot_platform() {
+	# This is run board-side too, so account for the non-existance of run_host_command_logged
+	local logging_prelude=""
+	[[ $(type -t run_host_command_logged) == function ]] && logging_prelude="run_host_command_logged"
+
 	if [[ -f $1/rksd_loader.img ]]; then # legacy rk3399 loader
-
-		dd if=$1/rksd_loader.img of=$2 seek=64 conv=notrunc status=none >/dev/null 2>&1
-
+		${logging_prelude} dd if=$1/rksd_loader.img of=$2 seek=64 conv=notrunc status=none
 	elif [[ -f $1/u-boot.itb ]]; then # $BOOT_SCENARIO == "blobless" || $BOOT_SCENARIO == "tpl-spl-blob"
-
-		dd if=$1/idbloader.img of=$2 seek=64 conv=notrunc status=none >/dev/null 2>&1
-		dd if=$1/u-boot.itb of=$2 seek=16384 conv=notrunc status=none >/dev/null 2>&1
-
+		${logging_prelude} dd if=$1/idbloader.img of=$2 seek=64 conv=notrunc status=none
+		${logging_prelude} dd if=$1/u-boot.itb of=$2 seek=16384 conv=notrunc status=none
 	elif [[ -f $1/uboot.img ]]; then # $BOOT_SCENARIO == "only-blobs"
-
-		dd if=$1/idbloader.bin of=$2 seek=64 conv=notrunc status=none >/dev/null 2>&1
-		dd if=$1/uboot.img of=$2 seek=16384 conv=notrunc status=none >/dev/null 2>&1
-		dd if=$1/trust.bin of=$2 seek=24576 conv=notrunc status=none >/dev/null 2>&1
-
+		${logging_prelude} dd if=$1/idbloader.bin of=$2 seek=64 conv=notrunc status=none
+		${logging_prelude} dd if=$1/uboot.img of=$2 seek=16384 conv=notrunc status=none
+		${logging_prelude} dd if=$1/trust.bin of=$2 seek=24576 conv=notrunc status=none
 	else
 		echo "Unsupported u-boot processing configuration!"
 		exit 1
-
 	fi
 }
 
 write_uboot_platform_mtd() {
 	if [[ -f $1/rkspi_loader.img ]]; then
 
-		dd if=$1/rkspi_loader.img of=$2 conv=notrunc status=none >/dev/null 2>&1
+		dd if=$1/rkspi_loader.img of=$2 conv=notrunc status=none > /dev/null 2>&1
 
 	else
 
@@ -255,8 +254,8 @@ setup_write_uboot_platform() {
 		local tmp=$(cat /proc/cmdline)
 		tmp="${tmp##*ubootpart=}"
 		tmp="${tmp%% *}"
-		[[ -n $tmp ]] && local part=$(findfs PARTUUID=$tmp 2>/dev/null)
-		[[ -n $part ]] && local dev=$(lsblk -n -o PKNAME $part 2>/dev/null)
+		[[ -n $tmp ]] && local part=$(findfs PARTUUID=$tmp 2> /dev/null)
+		[[ -n $part ]] && local dev=$(lsblk -n -o PKNAME $part 2> /dev/null)
 		[[ -n $dev ]] && DEVICE="/dev/$dev"
 
 	fi
@@ -273,7 +272,7 @@ family_tweaks() {
 
 		# rename USB based network to lan0
 		mkdir -p $SDCARD/etc/udev/rules.d/
-		echo 'SUBSYSTEM=="net", ACTION=="add", DRIVERS=="r8152", KERNEL=="eth1", NAME="lan0"' >$SDCARD/etc/udev/rules.d/70-rename-lan.rules
+		echo 'SUBSYSTEM=="net", ACTION=="add", DRIVERS=="r8152", KERNEL=="eth1", NAME="lan0"' > $SDCARD/etc/udev/rules.d/70-rename-lan.rules
 
 	elif [[ $BOARD == helios64 ]]; then
 
@@ -325,7 +324,7 @@ family_tweaks_bsp() {
 
 	if [[ $BOOTCONFIG == *3328* ]] && [[ $BRANCH != legacy ]]; then
 		mkdir -p "$destination"/etc/X11/xorg.conf.d
-		cat <<-EOF >"$destination"/etc/X11/xorg.conf.d/02-driver.conf
+		cat <<- EOF > "$destination"/etc/X11/xorg.conf.d/02-driver.conf
 			# set fbdev as default driver.
 			Section "Device"
 			         Identifier "NOGPU"
@@ -337,7 +336,7 @@ family_tweaks_bsp() {
 	if [[ $BOARD == clockworkpi-a06 ]]; then
 		# rotate screen & disable dpms
 		mkdir -p "$destination"/etc/X11/xorg.conf.d
-		cat <<-EOF >"$destination"/etc/X11/xorg.conf.d/10-monitor.conf
+		cat <<- EOF > "$destination"/etc/X11/xorg.conf.d/10-monitor.conf
 			# set monitor
 			Section "Monitor"
 			        Identifier "DSI-1"
@@ -387,7 +386,7 @@ family_tweaks_bsp() {
 	fi
 
 	if [[ $BOARD == orangepi4-lts ]]; then
-		
+
 		# Bluetooth on orangepi 4 LTS board is handled by a Spreadtrum (sprd) chip and requires
 		# a custom hciattach_opi binary, plus a systemd service to run it at boot time
 		install -m 755 $SRC/packages/bsp/rk3399/hciattach_opi $destination/usr/bin
