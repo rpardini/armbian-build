@@ -1,6 +1,6 @@
 # Rockchip RK3566 quad core 4GB-8GB GBE PCIe USB3
 BOARD_NAME="Quartz64 A"
-BOARDFAMILY="media"
+BOARDFAMILY="media" # rpardini's try with "pgwipeout" tree: BOARDFAMILY="rk356x-pgwipeout"
 BOOT_SOC="rk3568"
 BOOTCONFIG="quartz64-a-rk3566_defconfig"
 KERNEL_TARGET="current,edge"
