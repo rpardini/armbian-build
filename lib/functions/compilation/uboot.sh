@@ -74,7 +74,8 @@ function compile_uboot_target() {
 
 	display_alert "${uboot_prefix}Compiling u-boot" "${version} ${target_make}" "info"
 	export if_error_detail_message="${uboot_prefix}Failed to build u-boot ${version} ${target_make}"
-	KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation" \
+	CFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation -Wno-error=address-of-packed-member -Wno-error=int-conversion -Wno-error=int-in-bool-context -Wno-error=uninitialized -Wno-error=array-bounds -Wno-error=pedantic" \
+	KCFLAGS="-fdiagnostics-color=always -Wno-error=maybe-uninitialized -Wno-error=misleading-indentation -Wno-error=address-of-packed-member -Wno-error=int-conversion -Wno-error=int-in-bool-context -Wno-error=uninitialized -Wno-error=array-bounds -Wno-error=pedantic" \
 		run_host_command_logged_long_running CCACHE_BASEDIR="$(pwd)" PATH="${toolchain}:${toolchain2}:${PATH}" \
 		make "$target_make" "$CTHREADS" "${cross_compile}"
 
