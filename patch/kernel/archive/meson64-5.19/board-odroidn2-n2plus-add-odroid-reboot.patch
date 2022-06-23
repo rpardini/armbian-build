@@ -1,0 +1,45 @@
+From 7ab821b3289f781553982e2cdc97d031e457bea0 Mon Sep 17 00:00:00 2001
+From: ckkim <changkon12@gmail.com>
+Date: Tue, 6 Oct 2020 18:37:25 +0900
+Subject: [PATCH 75/75] ODROID-N2: arm64:dts: reboot / power off support for
+ ODROID-N2/N2Plus
+
+Signed-off-by: ckkim <changkon12@gmail.com>
+Change-Id: I27adc0b9836823219d70a05375fa1327f830130d
+---
+Index: arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dtsi
+===================================================================
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dtsi b/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dtsi
+--- a/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dtsi	(revision e209be874602b0a650b442801cbffe529aa7dfff)
++++ b/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dtsi	(date 1655950140989)
+@@ -22,6 +22,14 @@
+ 		spi0 = &spicc0;
+ 	};
+
++	reboot: odroid-reboot {
++		compatible = "odroid,reboot";
++		sys_reset = <0x84000009>;
++		sys_poweroff = <0x84000008>;
++		sd-vqsw = <&gpio_ao GPIOAO_9 GPIO_ACTIVE_HIGH>;
++		sd-vmmc = <&gpio_ao GPIOAO_8 GPIO_ACTIVE_HIGH>;
++	};
++
+ 	dio2133: audio-amplifier-0 {
+ 		compatible = "simple-audio-amplifier";
+ 		enable-gpios = <&gpio_ao GPIOAO_2 GPIO_ACTIVE_HIGH>;
+Index: arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2-plus.dts
+===================================================================
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2-plus.dts b/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2-plus.dts
+--- a/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2-plus.dts	(revision e209be874602b0a650b442801cbffe529aa7dfff)
++++ b/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2-plus.dts	(date 1655950140993)
+@@ -15,6 +15,10 @@
+ 	model = "Hardkernel ODROID-N2Plus";
+ };
+
++&reboot {
++	sd-vqen = <&gpio_ao GPIOAO_3 GPIO_ACTIVE_HIGH>;
++};
++
+ &vddcpu_a {
+ 	regulator-min-microvolt = <680000>;
+ 	regulator-max-microvolt = <1040000>;
