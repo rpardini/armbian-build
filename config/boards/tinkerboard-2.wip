@@ -9,3 +9,11 @@ BOOT_FDT_FILE="rockchip/rk3399-tinker-2.dtb"
 BOOT_SCENARIO="blobless"
 SERIALCON="ttyS2"
 BOARD_FIRMWARE_INSTALL="-full" # Install full firmware, for rtl8822ce firmware and others
+
+# Hack: Using ASUS own 856MHZ DDR blobs, switch the BOOT_SCENARIO and the RKBIN GIT URL.
+if [[ "${TB2_USE_ASUS_BLOBS}" == "yes" ]]; then
+	display_alert "Using ASUS's 856MHz DDR blobs" "TB2_USE_ASUS_BLOBS=yes" "warn"
+	RKBIN_GIT_URL="https://github.com/rpardini/armbian-rkbin" # With ASUS's blobs
+	BOOT_SCENARIO="tpl-blob-atf-mainline"
+	DDR_BLOB="rk33/rk3399_ddr_800MHz_v1.26_ASUS_TB2.bin"
+fi

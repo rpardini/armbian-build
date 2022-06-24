@@ -66,8 +66,9 @@ elif [[ $BOOT_SOC == rk3399 ]]; then
 
 	BOOT_SCENARIO="${BOOT_SCENARIO:=only-blobs}"
 	DDR_BLOB="${DDR_BLOB:=rk33/rk3399_ddr_933MHz_v1.25.bin}"
-	MINILOADER_BLOB='rk33/rk3399_miniloader_v1.26.bin'
-	BL31_BLOB='rk33/rk3399_bl31_v1.35.elf'
+	MINILOADER_BLOB="${MINILOADER_BLOB:-'rk33/rk3399_miniloader_v1.26.bin'}"
+	BL31_BLOB="${BL31_BLOB:-'rk33/rk3399_bl31_v1.35.elf'}"
+	display_alert "rockchip64_common: BOOT_SOC == rk3399" "BOOT_SCENARIO=${BOOT_SCENARIO}; DDR_BLOB=${DDR_BLOB}; MINILOADER_BLOB=${MINILOADER_BLOB}; BL31_BLOB=${BL31_BLOB}" "debug"
 
 elif [[ $BOOT_SOC == rk3399pro ]]; then
 
@@ -135,8 +136,11 @@ case $BRANCH in
 esac
 
 prepare_boot_configuration() {
+	display_alert "rockchip64_common: prepare_boot_configuration" "BOOT_SCENARIO: ${BOOT_SCENARIO}" "debug"
+
 	if [[ $BOOT_SCENARIO == "blobless" || $BOOT_SCENARIO == "tpl-blob-atf-mainline" ]]; then
 
+		display_alert "rockchip64_common: prepare_boot_configuration (blobless/tpl-blob-atf-mainline)" "BOOT_SCENARIO: ${BOOT_SCENARIO}" "debug"
 		UBOOT_TARGET_MAP="BL31=bl31.elf idbloader.img u-boot.itb;;idbloader.img u-boot.itb"
 		ATFSOURCE='https://github.com/ARM-software/arm-trusted-firmware'
 		ATF_COMPILER='aarch64-linux-gnu-'
@@ -162,6 +166,7 @@ prepare_boot_configuration() {
 
 	elif [[ $BOOT_SCENARIO == "only-blobs" ]]; then
 
+		display_alert "rockchip64_common: prepare_boot_configuration (only-blobs)" "BOOT_SCENARIO: ${BOOT_SCENARIO}" "debug"
 		UBOOT_TARGET_MAP="u-boot-dtb.bin;;idbloader.bin uboot.img trust.bin"
 		ATFSOURCE=''
 		ATF_COMPILE='no'
@@ -184,15 +189,21 @@ uboot_custom_postprocess() {
 	if [[ $BOOT_SCENARIO == "blobless" || $BOOT_SCENARIO == "tpl-spl-blob" ]]; then
 		:
 	elif [[ $BOOT_SCENARIO == "spl-blobs" || $BOOT_SCENARIO == "tpl-blob-atf-mainline" ]]; then
-		display_alert "mkimage for $BOOT_SOC with $BOOT_SCENARIO" "spl-blobs/tpl-blob-atf-mainline" "debug"
+		display_alert "mkimage for $BOOT_SOC with $BOOT_SCENARIO" "spl-blobs/tpl-blob-atf-mainline; DDR_BLOB=${DDR_BLOB}" "debug"
 		run_host_command_logged tools/mkimage -n $BOOT_SOC -T rksd -d $RKBIN_DIR/$DDR_BLOB:spl/u-boot-spl.bin idbloader.img
 
 	elif [[ $BOOT_SCENARIO == "only-blobs" ]]; then
 
-		local tempfile=$(mktemp)
+		display_alert "Creating idbloader.bin for $BOOT_SOC" "only-blobs; DDR_BLOB=${DDR_BLOB}" "debug"
 		run_host_command_logged tools/mkimage -n $BOOT_SOC -T rksd -d $RKBIN_DIR/$DDR_BLOB idbloader.bin
-		cat $RKBIN_DIR/$MINILOADER_BLOB >> idbloader.bin
+
+		display_alert "Adding miniloader to idbloader.bin" "only-blobs; MINILOADER_BLOB=${MINILOADER_BLOB}" "debug"
+		run_host_command_logged cat $RKBIN_DIR/$MINILOADER_BLOB >> idbloader.bin
+
+		display_alert "Creating uboot.img from uboot-dtb.bin" "only-blobs" "debug"
 		run_host_x86_binary_logged $RKBIN_DIR/tools/loaderimage --pack --uboot ./u-boot-dtb.bin uboot.img 0x200000
+
+		display_alert "Running trust-merger" "only-blobs; BL31_BLOB=${BL31_BLOB}" "debug"
 		run_host_x86_binary_logged $RKBIN_DIR/tools/trust_merger --replace bl31.elf $RKBIN_DIR/$BL31_BLOB trust.ini
 
 	else
