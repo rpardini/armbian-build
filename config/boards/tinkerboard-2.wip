@@ -11,8 +11,11 @@ BOOT_FDT_FILE="rockchip/rk3399-tinker-2.dtb"
 
 # Using ASUS own 856MHZ DDR blobs.
 RKBIN_GIT_URL="https://github.com/rpardini/armbian-rkbin" # With ASUS's blobs
-BOOT_SCENARIO="tpl-blob-atf-mainline"
+BOOT_SCENARIO="only-blobs" # proprietary rockchip ddrbin, miniloader and ATF
 DDR_BLOB="rk33/rk3399_ddr_800MHz_v1.26_ASUS_TB2.bin"
+MINILOADER_BLOB="rk33/rk3399_miniloader_v1.26_ASUS_TB2.bin"
+BL31_BLOB="rk33/rk3399_bl31_atf_2.6_armbian.elf"
+
 
 SERIALCON="ttyS2"
 BOARD_FIRMWARE_INSTALL="-full" # Install full firmware, for rtl8822ce firmware and others
