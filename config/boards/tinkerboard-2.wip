@@ -17,5 +17,88 @@ DDR_BLOB="rk33/rk3399_ddr_800MHz_v1.26_ASUS_TB2.bin"
 SERIALCON="ttyS2"
 BOARD_FIRMWARE_INSTALL="-full" # Install full firmware, for rtl8822ce firmware and others
 
- # Extra debugging stuff in uboot, enable with UBOOT_DEBUGGING=yes
-UBOOT_DEBUGGING="no"
+# Extra debugging stuff in uboot, enable with UBOOT_DEBUGGING=yes
+# UBOOT_DEBUGGING="yes"
+
+# Lemme enable extlinux super-quick..
+#SRC_EXTLINUX="yes"   # Use extlinux, I don't wanna be writing bootscript for this
+#ALLOW_EXTLINUX="yes" # Allow extlinux.
+
+UBOOT_SCHEME="armbian-mainline-with-external-loader-and-trust"
+UBOOT_SCHEME="full-vendor-stuff"
+
+display_alert "Activating UBOOT_SCHEME for TB2" "${UBOOT_SCHEME}" "warn"
+case ${UBOOT_SCHEME} in
+
+	"armbian-mainline-with-external-loader-and-trust")
+		BOOT_SCENARIO="only-blobs"
+		function post_uboot_custom_postprocess__actually_use_libreelec_stuff() {
+			display_alert "Preparing custom u-boot" "post_uboot_custom_postprocess__actually_use_libreelec_stuff" "warn"
+			# Grab from libreelec, fuckit
+			run_host_command_logged cp -v /opt/build_libreelec/libreelec-master-rpardini/build.LibreELEC-RK3399.arm-11.0-devel/image/system/usr/share/bootloader/idbloader.img idbloader.bin
+			run_host_command_logged cp -v /opt/build_libreelec/libreelec-master-rpardini/build.LibreELEC-RK3399.arm-11.0-devel/image/system/usr/share/bootloader/trust.img trust.bin
+			# NOT THIS #run_host_command_logged cp -v /opt/build_libreelec/libreelec-master-rpardini/build.LibreELEC-RK3399.arm-11.0-devel/image/system/usr/share/bootloader/uboot.img uboot.img
+		}
+
+		;;
+
+	"full-vendor-stuff")
+		BOOT_SCENARIO="only-blobs"
+
+		# Hacks after the family/arm64 code has run, to override...
+		function post_family_config__use_vendor_uboot() {
+			display_alert "Using vendor uboot" "post_family_config__use_vendor_uboot" "warn"
+			BOOTSOURCE='https://github.com/rpardini/u-boot-tb2-asus.git'
+			BOOTBRANCH='branch:modern'
+			BOOTDIR='u-boot-asus-tb2'
+			BOOTPATCHDIR="u-boot-asus-tb2" # Does not exist, no further patches.
+			ATFSOURCE=''                   # This is 'only-blobs', don't build ATF.
+			ATF_COMPILE='no'
+		}
+
+		function fetch_custom_uboot__tb2_vendor() {
+			display_alert "Fetching custom u-boot" "fetch_custom_uboot__tb2_vendor BOOTDIR: '${BOOTDIR}'" "warn"
+			# Fetch the vendor rkbins expected by the vendor u-boot in the ../rkbin
+			fetch_from_repo "https://github.com/TinkerBoard2/rkbin.git" "${BOOTDIR}/rkbin" "branch:linux4.19-rk3399-debian10"
+		}
+
+		function build_custom_uboot__tb2_vendor() {
+			display_alert "Preparing custom u-boot" "build_custom_uboot__tb2_vendor: $(pwd)" "warn"
+
+			# Build the vendor uboot using their own scripts / Makefiles.
+			run_host_command_logged git clean -xfd
+			run_host_command_logged ./make.sh tinker2 # loader --spl --tpl
+
+			# What the hell is the `rk3399_loader_v1.26.126.bin idbloader.bin` produced by make.sh?
+			#run_host_command_logged cp -pv rk3399_loader_v1.26.126.bin idbloader.bin
+
+			## display_alert "Creating idbloader.bin for $BOOT_SOC" "tb2; DDR_BLOB=${FULL_DDR_BLOB}" "warn"
+			## FULL_DDR_BLOB="${SRC}/cache/sources/u-boot-asus-tb2/rkbin/bin/rk33/rk3399_ddr_800MHz_v1.26_115200.bin"
+			## [[ -f idbloader.bin ]] && rm -f idbloader.bin
+			## run_host_command_logged tools/mkimage -n "${BOOT_SOC}" -T rksd -d "${FULL_DDR_BLOB}" idbloader.bin
+			##
+			## FULL_MINILOADER_BLOB="${SRC}/cache/sources/u-boot-asus-tb2/rkbin/bin/rk33/rk3399_miniloader_v1.26.bin"
+			## display_alert "Adding miniloader to idbloader.bin" "tb2; FULL_MINILOADER_BLOB=${FULL_MINILOADER_BLOB}" "warn"
+			## run_host_command_logged cat "${FULL_MINILOADER_BLOB}" >> idbloader.bin
+			##
+			## # What about 'trust.bin' ? is it the same as trust.img? @TODO apparently not...
+			## run_host_command_logged cp -pv trust.img trust.bin
+
+			# Give up and use LibreELEC stuff to make sure
+			run_host_command_logged cp -v /opt/build_libreelec/libreelec-master-rpardini/build.LibreELEC-RK3399.arm-11.0-devel/image/system/usr/share/bootloader/idbloader.img idbloader.bin
+			run_host_command_logged cp -v /opt/build_libreelec/libreelec-master-rpardini/build.LibreELEC-RK3399.arm-11.0-devel/image/system/usr/share/bootloader/trust.img trust.bin
+			#run_host_command_logged cp -v /opt/build_libreelec/libreelec-master-rpardini/build.LibreELEC-RK3399.arm-11.0-devel/image/system/usr/share/bootloader/uboot.img uboot.img
+
+			# Deploy the built bins to the target (where .deb will be built -- akin to what UBOOT_TARGET_MAP does, but without make'ing anything)
+			loop_over_uboot_targets_and_do deploy_built_uboot_bins_for_one_target_to_packaging_area
+
+			export EXTENSION_BUILT_UBOOT="yes" # Armbian will NOT build or handle bin assets. Everything is already done above.
+		}
+
+		;;
+
+	*)
+		display_alert "Default board uboot stuff" "BOOT_SCENARIO: ${BOOT_SCENARIO}" warn
+		;;
+
+esac
