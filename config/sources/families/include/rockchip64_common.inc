@@ -202,9 +202,11 @@ uboot_custom_postprocess() {
 
 		display_alert "Creating uboot.img from uboot-dtb.bin" "only-blobs" "debug"
 		run_host_x86_binary_logged $RKBIN_DIR/tools/loaderimage --pack --uboot ./u-boot-dtb.bin uboot.img 0x200000
+		run_host_x86_binary_logged $RKBIN_DIR/tools/loaderimage --pack --uboot ./u-boot-dtb.bin uboot.img 0x00200000 --size 2048 2
 
 		display_alert "Running trust-merger" "only-blobs; BL31_BLOB=${BL31_BLOB}" "debug"
 		run_host_x86_binary_logged $RKBIN_DIR/tools/trust_merger --replace bl31.elf $RKBIN_DIR/$BL31_BLOB trust.ini
+		run_host_x86_binary_logged $RKBIN_DIR/tools/trust_merger /root/uboot-tb2/rkbin/RKTRUST/RK3399TRUST.ini --size 2048 2 --sha 3 --rsa 2
 
 	else
 		echo "Unsupported u-boot processing configuration!"
