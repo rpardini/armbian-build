@@ -241,14 +241,17 @@ function install_distribution_agnostic() {
 	APT_OPTS="y" chroot_sdcard_apt_get clean
 
 	display_alert "Updating" "apt package lists"
-	APT_OPTS="y" chroot_sdcard_apt_get update
+	APT_OPTS="y" do_with_retries 3 chroot_sdcard_apt_get update
 
 	# install family packages
 	if [[ -n ${PACKAGE_LIST_FAMILY} ]]; then
 		_pkg_list=${PACKAGE_LIST_FAMILY}
 		display_alert "Installing PACKAGE_LIST_FAMILY packages" "${_pkg_list}"
+		# shellcheck disable=SC2086 # we need to expand here. retry 3 times download-only to counter apt-cacher-ng failures.
+		do_with_retries 3 chroot_sdcard_apt_get_install_download_only ${_pkg_list}
+
 		# shellcheck disable=SC2086 # we need to expand here.
-		chroot_sdcard_apt_get_install $_pkg_list
+		chroot_sdcard_apt_get_install ${_pkg_list}
 	fi
 
 	# install board packages
@@ -324,7 +327,7 @@ function install_distribution_agnostic() {
 			VER="${VER/-$LINUXFAMILY/}"
 			VER="${VER/linux-/}"
 			display_alert "Parsed kernel version from remote package" "${VER}" "debug"
-			if [[ "${ARCH}" != "amd64" && "${LINUXFAMILY}" != "media"  ]]; then # amd64 does not have dtb package, see packages/armbian/builddeb:355
+			if [[ "${ARCH}" != "amd64" && "${LINUXFAMILY}" != "media" ]]; then # amd64 does not have dtb package, see packages/armbian/builddeb:355
 				install_deb_chroot "linux-dtb-${BRANCH}-${LINUXFAMILY}" "remote"
 			fi
 			[[ $INSTALL_HEADERS == yes ]] && install_deb_chroot "linux-headers-${BRANCH}-${LINUXFAMILY}" "remote"
