@@ -1,0 +1,13 @@
+diff --git a/configs/qemu-x86_64_defconfig b/configs/qemu-x86_64_defconfig
+index 591b31165f..12e088a67e 100644
+--- a/configs/qemu-x86_64_defconfig
++++ b/configs/qemu-x86_64_defconfig
+@@ -5,7 +5,7 @@ CONFIG_NR_DRAM_BANKS=8
+ CONFIG_ENV_SIZE=0x40000
+ CONFIG_MAX_CPUS=2
+ CONFIG_SPL_DM_SPI=y
+-CONFIG_DEFAULT_DEVICE_TREE="qemu-x86_i440fx"
++CONFIG_DEFAULT_DEVICE_TREE="qemu-x86_q35"
+ CONFIG_SPL_TEXT_BASE=0xfffd0000
+ CONFIG_DEBUG_UART_BASE=0x3f8
+ CONFIG_DEBUG_UART_CLOCK=1843200
