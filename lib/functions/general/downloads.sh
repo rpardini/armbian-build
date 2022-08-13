@@ -4,7 +4,7 @@ function webseed() {
 	unset text
 	local CCODE=$(curl -s redirect.armbian.com/geoip | jq '.continent.code' -r)
 
-	if [[ "$2" == "rootfs" ]]; then
+	if [[ "$2" == rootfs* ]]; then
 		WEBSEED=($(curl -s ${1}mirrors | jq -r '.'${CCODE}' | .[] | values'))
 	else
 		WEBSEED=($(curl -s https://redirect.armbian.com/mirrors | jq -r '.'${CCODE}' | .[] | values'))
@@ -67,6 +67,12 @@ function download_and_verify_internal() {
 		return 0
 	fi
 
+	# rootfs has its own infra
+	if [[ "${remotedir}" == "_rootfs" ]]; then
+		local server="https://cache.armbian.com/"
+		remotedir="rootfs/$ROOTFSCACHE_VERSION"
+	fi
+
 	# switch to china mirror if US timeouts
 	timeout 10 curl --head --fail --silent "${server}${remotedir}/${filename}"
 	if [[ $? -ne 7 && $? -ne 22 && $? -ne 0 ]]; then
@@ -124,7 +130,7 @@ function download_and_verify_internal() {
 	if [[ ! -f "${localdir}/${filename}.complete" ]]; then
 		if [[ ! $(timeout 10 curl --head --fail --silent ${server}${remotedir}/${filename} 2>&1 > /dev/null) ]]; then
 			display_alert "downloading from $(echo $server | cut -d'/' -f3 | cut -d':' -f1) using http(s) network" "$filename"
-			run_host_command_logged aria2c --download-result=hide --rpc-save-upload-metadata=false --console-log-level=error \
+			run_host_command_logged aria2c --allow-overwrite=true  --download-result=hide --rpc-save-upload-metadata=false --console-log-level=error \
 				--dht-file-path="${SRC}"/cache/.aria2/dht.dat --disable-ipv6=${DISABLE_IPV6} --summary-interval=0 --auto-file-renaming=false --dir="${localdir}" ${server}${remotedir}/${filename} $(webseed "${remotedir}/${filename}") -o "${filename}"
 			# mark complete
 			[[ $? -eq 0 ]] && touch "${localdir}/${filename}.complete" && echo ""

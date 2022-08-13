@@ -174,7 +174,7 @@ function install_distribution_agnostic() {
 		fi
 	else
 
-		if [[ "${BOOTCONFIG}" != "none" ]]; then
+		if [[ -n "${BOOTSCRIPT}" ]]; then # @TODO: this used to check BOOTCONFIG not being 'none'
 			if [ -f "${USERPATCHES_PATH}/bootscripts/${bootscript_src}" ]; then
 				run_host_command_logged cp -pv "${USERPATCHES_PATH}/bootscripts/${bootscript_src}" "${SDCARD}/boot/${bootscript_dst}"
 			else

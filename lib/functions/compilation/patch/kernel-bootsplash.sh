@@ -5,6 +5,7 @@ function apply_kernel_patches_for_bootsplash() {
 	# previously: if linux-version compare "${version}" ge 5.10 && [ $SKIP_BOOTSPLASH != yes ]; then
 	[[ "${SKIP_BOOTSPLASH}" == "yes" ]] && return 0
 	linux-version compare "${version}" le 5.10 && return 0
+	linux-version compare "${version}" lt 5.19 && return 0
 
 	display_alert "Adding" "Kernel bootsplash patch" "info"
 

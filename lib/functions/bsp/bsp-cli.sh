@@ -12,7 +12,7 @@ create_board_package() {
 	copy_all_packages_files_for "bsp-cli"
 
 	# install copy of boot script & environment file
-	if [[ "${BOOTCONFIG}" != "none" ]]; then
+	if [[ -z "${BOOTSCRIPT}" ]]; then # @TODO: used to be: if [[ "${BOOTCONFIG}" != "none" ]]; then
 		# @TODO: add extension method bsp_prepare_bootloader(), refactor into u-boot extension
 		local bootscript_src=${BOOTSCRIPT%%:*}
 		local bootscript_dst=${BOOTSCRIPT##*:}
@@ -29,8 +29,9 @@ create_board_package() {
 			else
 				run_host_command_logged cp -pv "${SRC}/config/bootscripts/${bootscript_src}" "${destination}/usr/share/armbian/${bootscript_dst}"
 			fi
-			[[ -n $BOOTENV_FILE && -f $SRC/config/bootenv/$BOOTENV_FILE ]] &&
+			if [[ -n $BOOTENV_FILE && -f $SRC/config/bootenv/$BOOTENV_FILE ]]; then
 				run_host_command_logged cp -pv "${SRC}/config/bootenv/${BOOTENV_FILE}" "${destination}"/usr/share/armbian/armbianEnv.txt
+			fi
 		else
 			display_alert "Using extlinux, regular bootscripts ignored" "SRC_EXTLINUX=${SRC_EXTLINUX}" "warn"
 		fi

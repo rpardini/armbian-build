@@ -18,7 +18,7 @@ function prepare_partitions() {
 
 	# array copying in old bash versions is tricky, so having filesystems as arrays
 	# with attributes as keys is not a good idea
-	declare -A parttype mkopts mkfs mountopts
+	declare -A parttype mkopts mkopts_label mkfs mountopts
 
 	parttype[ext4]=ext4
 	parttype[ext2]=ext2
@@ -35,12 +35,20 @@ function prepare_partitions() {
 	if [[ $HOSTRELEASE =~ buster|bullseye|focal|jammy|sid ]]; then
 		mkopts[ext4]="-q -m 2 -O ^64bit,^metadata_csum -N $((128 * node_number))"
 	fi
-	mkopts[fat]='-n BOOT'
+	# mkopts[fat] is empty
 	mkopts[ext2]='-q'
 	# mkopts[f2fs] is empty
 	mkopts[btrfs]='-m dup'
 	# mkopts[xfs] is empty
 	# mkopts[nfs] is empty
+
+	mkopts_label[ext4]='-L '
+	mkopts_label[ext2]='-L '
+	mkopts_label[fat]='-n '
+	mkopts_label[f2fs]='-l '
+	mkopts_label[btrfs]='-L '
+	mkopts_label[xfs]='-L '
+	# mkopts_label[nfs] is empty
 
 	mkfs[ext4]=ext4
 	mkfs[ext2]=ext2
@@ -65,6 +73,8 @@ function prepare_partitions() {
 	BIOSSIZE=${BIOSSIZE:-0}
 	UEFI_MOUNT_POINT=${UEFI_MOUNT_POINT:-/boot/efi}
 	UEFI_FS_LABEL="${UEFI_FS_LABEL:-ARMBIEFI}" # Should be always uppercase
+	ROOT_FS_LABEL="${ROOT_FS_LABEL:-armbian_root}"
+	BOOT_FS_LABEL="${BOOT_FS_LABEL:-armbian_boot}"
 
 	call_extension_method "pre_prepare_partitions" "prepare_partitions_custom" <<- 'PRE_PREPARE_PARTITIONS'
 		*allow custom options for mkfs*
@@ -230,7 +240,7 @@ function prepare_partitions() {
 
 	check_loop_device "$LOOP"
 
-	run_host_command_logged losetup -P $LOOP ${SDCARD}.raw
+	run_host_command_logged losetup $LOOP ${SDCARD}.raw # @TODO: had a '-P- here, what was it?
 
 	# loop device was grabbed here, unlock
 	flock -u $FD
@@ -254,7 +264,7 @@ function prepare_partitions() {
 
 		check_loop_device "$rootdevice"
 		display_alert "Creating rootfs" "$ROOTFS_TYPE on $rootdevice"
-		run_host_command_logged mkfs.${mkfs[$ROOTFS_TYPE]} "${mkopts[$ROOTFS_TYPE]}" "$rootdevice"
+		run_host_command_logged mkfs.${mkfs[$ROOTFS_TYPE]} ${mkopts[$ROOTFS_TYPE]} ${mkopts_label[$ROOTFS_TYPE]:+${mkopts_label[$ROOTFS_TYPE]}"$ROOT_FS_LABEL"} "${rootdevice}"
 		[[ $ROOTFS_TYPE == ext4 ]] && run_host_command_logged tune2fs -o journal_data_writeback "$rootdevice"
 		if [[ $ROOTFS_TYPE == btrfs && $BTRFS_COMPRESSION != none ]]; then
 			local fscreateopt="-o compress-force=${BTRFS_COMPRESSION}"
@@ -275,7 +285,7 @@ function prepare_partitions() {
 	if [[ -n $bootpart ]]; then
 		display_alert "Creating /boot" "$bootfs on ${LOOP}p${bootpart}"
 		check_loop_device "${LOOP}p${bootpart}"
-		run_host_command_logged mkfs.${mkfs[$bootfs]} ${mkopts[$bootfs]} ${LOOP}p${bootpart} 2>&1
+		run_host_command_logged mkfs.${mkfs[$bootfs]} ${mkopts[$bootfs]} ${mkopts_label[$bootfs]:+${mkopts_label[$bootfs]}"$BOOT_FS_LABEL"} ${LOOP}p${bootpart}
 		mkdir -p $MOUNT/boot/
 		run_host_command_logged mount ${LOOP}p${bootpart} $MOUNT/boot/
 		echo "UUID=$(blkid -s UUID -o value ${LOOP}p${bootpart}) /boot ${mkfs[$bootfs]} defaults${mountopts[$bootfs]} 0 2" >> $SDCARD/etc/fstab

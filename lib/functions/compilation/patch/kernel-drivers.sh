@@ -31,7 +31,7 @@ function prepare_extra_kernel_drivers() {
 	#
 	# Older versions have AUFS support with a patch
 
-	if linux-version compare "${version}" gt 5.11 && linux-version compare "${version}" lt 5.19 && [ "$AUFS" == yes ]; then
+	if linux-version compare "${version}" gt 5.11 && linux-version compare "${version}" lt 5.20 && [ "$AUFS" == yes ]; then
 		# attach to specifics tag or branch
 		local aufstag
 		aufstag=$(echo "${version}" | cut -f 1-2 -d ".")
@@ -240,8 +240,8 @@ function prepare_extra_kernel_drivers() {
 	fi
 
 	# Wireless drivers for Xradio XR819 chipsets
-	if linux-version compare "${version}" ge 4.19 && [[ "$LINUXFAMILY" == sunxi* ]] && [[ "$EXTRAWIFI" == yes ]]; then
-		# @TODO: fasthash for this is... ? remote git hash?
+	if linux-version compare "${version}" ge 4.19 && linux-version compare "${version}" le 5.19 &&
+		[[ "$LINUXFAMILY" == sunxi* ]] && [[ "$EXTRAWIFI" == yes ]]; then
 
 		display_alert "Adding" "Wireless drivers for Xradio XR819 chipsets" "info"
 

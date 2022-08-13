@@ -1,61 +1,48 @@
 # this gets from cache or produces a new rootfs, and leaves a mounted chroot "$SDCARD" at the end.
 get_or_create_rootfs_cache_chroot_sdcard() {
-	if [[ "$ROOT_FS_CREATE_ONLY" == "force" ]]; then
+	if [[ "$ROOT_FS_CREATE_ONLY" == "yes" ]]; then
 		local cycles=1
 	else
-		local cycles=2
+		local cycles=3
 	fi
 
+	# @TODO: this was moved from configuration to this stage, that way configuration can be offline
 	# if variable not provided, check which is current version in the cache storage in GitHub.
 	if [[ -z "${ROOTFSCACHE_VERSION}" ]]; then
-		display_alert "ROOTFSCACHE_VERSION not set, getting remotely" "https://github.com/armbian/mirror/releases/download/rootfs/rootfscache.version" "debug"
-		ROOTFSCACHE_VERSION=$(wget --tries=10 -O - -o /dev/null https://github.com/armbian/mirror/releases/download/rootfs/rootfscache.version || true)
-		ROOTFSCACHE_VERSION=${ROOTFSCACHE_VERSION:-"0"}
+		display_alert "ROOTFSCACHE_VERSION not set, getting remotely" "Github API and armbian/mirror " "debug"
+		ROOTFSCACHE_VERSION=$(curl https://api.github.com/repos/armbian/cache/releases/latest -s --fail | jq .tag_name -r || true)
+		# anonymous API access is very limited which is why we need a fallback
+		ROOTFSCACHE_VERSION=${ROOTFSCACHE_VERSION:-$(curl -L --silent https://cache.armbian.com/rootfs/latest --fail)}
 	fi
+
+	INITIAL_ROOTFSCACHE_VERSION=$ROOTFSCACHE_VERSION
 
 	# seek last cache, proceed to previous otherwise build it
 	for ((n = 0; n < cycles; n++)); do
 
-		FORCED_MONTH_OFFSET=${n}
+		ROOTFSCACHE_VERSION=$(expr $INITIAL_ROOTFSCACHE_VERSION - $n)
+		ROOTFSCACHE_VERSION=$(printf "%04d\n" ${ROOTFSCACHE_VERSION})
 
-		local packages_hash
-		packages_hash=$(get_package_list_hash "$(date -d "$D -${FORCED_MONTH_OFFSET} month" +"%Y-%m-module$ROOTFSCACHE_VERSION" | sed 's/^0*//')")
-
+		local packages_hash=$(get_package_list_hash "$ROOTFSCACHE_VERSION")
 		local cache_type="cli"
-		[[ ${BUILD_DESKTOP} == yes ]] && cache_type="xfce-desktop"
-		[[ -n ${DESKTOP_ENVIRONMENT} ]] && cache_type="${DESKTOP_ENVIRONMENT}"
-		[[ ${BUILD_MINIMAL} == yes ]] && cache_type="minimal"
-
-		local cache_name=${RELEASE}-${cache_type}-${ARCH}.${packages_hash}.tar.zst
+		[[ ${BUILD_DESKTOP} == yes ]] && local cache_type="xfce-desktop"
+		[[ -n ${DESKTOP_ENVIRONMENT} ]] && local cache_type="${DESKTOP_ENVIRONMENT}"
+		[[ ${BUILD_MINIMAL} == yes ]] && local cache_type="minimal"
+		local cache_name=${RELEASE}-${cache_type}-${ARCH}.$packages_hash.tar.zst
 		local cache_fname=${SRC}/cache/rootfs/${cache_name}
 		local display_name=${RELEASE}-${cache_type}-${ARCH}.${packages_hash:0:3}...${packages_hash:29}.tar.zst
 
-		[[ "$ROOT_FS_CREATE_ONLY" == force ]] && break
+		[[ "$ROOT_FS_CREATE_ONLY" == yes ]] && break
 
 		if [[ -f ${cache_fname} && -f ${cache_fname}.aria2 ]]; then
-			rm "${cache_fname}"*
+			rm ${cache_fname}*
 			display_alert "Partially downloaded file. Re-start."
 			download_and_verify "_rootfs" "$cache_name"
 		fi
 
 		display_alert "Checking local cache" "$display_name" "info"
 
-		if [[ -f ${cache_fname} && -n "$ROOT_FS_CREATE_ONLY" ]]; then
-			echo "$cache_fname" > $cache_fname.current
-			display_alert "Checking cache integrity" "$display_name" "info"
-
-			sudo zstd -tqq "${cache_fname}" || {
-				rm -f "${cache_fname}"
-				exit_with_error "Cache ${cache_fname} is corrupted and was deleted. Please restart!"
-			}
-
-			# sign if signature is missing
-			if [[ -n "${GPG_PASS}" && "${SUDO_USER}" && ! -f ${cache_fname}.asc ]]; then
-				[[ -n ${SUDO_USER} ]] && sudo chown -R ${SUDO_USER}:${SUDO_USER} "${DEST}"/images/
-				echo "${GPG_PASS}" | sudo -H -u ${SUDO_USER} bash -c "gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes ${cache_fname}" || exit 1
-			fi
-			break
-		elif [[ -f ${cache_fname} ]]; then
+		if [[ -f $cache_fname ]]; then
 			break
 		else
 			display_alert "searching on servers"
@@ -69,17 +56,17 @@ get_or_create_rootfs_cache_chroot_sdcard() {
 
 	done
 
-	if [[ -f $cache_fname && ! -f $cache_fname.aria2 ]]; then
+	# check if cache exists and we want to make it
+	if [[ -f ${cache_fname} && "$ROOT_FS_CREATE_ONLY" == "yes" ]]; then
+		display_alert "Checking cache integrity" "$display_name" "info"
+		zstd -tqq ${cache_fname} || {
+			rm $cache_fname
+			exit_with_error "Cache $cache_fname is corrupted and was deleted. Please restart!"
+		}
+	fi
 
-		# speed up checking
-		if [[ -n "$ROOT_FS_CREATE_ONLY" ]]; then
-			echo "$cache_fname" > $cache_fname.current
-			umount --lazy "$SDCARD"
-			rm -rf $SDCARD
-			# remove exit trap
-			remove_all_trap_handlers INT TERM EXIT
-			exit
-		fi
+	# if aria2 file exists download didn't succeeded
+	if [[ -f $cache_fname && ! -f $cache_fname.aria2 ]]; then
 
 		local date_diff=$((($(date +%s) - $(stat -c %Y $cache_fname)) / 86400))
 		display_alert "Extracting $display_name" "$date_diff days old" "info"
@@ -89,7 +76,7 @@ get_or_create_rootfs_cache_chroot_sdcard() {
 		echo "nameserver $NAMESERVER" >> $SDCARD/etc/resolv.conf
 		create_sources_list "$RELEASE" "$SDCARD/"
 	else
-		display_alert "... remote not found" "Creating new rootfs cache for $RELEASE" "info"
+		display_alert "Creating new rootfs cache for" "$RELEASE" "info"
 
 		create_new_rootfs_cache
 
@@ -99,7 +86,7 @@ get_or_create_rootfs_cache_chroot_sdcard() {
 	fi
 
 	# used for internal purposes. Faster rootfs cache rebuilding
-	if [[ -n "$ROOT_FS_CREATE_ONLY" ]]; then
+	if [[ "$ROOT_FS_CREATE_ONLY" == "yes" ]]; then
 		umount --lazy "$SDCARD"
 		rm -rf $SDCARD
 		# remove exit trap

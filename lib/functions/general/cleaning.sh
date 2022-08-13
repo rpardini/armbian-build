@@ -65,7 +65,7 @@ general_cleaning() {
 			;;
 
 		oldcache) # remove old `cache/rootfs` except for the newest 8 files
-			if [[ -d "${SRC}"/cache/rootfs && $(ls -1 "${SRC}"/cache/rootfs/*.lz4 2> /dev/null | wc -l) -gt "${ROOTFS_CACHE_MAX}" ]]; then
+			if [[ -d "${SRC}"/cache/rootfs && $(ls -1 "${SRC}"/cache/rootfs/*.zst* 2> /dev/null | wc -l) -gt "${ROOTFS_CACHE_MAX}" ]]; then
 				display_alert "Cleaning" "rootfs cache (old)" "info"
 				(
 					cd "${SRC}"/cache/rootfs
