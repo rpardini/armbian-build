@@ -1,0 +1,237 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ricardo Pardini <ricardo@pardini.net>
+Date: Tue, 6 Dec 2022 15:07:18 +0100
+Subject: meson64's with SPIDEV and I2C EE M3 the hard way
+ (c4,vim3,vim3l,zero,n2-plus,zero2)
+
+WiP: meson64's with SPIDEV and I2C EE M3 the hard way (c4,vim3,vim3l,zero,n2-plus,zero2) v5 (6.0.y)
+
+- this adds spidev under spicc1, so it should be spidev1.0, but spicc0 not enabled, so it end the end becomes spidev0.0 -- good enough for now
+- Add derived DTS with SPI (don't wanna mess with overlays for this)
+- this counts on `drv-spi-spidev-remove-warnings` working
+---
+ arch/arm64/boot/dts/amlogic/Makefile                                |  6 ++
+ arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero-spidev.dts        | 29 ++++++++++
+ arch/arm64/boot/dts/amlogic/meson-g12b-a311d-khadas-vim3-spidev.dts | 29 ++++++++++
+ arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2-plus-spidev.dts    | 21 +++++++
+ arch/arm64/boot/dts/amlogic/meson-g12b-radxa-zero2-spidev.dts       | 29 ++++++++++
+ arch/arm64/boot/dts/amlogic/meson-sm1-khadas-vim3l-spidev.dts       | 29 ++++++++++
+ arch/arm64/boot/dts/amlogic/meson-sm1-odroid-c4-spidev.dts          | 24 ++++++++
+ 7 files changed, 167 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/amlogic/Makefile b/arch/arm64/boot/dts/amlogic/Makefile
+index a3be04fd53d3..606063c3204f 100644
+--- a/arch/arm64/boot/dts/amlogic/Makefile
++++ b/arch/arm64/boot/dts/amlogic/Makefile
+@@ -1,5 +1,11 @@
+ # SPDX-License-Identifier: GPL-2.0
+ dtb-$(CONFIG_ARCH_MESON) += meson-a1-ad401.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-sm1-odroid-c4-spidev.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-g12b-radxa-zero2-spidev.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-g12b-odroid-n2-plus-spidev.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-g12b-a311d-khadas-vim3-spidev.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-g12a-radxa-zero-spidev.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-sm1-khadas-vim3l-spidev.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-axg-jethome-jethub-j100.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-axg-jethome-jethub-j110-rev-2.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-axg-jethome-jethub-j110-rev-3.dtb
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero-spidev.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero-spidev.dts
+new file mode 100644
+index 000000000000..5ee13525d158
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero-spidev.dts
+@@ -0,0 +1,29 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++/dts-v1/;
++
++#include "meson-g12a-radxa-zero.dts"
++
++/ {
++	model = "Radxa Zero with SPIDEV and I2C - MOSI pin 19, CLK pin 23 - SDA pin 3, SCL pin 5";
++};
++
++&spicc1 {
++	pinctrl-0 = <&spicc1_pins &spicc1_ss0_pins>;
++	pinctrl-names = "default";
++	#address-cells = <1>;
++	#size-cells = <0>;
++	status = "okay";
++	spidev@0 {
++		compatible = "armbian,spi-dev";
++		status = "okay";
++		reg = <0>;
++		spi-max-frequency = <10000000>;
++	};
++};
++
++&i2c3 {
++	status = "okay";
++	pinctrl-0 = <&i2c3_sck_a_pins &i2c3_sda_a_pins>;
++	pinctrl-names = "default";
++};
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12b-a311d-khadas-vim3-spidev.dts b/arch/arm64/boot/dts/amlogic/meson-g12b-a311d-khadas-vim3-spidev.dts
+new file mode 100644
+index 000000000000..8982a04c9d1f
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/meson-g12b-a311d-khadas-vim3-spidev.dts
+@@ -0,0 +1,29 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++/dts-v1/;
++
++#include "meson-g12b-a311d-khadas-vim3.dts"
++
++/ {
++	model = "Khadas VIM3 with SPIDEV and I2C - MOSI pin 37, CLK pin 16 - SDA pin 23, SCL pin 23";
++};
++
++&spicc1 {
++	pinctrl-0 = <&spicc1_pins &spicc1_ss0_pins>;
++	pinctrl-names = "default";
++	#address-cells = <1>;
++	#size-cells = <0>;
++	status = "okay";
++	spidev@0 {
++		compatible = "armbian,spi-dev";
++		status = "okay";
++		reg = <0>;
++		spi-max-frequency = <10000000>;
++	};
++};
++
++&i2c3 {
++	status = "okay";
++	pinctrl-0 = <&i2c3_sck_a_pins &i2c3_sda_a_pins>;
++	pinctrl-names = "default";
++};
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2-plus-spidev.dts b/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2-plus-spidev.dts
+new file mode 100644
+index 000000000000..a87ddd464773
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2-plus-spidev.dts
+@@ -0,0 +1,21 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++/dts-v1/;
++
++#include "meson-g12b-odroid-n2-plus.dts"
++
++/ {
++	model = "Hardkernel ODROID-N2Plus with SPIDEV - MISO is pin 19, CLK is pin 23";
++};
++
++&spicc0 {
++	cs-gpios = <&gpio GPIOX_10 GPIO_ACTIVE_LOW>;
++	status = "okay";
++	spidev@0 {
++		compatible = "armbian,spi-dev";
++		status = "okay";
++		reg = <0>;
++		spi-max-frequency = <10000000>;
++	};
++};
++
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12b-radxa-zero2-spidev.dts b/arch/arm64/boot/dts/amlogic/meson-g12b-radxa-zero2-spidev.dts
+new file mode 100644
+index 000000000000..0d16cde214a7
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/meson-g12b-radxa-zero2-spidev.dts
+@@ -0,0 +1,29 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++/dts-v1/;
++
++#include "meson-g12b-radxa-zero2.dts"
++
++/ {
++	model = "Radxa Zero2 with SPIDEV and I2C - MOSI pin 19, CLK pin 23 - SDA pin 3, SCL pin 5";
++};
++
++&spicc1 {
++	pinctrl-0 = <&spicc1_pins &spicc1_ss0_pins>;
++	pinctrl-names = "default";
++	#address-cells = <1>;
++	#size-cells = <0>;
++	status = "okay";
++	spidev@0 {
++		compatible = "armbian,spi-dev";
++		status = "okay";
++		reg = <0>;
++		spi-max-frequency = <10000000>;
++	};
++};
++
++&i2c3 {
++	status = "okay";
++	pinctrl-0 = <&i2c3_sck_a_pins &i2c3_sda_a_pins>;
++	pinctrl-names = "default";
++};
+diff --git a/arch/arm64/boot/dts/amlogic/meson-sm1-khadas-vim3l-spidev.dts b/arch/arm64/boot/dts/amlogic/meson-sm1-khadas-vim3l-spidev.dts
+new file mode 100644
+index 000000000000..e7a0f5a3fc35
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/meson-sm1-khadas-vim3l-spidev.dts
+@@ -0,0 +1,29 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++/dts-v1/;
++
++#include "meson-sm1-khadas-vim3l.dts"
++
++/ {
++	model = "Khadas VIM3L with SPIDEV and I2C - MOSI pin 37, CLK pin 16 - SDA pin 23, SCL pin 23";
++};
++
++&spicc1 {
++	pinctrl-0 = <&spicc1_pins &spicc1_ss0_pins>;
++	pinctrl-names = "default";
++	#address-cells = <1>;
++	#size-cells = <0>;
++	status = "okay";
++	spidev@0 {
++		compatible = "armbian,spi-dev";
++		status = "okay";
++		reg = <0>;
++		spi-max-frequency = <10000000>;
++	};
++};
++
++&i2c3 {
++	status = "okay";
++	pinctrl-0 = <&i2c3_sck_a_pins &i2c3_sda_a_pins>;
++	pinctrl-names = "default";
++};
+diff --git a/arch/arm64/boot/dts/amlogic/meson-sm1-odroid-c4-spidev.dts b/arch/arm64/boot/dts/amlogic/meson-sm1-odroid-c4-spidev.dts
+new file mode 100644
+index 000000000000..4688b40052ca
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/meson-sm1-odroid-c4-spidev.dts
+@@ -0,0 +1,24 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++/dts-v1/;
++
++#include "meson-sm1-odroid-c4.dts"
++
++/ {
++	model = "Hardkernel ODROID-C4 - MOSI is pin y, CLK is pin x";
++};
++
++&spicc1 {
++	pinctrl-0 = <&spicc1_pins &spicc1_ss0_pins>;
++	pinctrl-names = "default";
++	#address-cells = <1>;
++	#size-cells = <0>;
++	status = "okay";
++	spidev@0 {
++		compatible = "armbian,spi-dev";
++		status = "okay";
++		reg = <0>;
++		spi-max-frequency = <10000000>;
++	};
++};
++
+-- 
+Armbian
+
