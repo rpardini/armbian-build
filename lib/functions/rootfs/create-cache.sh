@@ -231,12 +231,12 @@ function create_new_rootfs_cache() {
 
 	# DEBUG: print free space
 	local freespace=$(LC_ALL=C df -h)
-	display_alert "Free SD cache" "$(echo -e "$freespace" | grep $SDCARD | awk '{print $5}')" "info"
+	display_alert "Free SD cache" "$(echo "$freespace" | grep $SDCARD | awk '{print $5}')" "info"
 	[[ -d "${MOUNT}" ]] &&
-		display_alert "Mount point" "$(echo -e "$freespace" | grep $MOUNT | head -1 | awk '{print $5}')" "info"
+		display_alert "Mount point" "$(echo "$freespace" | grep $MOUNT | head -1 | awk '{print $5}')" "info"
 
 	# create list of installed packages for debug purposes - this captures it's own stdout.
-	chroot "${SDCARD}" /bin/bash -c "dpkg -l | grep ^ii | awk '{ print \$2\",\"\$3 }' > '${cache_fname}.list'"
+	chroot_sdcard "dpkg -l | grep ^ii | awk '{ print \$2\",\"\$3 }'" > "${cache_fname}.list"
 
 	# creating xapian index that synaptic runs faster
 	if [[ $BUILD_DESKTOP == yes ]]; then
@@ -273,8 +273,7 @@ function create_new_rootfs_cache() {
 # get_package_list_hash
 #
 # returns md5 hash for current package list and rootfs cache version
-get_package_list_hash()
-{
+get_package_list_hash() {
 	local package_arr exclude_arr
 	local list_content
 	read -ra package_arr <<< "${DEBOOTSTRAP_LIST} ${PACKAGE_LIST}"
