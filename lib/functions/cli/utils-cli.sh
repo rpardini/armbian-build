@@ -6,21 +6,21 @@ function parse_cmdline_params() {
 	declare -A -g ARMBIAN_PARSED_CMDLINE_PARAMS=()
 	declare -a -g ARMBIAN_NON_PARAM_ARGS=()
 
-	while [[ "x${1}x" != "xx" ]]; do # @TODO, incorrect, I just wanna parse them ALL.
-		if [[ "${1}" == *=* ]]; then    # it's a param.
+	# loop over the arguments parse them out
+	local arg
+	for arg in "${@}"; do
+		if [[ "${arg}" == *=* ]]; then # contains an equal sign. it's a param.
 			local param_name param_value param_value_desc
-			param_name=${1%%=*}
-			param_value=${1##*=}
+			param_name=${arg%%=*}
+			param_value=${arg##*=}
 			param_value_desc="${param_value:-(empty)}"
 			ARMBIAN_PARSED_CMDLINE_PARAMS["${param_name}"]="${param_value}"
-			shift
 			display_alert "Command line: parsed parameter '$param_name' to" "${param_value_desc}" "debug"
-		else # not a param, store it in the non-param array for later usage
-			local non_param_value="${1}"
+		elif [[ "x${arg}x" != "xx" ]]; then # not a param, not empty, store it in the non-param array for later usage
+			local non_param_value="${arg}"
 			local non_param_value_desc="${non_param_value:-(empty)}"
 			display_alert "Command line: storing non-param argument" "${non_param_value_desc}" "debug"
 			ARMBIAN_NON_PARAM_ARGS+=("${non_param_value}")
-			shift
 		fi
 	done
 }
@@ -52,4 +52,96 @@ function apply_cmdline_params_to_env() {
 			display_alert "Command line: '${__my_reason}': '$param_name' already set to" "${current_env_value_desc}" "debug"
 		fi
 	done
+}
+
+function armbian_prepare_cli_command_to_run() {
+	local command_id="${1}"
+	display_alert "Preparing to run command" "${command_id}" "debug"
+	ARMBIAN_COMMAND="${command_id}"
+	ARMBIAN_COMMAND_HANDLER="${ARMBIAN_COMMANDS_TO_HANDLERS_DICT[${command_id}]}"
+	ARMBIAN_COMMAND_VARS="${ARMBIAN_COMMANDS_TO_VARS_DICT[${command_id}]}"
+	# @TODO: actually set the vars...
+
+	local pre_run_function_name="cli_${ARMBIAN_COMMAND_HANDLER}_pre_run"
+	local run_function_name="cli_${ARMBIAN_COMMAND_HANDLER}_run"
+
+	# Reset the functions.
+	function armbian_cli_pre_run_command() {
+		display_alert "No pre-run function for command" "${ARMBIAN_COMMAND}" "warn"
+	}
+	function armbian_cli_run_command() {
+		display_alert "No run function for command" "${ARMBIAN_COMMAND}" "warn"
+	}
+	
+	# Materialize functions to call that specific command.
+	if [[ $(type -t "${pre_run_function_name}" || true) == function ]]; then
+		eval "$(
+			cat <<- EOF
+				display_alert "Setting up pre-run function for command" "${ARMBIAN_COMMAND}: ${pre_run_function_name}" "debug"
+				function armbian_cli_pre_run_command() {
+					display_alert "Calling pre-run function for command" "${ARMBIAN_COMMAND}: ${pre_run_function_name}" "debug"
+					${pre_run_function_name}
+				}
+			EOF
+		)"
+	fi
+
+	if [[ $(type -t "${run_function_name}" || true) == function ]]; then
+		eval "$(
+			cat <<- EOF
+				display_alert "Setting up run function for command" "${ARMBIAN_COMMAND}: ${run_function_name}" "debug"
+				function armbian_cli_run_command() {
+					display_alert "Calling run function for command" "${ARMBIAN_COMMAND}: ${run_function_name}" "debug"
+					${run_function_name}
+				}
+			EOF
+		)"
+	fi
+}
+
+function parse_each_cmdline_arg_as_command_param_or_config() {
+	local is_command="no" is_config="no" command_handler conf_path conf_sh_path config_file=""
+	local argument="${1}"
+
+	# lookup if it is a command.
+	if [[ -n "${ARMBIAN_COMMANDS_TO_HANDLERS_DICT[${argument}]}" ]]; then
+		is_command="yes"
+		command_handler="${ARMBIAN_COMMANDS_TO_HANDLERS_DICT[${argument}]}"
+		display_alert "Found command!" "${argument} is handled by '${command_handler}'" "debug"
+	fi
+
+	# see if we can find config file in userpatches. can be either config-${argument}.conf or config-${argument}.conf.sh
+	conf_path="${SRC}/userpatches/config-${argument}.conf"
+	conf_sh_path="${SRC}/userpatches/config-${argument}.conf.sh"
+
+	# early safety net: immediately bomb if we find both forms of config. it's too confusing. choose one.
+	if [[ -f ${conf_path} && -f ${conf_sh_path} ]]; then
+		exit_with_error "Found both config-${argument}.conf and config-${argument}.conf.sh in userpatches. Please remove one."
+		exit 1
+	elif [[ -f ${conf_sh_path} ]]; then
+		config_file="${conf_sh_path}"
+		is_config="yes"
+	elif [[ -f ${conf_path} ]]; then
+		config_file="${conf_path}"
+		is_config="yes"
+	fi
+
+	# Sanity check. If we have both a command and a config, bomb.
+	if [[ "${is_command}" == "yes" && "${is_config}" == "yes" ]]; then
+		exit_with_error "You cannot have a configuration file named '${config_file}'. '${argument}' is a command name and is reserved for internal Armbian usage. Sorry. Please rename your config file and pass its name it an argument, and I'll use it. PS: You don't need a config file for 'docker' anymore, Docker is all managed by Armbian now."
+	elif [[ "${is_config}" == "yes" ]]; then # we have a config only
+		display_alert "Adding config file to list" "${config_file}" "debug"
+		ARMBIAN_CONFIG_FILES+=("${config_file}")
+	elif [[ "${is_command}" == "yes" ]]; then # we have a command, only.
+		# sanity check. we can't have more than one command. decide!
+		if [[ -n "${ARMBIAN_COMMAND}" ]]; then
+			exit_with_error "You cannot specify more than one command. You have '${ARMBIAN_COMMAND}' and '${argument}'. Please decide which one you want to run and pass only that one."
+			exit 1
+		fi
+		ARMBIAN_COMMAND="${argument}" # too early for armbian_prepare_cli_command_to_run "${argument}"
+	else
+		# We've an unknown argument. Alert now, bomb later.
+		ARMBIAN_HAS_UNKNOWN_ARG="yes"
+		display_alert "Unknown argument" "${argument}" "err"
+	fi
 }

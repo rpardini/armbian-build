@@ -12,7 +12,10 @@ function logging_init() {
 	fi
 	if [[ "${ARMBIAN_RUNNING_IN_CONTAINER}" == "yes" ]]; then # if in container, add a cyan "whale emoji" to the left marker wrapped in dark gray brackets
 		local container_emoji="🐳"                                #  🐳 or 🐋
-		export left_marker="${gray_color}[${container_emoji}${normal_color}${left_marker}"
+		export left_marker="${gray_color}[${container_emoji}|${normal_color}"
+	elif [[ "$(uname -s)" == "Darwin" ]]; then # if on Mac, add a an apple emoji to the left marker wrapped in dark gray brackets
+		local mac_emoji="🍎"
+		export left_marker="${gray_color}[${mac_emoji}|${normal_color}"
 	fi
 }
 
@@ -394,7 +397,11 @@ function export_html_logs() {
 
 # Cleanup for logging.
 function trap_handler_cleanup_logging() {
+	[[ "x${LOGDIR}x" == "xx" ]] && return 0
+	[[ "x${LOGDIR}x" == "x/x" ]] && return 0
 	[[ ! -d "${LOGDIR}" ]] && return 0
+
+	display_alert "Cleaning up log files" "LOGDIR: '${LOGDIR}'" "debug"
 
 	# `pwd` might not even be valid anymore. Move back to ${SRC}
 	cd "${SRC}" || exit_with_error "cray-cray about SRC: ${SRC}"
@@ -438,5 +445,10 @@ function trap_handler_cleanup_logging() {
 	local target_file="${target_path}/armbian-logs-ansi-${ARMBIAN_BUILD_UUID}.txt.log"
 	export_ansi_logs
 
-	rm -rf --one-file-system "${LOGDIR}"
+	# Linux allows us to be more careful, but really, those are log files we're talking about.
+	if [[ "$(uname)" == "Linux" ]]; then
+		rm -rf --one-file-system "${LOGDIR}"
+	else
+		rm -rf "${LOGDIR}"
+	fi
 }

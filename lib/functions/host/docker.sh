@@ -283,12 +283,18 @@ function docker_cli_launch() {
 	display_alert "Showing Docker characteristics" "Docker args: '${DOCKER_ARGS[*]}'" "info"
 
 	display_alert "Running" "real build: ${*}" "info"
-	docker run -it "${DOCKER_ARGS[@]}" "${DOCKER_ARMBIAN_INITIAL_IMAGE_TAG}" /bin/bash "${DOCKER_ARMBIAN_TARGET_PATH}/compile.sh" "$@"
-
-	display_alert "Done!"
+	local -i docker_build_result=1
+	if docker run -it "${DOCKER_ARGS[@]}" "${DOCKER_ARMBIAN_INITIAL_IMAGE_TAG}" /bin/bash "${DOCKER_ARMBIAN_TARGET_PATH}/compile.sh" "$@"; then
+		display_alert "Docker Build finished" "successfully" "info"
+		docker_build_result=0
+	else
+		display_alert "Docker Build failed" "with errors" "err"
+	fi
 
 	display_alert "Showing docker volumes usage" "debug"
-	docker system df -v | grep -e "^armbian-cache" | grep -v "\b0B" | tr -s " " | cut -d " " -f 1,3
+	docker system df -v | grep -e "^armbian-cache" | grep -v "\b0B" | tr -s " " | cut -d " " -f 1,3 || true
+	
+	return ${docker_build_result}
 }
 
 # Leftovers from original Dockerfile before rewrite
