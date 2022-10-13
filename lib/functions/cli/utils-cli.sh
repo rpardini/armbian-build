@@ -1,85 +1,55 @@
-# Misc functions from compile.sh
+# This is called like this:
+#	declare -A -g ARMBIAN_PARSED_CMDLINE_PARAMS=()
+#	declare -a -g ARMBIAN_NON_PARAM_ARGS=()
+#	parse_cmdline_params "${@}" # which fills the vars above, being global.
+function parse_cmdline_params() {
+	declare -A -g ARMBIAN_PARSED_CMDLINE_PARAMS=()
+	declare -a -g ARMBIAN_NON_PARAM_ARGS=()
 
-function handle_docker_vagrant() {
-	# Check for Vagrant
-	if [[ "${1}" == vagrant && -z "$(command -v vagrant)" ]]; then
-		display_alert "Vagrant not installed." "Installing"
-		sudo apt-get update
-		sudo apt-get install -y vagrant virtualbox
-	fi
-
-	# Install Docker if not there but wanted. We cover only Debian based distro install. On other distros, manual Docker install is needed
-	if [[ "${1}" == docker && -f /etc/debian_version && -z "$(command -v docker)" ]]; then
-		DOCKER_BINARY="docker-ce"
-
-		# add exception for Ubuntu Focal until Docker provides dedicated binary
-		codename=$(cat /etc/os-release | grep VERSION_CODENAME | cut -d"=" -f2)
-		codeid=$(cat /etc/os-release | grep ^NAME | cut -d"=" -f2 | awk '{print tolower($0)}' | tr -d '"' | awk '{print $1}')
-		[[ "${codename}" == "debbie" ]] && codename="buster" && codeid="debian"
-		[[ "${codename}" == "ulyana" || "${codename}" == "jammy" ]] && codename="focal" && codeid="ubuntu"
-
-		# different binaries for some. TBD. Need to check for all others
-		[[ "${codename}" =~ focal|hirsute ]] && DOCKER_BINARY="docker containerd docker.io"
-
-		display_alert "Docker not installed." "Installing" "Info"
-		sudo bash -c "echo \"deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/${codeid} ${codename} stable\" > /etc/apt/sources.list.d/docker.list"
-
-		sudo bash -c "curl -fsSL \"https://download.docker.com/linux/${codeid}/gpg\" | apt-key add -qq - > /dev/null 2>&1 "
-		export DEBIAN_FRONTEND=noninteractive
-		sudo apt-get update
-		sudo apt-get install -y -qq --no-install-recommends ${DOCKER_BINARY}
-		display_alert "Add yourself to docker group to avoid root privileges" "" "wrn"
-		"${SRC}/compile.sh" "$@"
-		exit $?
-	fi
-
+	while [[ "x${1}x" != "xx" ]]; do # @TODO, incorrect, I just wanna parse them ALL.
+		if [[ "${1}" == *=* ]]; then    # it's a param.
+			local param_name param_value param_value_desc
+			param_name=${1%%=*}
+			param_value=${1##*=}
+			param_value_desc="${param_value:-(empty)}"
+			ARMBIAN_PARSED_CMDLINE_PARAMS["${param_name}"]="${param_value}"
+			shift
+			display_alert "Command line: parsed parameter '$param_name' to" "${param_value_desc}" "debug"
+		else # not a param, store it in the non-param array for later usage
+			local non_param_value="${1}"
+			local non_param_value_desc="${non_param_value:-(empty)}"
+			display_alert "Command line: storing non-param argument" "${non_param_value_desc}" "debug"
+			ARMBIAN_NON_PARAM_ARGS+=("${non_param_value}")
+			shift
+		fi
+	done
 }
 
-function prepare_userpatches() {
-	# Create userpatches directory if not exists
-	mkdir -p "${SRC}"/userpatches
+# This can be called early on, or later after having sourced the config. Show what is happening.
+# This is called:
+# apply_cmdline_params_to_env "reason" # reads from global ARMBIAN_PARSED_CMDLINE_PARAMS
+function apply_cmdline_params_to_env() {
+	declare -A -g ARMBIAN_PARSED_CMDLINE_PARAMS # Hopefully this has values
+	declare __my_reason="${1}"
+	shift
 
-	# Create example configs if none found in userpatches
-	if ! ls "${SRC}"/userpatches/{config-default.conf,config-docker.conf,config-vagrant.conf} 1> /dev/null 2>&1; then
+	# Loop over the dictionary and apply the values to the environment.
+	for param_name in "${!ARMBIAN_PARSED_CMDLINE_PARAMS[@]}"; do
+		local param_value param_value_desc current_env_value
+		# get the current value from the environment
+		current_env_value="${!param_name}"
+		current_env_value_desc="${current_env_value:-(empty)}"
+		# get the new value from the dictionary
+		param_value="${ARMBIAN_PARSED_CMDLINE_PARAMS[${param_name}]}"
+		param_value_desc="${param_value:-(empty)}"
 
-		# Migrate old configs
-		if ls "${SRC}"/*.conf 1> /dev/null 2>&1; then
-			display_alert "Migrate config files to userpatches directory" "all *.conf" "info"
-			cp "${SRC}"/*.conf "${SRC}"/userpatches || exit 1
-			rm "${SRC}"/*.conf
-			[[ ! -L "${SRC}"/userpatches/config-example.conf ]] && ln -fs config-example.conf "${SRC}"/userpatches/config-default.conf || exit 1
+		# Compare, log, and apply.
+		if [[ "${current_env_value}" != "${param_value}" ]]; then
+			display_alert "Command line: '${__my_reason}': applying '$param_name', changing '${current_env_value_desc}' to" "${param_value_desc}" "info"
+			# use `declare -g` to make it global, we're in a function.
+			eval "declare -g $param_name=\"$param_value\""
+		else
+			display_alert "Command line: '${__my_reason}': '$param_name' already set to" "${current_env_value_desc}" "debug"
 		fi
-
-		display_alert "Create example config file using template" "config-default.conf" "info"
-
-		# Create example config
-		if [[ ! -f "${SRC}"/userpatches/config-example.conf ]]; then
-			cp "${SRC}"/config/templates/config-example.conf "${SRC}"/userpatches/config-example.conf || exit 1
-		fi
-
-		# Link default config to example config
-		if [[ ! -f "${SRC}"/userpatches/config-default.conf ]]; then
-			ln -fs config-example.conf "${SRC}"/userpatches/config-default.conf || exit 1
-		fi
-
-		# Create Docker config
-		if [[ ! -f "${SRC}"/userpatches/config-docker.conf ]]; then
-			cp "${SRC}"/config/templates/config-docker.conf "${SRC}"/userpatches/config-docker.conf || exit 1
-		fi
-
-		# Create Docker file
-		if [[ ! -f "${SRC}"/userpatches/Dockerfile ]]; then
-			cp "${SRC}"/config/templates/Dockerfile "${SRC}"/userpatches/Dockerfile || exit 1
-		fi
-
-		# Create Vagrant config
-		if [[ ! -f "${SRC}"/userpatches/config-vagrant.conf ]]; then
-			cp "${SRC}"/config/templates/config-vagrant.conf "${SRC}"/userpatches/config-vagrant.conf || exit 1
-		fi
-
-		# Create Vagrant file
-		if [[ ! -f "${SRC}"/userpatches/Vagrantfile ]]; then
-			cp "${SRC}"/config/templates/Vagrantfile "${SRC}"/userpatches/Vagrantfile || exit 1
-		fi
-	fi
+	done
 }
