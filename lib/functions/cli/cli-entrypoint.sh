@@ -9,39 +9,80 @@ function cli_entrypoint() {
 		trap 'echo "${BASH_LINENO[@]}|${BASH_SOURCE[@]}|${FUNCNAME[@]}" >> ${SRC}/output/call-traces/calls.txt ;' RETURN
 	fi
 
-	if [[ "${EUID}" == "0" ]] || [[ "${1}" == "vagrant" ]]; then
-		:
-	elif [[ "${1}" == docker || "${1}" == dockerpurge || "${1}" == docker-shell ]] && grep -q "$(whoami)" <(getent group docker); then
-		:
+	# Process the command line, separating params (XX=YY) from non-params arguments.
+	# That way they can be set in any order.
+	declare -A -g ARMBIAN_PARSED_CMDLINE_PARAMS=() # A dict of PARAM=VALUE
+	declare -a -g ARMBIAN_NON_PARAM_ARGS=()        # An array of all non-param arguments
+	parse_cmdline_params "${@}"                    # which fills the above vars.
+
+	# Now load the key=value pairs from cmdline into environment, before loading config or executing commands.
+	# This will be done _again_ later, to make sure cmdline params override config et al.
+	apply_cmdline_params_to_env "early" # which uses ARMBIAN_PARSED_CMDLINE_PARAMS
+	# From here on, no more ${1} or stuff. We've parsed it all into ARMBIAN_PARSED_CMDLINE_PARAMS or ARMBIAN_NON_PARAM_ARGS and ARMBIAN_COMMAND.
+
+	# Decide what we're gonna do. We've a few hardcoded, 1st-argument "commands".
+	declare -A ARMBIAN_COMMANDS_TO_HANDLERS_DICT=(
+		["docker"]="DOCKER_SUBCMD='docker' cli_handle_docker"
+		["docker-purge"]="DOCKER_SUBCMD='purge' cli_handle_docker"
+		["dockerpurge"]="DOCKER_SUBCMD='purge' cli_handle_docker"
+		["docker-shell"]="DOCKER_SUBCMD='shell' cli_handle_docker"
+		["dockershell"]="DOCKER_SUBCMD='shell' cli_handle_docker"
+		["vagrant"]="cli_handle_vagrant"
+	)
+
+	# Check if the first non-param arg is a known command.
+	local ARMBIAN_FIRST_NON_PARAM="${ARMBIAN_NON_PARAM_ARGS[0]}"
+	display_alert "ARMBIAN_FIRST_NON_PARAM" "${ARMBIAN_FIRST_NON_PARAM}" "debug"
+
+	declare ARMBIAN_HAS_COMMAND="no"
+
+	declare ARMBIAN_COMMAND=""
+	declare ARMBIAN_HAS_FIRST_NON_PARAM="no"
+	if [[ "x${ARMBIAN_FIRST_NON_PARAM}x" != "xx" ]]; then
+		declare ARMBIAN_COMMAND="${ARMBIAN_COMMANDS_TO_HANDLERS_DICT["${ARMBIAN_FIRST_NON_PARAM}"]}"
+		display_alert "Found a first non-param argument" "${ARMBIAN_COMMAND}" "debug"
+		declare -r ARMBIAN_HAS_FIRST_NON_PARAM="yes"
+	fi
+
+	if [[ "x${ARMBIAN_COMMAND}x" != "xx" ]]; then
+		display_alert "Found command in" "ARMBIAN_COMMAND: ${ARMBIAN_COMMAND}" "debug"
+		declare -r ARMBIAN_COMMAND="${ARMBIAN_COMMAND}"
+		declare -r ARMBIAN_HAS_COMMAND="yes"
+		# 'shift' the non-param array, since we've taken the command from it.
+		ARMBIAN_NON_PARAM_ARGS=("${ARMBIAN_NON_PARAM_ARGS[@]:1}")
+	else
+		declare -r ARMBIAN_COMMAND=""
+		declare -r ARMBIAN_HAS_COMMAND="no"
+		display_alert "No command found in" "ARMBIAN_FIRST_NON_PARAM: ${ARMBIAN_FIRST_NON_PARAM}" "debug"
+	fi
+
+	# Super early handling. If no command and not root, become root by using sudo. Some exceptions apply.
+	if [[ "${EUID}" == "0" ]]; then # we're already root. Either running as real root, or already sudo'ed.
+		display_alert "Already running as root" "great" "debug"
+	elif [[ "${ARMBIAN_HAS_COMMAND}" == "yes" ]]; then # If we've a command, don't check for root, let each command handler decide.
+		display_alert "Not running as root, but we've a command" "great" "debug"
 	elif [[ "${CONFIG_DEFS_ONLY}" == "yes" ]]; then                 # this var is set in the ENVIRONMENT, not as parameter.
 		display_alert "No sudo for" "env CONFIG_DEFS_ONLY=yes" "debug" # not really building in this case, just gathering meta-data.
 	else
-		display_alert "This script requires root privileges, trying to use sudo" "" "wrn"
-		sudo "${SRC}/compile.sh" "$@"
+		# non, command, default build, not root.
+		# check if we're on Linux via uname. if not, refuse to do anything.
+		if [[ "$(uname)" != "Linux" ]]; then
+			display_alert "Not running on Linux" "refusing to run" "err"
+			exit 1
+		fi
+
+		display_alert "This script requires root privileges" "trying to use sudo" "wrn"
+		sudo --preserve-env "${SRC}/compile.sh" "${ARMBIAN_ORIGINAL_ARGV[@]}"
+		display_alert "AFTER SUDO!!!" "AFTER SUDO!!!" "warn"
 	fi
 
-	# Purge Armbian Docker images
-	if [[ "${1}" == dockerpurge && -f /etc/debian_version ]]; then
-		display_alert "Purging Armbian Docker containers" "" "wrn"
-		docker container ls -a | grep armbian | awk '{print $1}' | xargs docker container rm &> /dev/null
-		docker image ls | grep armbian | awk '{print $3}' | xargs docker image rm &> /dev/null
-		shift
-		set -- "docker" "$@"
-	fi
+	# Create userpatches directory if not exists.
+	mkdir -p "${SRC}"/userpatches
 
-	# Docker shell
-	if [[ "${1}" == docker-shell ]]; then
-		shift
-		SHELL_ONLY=yes
-		set -- "docker" "$@"
-	fi
 
-	handle_docker_vagrant "$@"
-
-	prepare_userpatches "$@"
-
+	# Check if the (newly-shifted, possibly) ${1} refers to a configfile in userpatches.
 	if [[ -z "${CONFIG}" && -n "$1" && -f "${SRC}/userpatches/config-$1.conf" ]]; then
-		CONFIG="userpatches/config-$1.conf"
+		CONFIG="userpatches/config-$1.conf" # here `docker` does its magic pt 1
 		shift
 	fi
 
@@ -50,14 +91,14 @@ function cli_entrypoint() {
 		CONFIG="userpatches/config-default.conf"
 	fi
 
-	# source build configuration file
+	# Check that the config file specified actually exists, and bail if not.
 	CONFIG_FILE="$(realpath "${CONFIG}")"
-
 	if [[ ! -f "${CONFIG_FILE}" ]]; then
 		display_alert "Config file does not exist" "${CONFIG}" "error"
 		exit 254
 	fi
 
+	# Get the directory name of the config, and use it as DEST if it contains an "output" folder. @TODO: Why?
 	CONFIG_PATH=$(dirname "${CONFIG_FILE}")
 
 	# DEST is the main output dir.
@@ -94,7 +135,7 @@ function cli_entrypoint() {
 		display_alert "* " "Sources, time and host will not be checked"
 	else
 		# check and install the basic utilities.
-		LOG_SECTION="prepare_host_basic" do_with_logging prepare_host_basic
+		LOG_SECTION="prepare_host_basic" do_with_logging prepare_host_basic # This includes the 'docker' case.
 	fi
 
 	# Source the extensions manager library at this point, before sourcing the config.
@@ -102,22 +143,22 @@ function cli_entrypoint() {
 	# shellcheck source=lib/extensions.sh
 	source "${SRC}"/lib/extensions.sh
 
+	# This actually sources/executes the config file.
 	display_alert "Using config file" "${CONFIG_FILE}" "info"
 	pushd "${CONFIG_PATH}" > /dev/null || exit
 	# shellcheck source=/dev/null
-	source "${CONFIG_FILE}"
+	source "${CONFIG_FILE}" # @TODO: in the docker case this is the 'bingo': this config re-execs compile.sh with "$@" that has already had 'docker' shifted from $1; it also errors out so never returns? not sure
 	popd > /dev/null || exit
 
+	# @TODO, why?
 	[[ -z "${USERPATCHES_PATH}" ]] && USERPATCHES_PATH="${CONFIG_PATH}"
 
-	# Script parameters handling
-	while [[ "${1}" == *=* ]]; do
-		parameter=${1%%=*}
-		value=${1##*=}
-		shift
-		display_alert "Command line: setting $parameter to" "${value:-(empty)}" "info"
-		eval "$parameter=\"$value\""
-	done
+	# Apply the params received from the command line _again_ after running the config.
+	# This ensures that params take precedence over stuff possibly defined in the config.
+	apply_cmdline_params_to_env "after config" # which uses ARMBIAN_PARSED_CMDLINE_PARAMS
+
+	# @TODO: actually execute the command here.
+	exit_with_error "This is the end of the line, folks."
 
 	##
 	## Main entrypoint.
@@ -137,7 +178,7 @@ function cli_entrypoint() {
 		install_host_dependencies "for REQUIREMENTS_DEFS_ONLY=yes"
 		# @TODO: maybe also toolchains?
 		# @TODO: maybe also some gitballs?
-		
+
 		display_alert "Done with" "REQUIREMENTS_DEFS_ONLY" "cachehit"
 		exit 0
 	fi
