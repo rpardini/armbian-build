@@ -1,5 +1,8 @@
 function cli_docker_pre_run() {
-	display_alert "Docker!" "func cli_docker_pre_run" "warn"
+	if [[ "${DOCKERFILE_GENERATE_ONLY}" == "yes" ]]; then
+		display_alert "Dockerfile generation only" "func cli_docker_pre_run" "debug"
+		return 0
+	fi
 
 	# make sure we're not _ALREADY_ running under docker... otherwise eternal loop?
 	if [[ "${ARMBIAN_RUNNING_IN_CONTAINER}" == "yes" ]]; then
@@ -10,8 +13,6 @@ function cli_docker_pre_run() {
 }
 
 function cli_docker_run() {
-	display_alert "Docker!" "func cli_docker_run" "warn"
-
 	LOG_SECTION="docker_cli_prepare" do_with_logging docker_cli_prepare
 
 	if [[ "${DOCKERFILE_GENERATE_ONLY}" == "yes" ]]; then
@@ -21,7 +22,7 @@ function cli_docker_run() {
 
 	# Force showing logs here while bulding Dockerfile.
 	SHOW_LOG=yes LOG_SECTION="docker_cli_build_dockerfile" do_with_logging docker_cli_build_dockerfile
-	
+
 	LOG_SECTION="docker_cli_prepare_launch" do_with_logging docker_cli_prepare_launch
 	docker_cli_launch "${ARMBIAN_ORIGINAL_ARGV[@]}" # this might include "docker" again...
 }

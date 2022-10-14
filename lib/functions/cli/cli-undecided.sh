@@ -1,6 +1,4 @@
 function cli_undecided_pre_run() {
-	display_alert "Undecided!" "func cli_undecided_pre_run" "warn"
-
 	# If undecided, run the 'build' command.
 	# 'build' will then defer to 'docker' if ran on Darwin.
 	# so save a trip, check if we're on Darwin right here.
@@ -14,6 +12,5 @@ function cli_undecided_pre_run() {
 }
 
 function cli_undecided_run() {
-	display_alert "Undecided!" "func cli_undecided_run" "warn"
 	exit_with_error "Should never run the undecided command. How did this happen?"
 }

@@ -62,6 +62,16 @@ function armbian_prepare_cli_command_to_run() {
 	ARMBIAN_COMMAND_VARS="${ARMBIAN_COMMANDS_TO_VARS_DICT[${command_id}]}"
 	# @TODO: actually set the vars...
 
+	local set_vars_for_command=""
+	if [[ "x${ARMBIAN_COMMAND_VARS}x" != "xx" ]]; then
+		# Loop over them, expanding...
+		for var_piece in ${ARMBIAN_COMMAND_VARS}; do
+			local var_decl="declare -g ${var_piece};"
+			display_alert "Command handler: setting variable" "${var_decl}" "debug"
+			set_vars_for_command+=" ${var_decl}"
+		done
+	fi
+
 	local pre_run_function_name="cli_${ARMBIAN_COMMAND_HANDLER}_pre_run"
 	local run_function_name="cli_${ARMBIAN_COMMAND_HANDLER}_run"
 
@@ -72,13 +82,15 @@ function armbian_prepare_cli_command_to_run() {
 	function armbian_cli_run_command() {
 		display_alert "No run function for command" "${ARMBIAN_COMMAND}" "warn"
 	}
-	
+
 	# Materialize functions to call that specific command.
 	if [[ $(type -t "${pre_run_function_name}" || true) == function ]]; then
 		eval "$(
 			cat <<- EOF
 				display_alert "Setting up pre-run function for command" "${ARMBIAN_COMMAND}: ${pre_run_function_name}" "debug"
 				function armbian_cli_pre_run_command() {
+					# Set the variables defined in ARMBIAN_COMMAND_VARS
+					${set_vars_for_command}
 					display_alert "Calling pre-run function for command" "${ARMBIAN_COMMAND}: ${pre_run_function_name}" "debug"
 					${pre_run_function_name}
 				}
@@ -91,6 +103,8 @@ function armbian_prepare_cli_command_to_run() {
 			cat <<- EOF
 				display_alert "Setting up run function for command" "${ARMBIAN_COMMAND}: ${run_function_name}" "debug"
 				function armbian_cli_run_command() {
+					# Set the variables defined in ARMBIAN_COMMAND_VARS
+					${set_vars_for_command}
 					display_alert "Calling run function for command" "${ARMBIAN_COMMAND}: ${run_function_name}" "debug"
 					${run_function_name}
 				}

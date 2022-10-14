@@ -8,7 +8,7 @@ function cli_entrypoint() {
 		echo -n "" > "${SRC}"/output/call-traces/calls.txt
 		trap 'echo "${BASH_LINENO[@]}|${BASH_SOURCE[@]}|${FUNCNAME[@]}" >> ${SRC}/output/call-traces/calls.txt ;' RETURN
 	fi
-	
+
 	# @TODO: allow for a super-early userpatches/config-000.custom.conf.sh to be loaded, before anything else.
 	# This would allow for custom commands and interceptors.
 
@@ -41,7 +41,7 @@ function cli_entrypoint() {
 	fi
 
 	# @TODO: Have a config that is always included? "${SRC}/userpatches/config-default.conf" ?
-	
+
 	# If we don't have a command decided yet, use the undecided command.
 	if [[ "${ARMBIAN_COMMAND}" == "" ]]; then
 		display_alert "No command found, using default" "undecided" "wrn"
@@ -57,14 +57,13 @@ function cli_entrypoint() {
 	declare -g ARMBIAN_CHANGE_COMMAND_TO="${ARMBIAN_COMMAND}"
 	while [[ "${ARMBIAN_CHANGE_COMMAND_TO}" != "" ]]; do
 		display_alert "Still a command to pre-run, this time:" "${ARMBIAN_CHANGE_COMMAND_TO}" "info"
-		
+
 		ARMBIAN_COMMAND="${ARMBIAN_CHANGE_COMMAND_TO}"
 		armbian_prepare_cli_command_to_run "${ARMBIAN_COMMAND}"
-		
+
 		ARMBIAN_CHANGE_COMMAND_TO=""
 		armbian_cli_pre_run_command
 	done
-	
 
 	# IMPORTANT!!!: it is INVALID to relaunch compile.sh from here. It will cause logging mistakes.
 	# So the last possible moment to relaunch is in xxxxx_pre_run!
@@ -98,6 +97,17 @@ function cli_entrypoint() {
 	LOG_SECTION=entrypoint start_logging_section     # This creates LOGDIR. @TODO: also maybe causes a spurious group to be created in the log file
 	add_cleanup_handler trap_handler_cleanup_logging # cleanup handler for logs; it rolls it up from LOGDIR into DEST/logs @TODO: use the COMMAND in the filenames.
 
+	# @TODO: So gigantic contention point here about logging the basic deps installation.
+	if [[ "${ARMBIAN_COMMAND_REQUIRE_BASIC_DEPS}" == "yes" ]]; then
+		if [[ "${OFFLINE_WORK}" == "yes" ]]; then
+			display_alert "* " "You are working offline!"
+			display_alert "* " "Sources, time and host will not be checked"
+		else
+			# check and install the basic utilities;
+			LOG_SECTION="prepare_host_basic" do_with_logging prepare_host_basic # This includes the 'docker' case.
+		fi
+	fi
+
 	# Source the extensions manager library at this point, before sourcing the config.
 	# This allows early calls to enable_extension(), but initialization proper is done later.
 	# shellcheck source=lib/extensions.sh
@@ -114,7 +124,12 @@ function cli_entrypoint() {
 		# shellcheck source=/dev/null
 		source "${config_file}"
 
-		# @TODO: reset set -e etc
+		# reset completely after sourcing config file
+		set -e
+		#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+		#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+		set -o errtrace # trace ERR through - enabled
+		set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
 
 		popd > /dev/null || exit_with_error "Failed to popd from ${config_dir}"
 
@@ -123,9 +138,8 @@ function cli_entrypoint() {
 		apply_cmdline_params_to_env "after config '${config_filename}'" # which uses ARMBIAN_PARSED_CMDLINE_PARAMS
 	done
 
-	display_alert "Eh will run the command here: ${ARMBIAN_COMMAND}" 
+	display_alert "Eh will run the command here: ${ARMBIAN_COMMAND}"
 	armbian_cli_run_command
-	
 
 	# Build done, run the cleanup handlers explicitly.
 	# This zeroes out the list of cleanups, so it's not done again when the main script exits normally and trap = 0 runs.
