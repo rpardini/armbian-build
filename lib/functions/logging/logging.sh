@@ -395,6 +395,15 @@ function export_html_logs() {
 	display_alert "Built HTML log file" "${target_file}"
 }
 
+function discard_logs_tmp_dir() {
+	# Linux allows us to be more careful, but really, those are log files we're talking about.
+	if [[ "$(uname)" == "Linux" ]]; then
+		rm -rf --one-file-system "${LOGDIR}"
+	else
+		rm -rf "${LOGDIR}"
+	fi
+}
+
 # Cleanup for logging.
 function trap_handler_cleanup_logging() {
 	[[ "x${LOGDIR}x" == "xx" ]] && return 0
@@ -409,7 +418,7 @@ function trap_handler_cleanup_logging() {
 	# Just delete LOGDIR if in CONFIG_DEFS_ONLY mode.
 	if [[ "${CONFIG_DEFS_ONLY}" == "yes" ]]; then
 		display_alert "Discarding logs" "CONFIG_DEFS_ONLY=${CONFIG_DEFS_ONLY}" "debug"
-		rm -rf --one-file-system "${LOGDIR}"
+		discard_logs_tmp_dir
 		return 0
 	fi
 
@@ -445,10 +454,5 @@ function trap_handler_cleanup_logging() {
 	local target_file="${target_path}/armbian-logs-ansi-${ARMBIAN_BUILD_UUID}.txt.log"
 	export_ansi_logs
 
-	# Linux allows us to be more careful, but really, those are log files we're talking about.
-	if [[ "$(uname)" == "Linux" ]]; then
-		rm -rf --one-file-system "${LOGDIR}"
-	else
-		rm -rf "${LOGDIR}"
-	fi
+	discard_logs_tmp_dir
 }

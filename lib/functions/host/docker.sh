@@ -1,4 +1,3 @@
-
 #############################################################################################################
 # @TODO: called by no-one, yet.
 function check_and_install_docker_daemon() {
@@ -7,7 +6,7 @@ function check_and_install_docker_daemon() {
 	if [[ "${1}" == docker && -f /etc/debian_version && -z "$(command -v docker)" ]]; then
 		DOCKER_BINARY="docker-ce"
 
-		# add exception for Ubuntu Focal until Docker provides dedicated binary  
+		# add exception for Ubuntu Focal until Docker provides dedicated binary
 		codename=$(cat /etc/os-release | grep VERSION_CODENAME | cut -d"=" -f2)
 		codeid=$(cat /etc/os-release | grep ^NAME | cut -d"=" -f2 | awk '{print tolower($0)}' | tr -d '"' | awk '{print $1}')
 		[[ "${codename}" == "debbie" ]] && codename="buster" && codeid="debian"
@@ -153,12 +152,8 @@ function docker_cli_prepare() {
 		WORKDIR ${DOCKER_ARMBIAN_TARGET_PATH}
 		ENV ARMBIAN_RUNNING_IN_CONTAINER=yes
 		ADD . ${DOCKER_ARMBIAN_TARGET_PATH}/
-		RUN echo "--> CACHE MISS IN DOCKERFILE: build system script files changed." >&2 && \
-			ls -laRht ${DOCKER_ARMBIAN_TARGET_PATH}
 		RUN echo "--> CACHE MISS IN DOCKERFILE: running Armbian requirements initialization." >&2 && \
-			uname -a && cat /etc/os-release && \
-			free -h && df -h && lscpu && \
-			/bin/bash "${DOCKER_ARMBIAN_TARGET_PATH}/compile.sh" REQUIREMENTS_DEFS_ONLY=yes SHOW_DEBUG=yes SHOW_COMMAND=yes SHOW_LOG=yes && \
+			/bin/bash "${DOCKER_ARMBIAN_TARGET_PATH}/compile.sh" requirements SHOW_DEBUG=yes SHOW_COMMAND=yes SHOW_LOG=yes && \
 			rm -rfv "${DOCKER_ARMBIAN_TARGET_PATH}/output" "${DOCKER_ARMBIAN_TARGET_PATH}/.tmp" "${DOCKER_ARMBIAN_TARGET_PATH}/cache" 
 	INITIAL_DOCKERFILE
 
@@ -292,18 +287,19 @@ function docker_cli_launch() {
 	fi
 
 	display_alert "Showing docker volumes usage" "debug"
+	# @TODO: this randomly fails for no good reason, why?
 	docker system df -v | grep -e "^armbian-cache" | grep -v "\b0B" | tr -s " " | cut -d " " -f 1,3 || true
-	
+
 	return ${docker_build_result}
 }
 
 # Leftovers from original Dockerfile before rewrite
 ## OLD DOCKERFILE ## RUN locale-gen en_US.UTF-8
-## OLD DOCKERFILE ## 
+## OLD DOCKERFILE ##
 ## OLD DOCKERFILE ## # Static port for NFSv3 server used for USB FEL boot
 ## OLD DOCKERFILE ## RUN sed -i 's/\(^STATDOPTS=\).*/\1"--port 32765 --outgoing-port 32766"/' /etc/default/nfs-common \
 ## OLD DOCKERFILE ##     && sed -i 's/\(^RPCMOUNTDOPTS=\).*/\1"--port 32767"/' /etc/default/nfs-kernel-server
-## OLD DOCKERFILE ## 
+## OLD DOCKERFILE ##
 ## OLD DOCKERFILE ## ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8' TERM=screen
 ## OLD DOCKERFILE ## WORKDIR /root/armbian
 ## OLD DOCKERFILE ## LABEL org.opencontainers.image.source="https://github.com/armbian/build/blob/master/config/templates/Dockerfile" \
