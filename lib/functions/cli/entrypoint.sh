@@ -94,7 +94,7 @@ function cli_entrypoint() {
 	export EXTENSION_MANAGER_TMP_DIR="${SRC}/.tmp/extensions-${ARMBIAN_BUILD_UUID}" # EXTENSION_MANAGER_TMP_DIR used to store extension-composed functions
 	export DESTIMG="${SRC}/.tmp/image-${ARMBIAN_BUILD_UUID}"                        # DESTIMG is where the backing image (raw, huge, sparse file) is kept (not the final destination)
 
-	LOG_SECTION=entrypoint start_logging_section     # This creates LOGDIR. @TODO: also maybe causes a spurious group to be created in the log file
+	LOG_SECTION="entrypoint" start_logging_section   # This creates LOGDIR. @TODO: also maybe causes a spurious group to be created in the log file
 	add_cleanup_handler trap_handler_cleanup_logging # cleanup handler for logs; it rolls it up from LOGDIR into DEST/logs @TODO: use the COMMAND in the filenames.
 
 	# @TODO: So gigantic contention point here about logging the basic deps installation.
@@ -122,7 +122,7 @@ function cli_entrypoint() {
 		pushd "${config_dir}" > /dev/null || exit_with_error "Failed to pushd to ${config_dir}"
 
 		# shellcheck source=/dev/null
-		source "${config_file}"
+		LOG_SECTION="userpatches_config:${config_filename}" do_with_logging source "${config_file}"
 
 		# reset completely after sourcing config file
 		set -e
