@@ -14,7 +14,7 @@ function logging_init() {
 		local container_emoji="🐳"                                #  🐳 or 🐋
 		export left_marker="${gray_color}[${container_emoji}|${normal_color}"
 	elif [[ "$(uname -s)" == "Darwin" ]]; then # if on Mac, add a an apple emoji to the left marker wrapped in dark gray brackets
-		local mac_emoji="🍎"
+		local mac_emoji="🍏"                       # 🍏 or 🍎
 		export left_marker="${gray_color}[${mac_emoji}|${normal_color}"
 	fi
 }

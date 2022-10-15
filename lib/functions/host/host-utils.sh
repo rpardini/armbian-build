@@ -198,9 +198,9 @@ function reset_uid_owner() {
 	local arg
 	for arg in "$@"; do
 		if [[ -d "${arg}" ]]; then
-			run_host_command_logged chown -Rv "${SET_OWNER_TO_UID}" "${arg}"
+			chown -R "${SET_OWNER_TO_UID}" "${arg}"
 		elif [[ -f "${arg}" ]]; then
-			run_host_command_logged chown -v "${SET_OWNER_TO_UID}" "${arg}"
+			chown "${SET_OWNER_TO_UID}" "${arg}"
 		else
 			display_alert "reset_uid_owner: '${arg}' is not a file or directory" "skipping" "debug"
 			return 1
