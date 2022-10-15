@@ -19,6 +19,8 @@ function armbian_register_commands() {
 
 		["undecided"]="undecided" # implemented in cli_undecided_pre_run and cli_undecided_run - relaunches either build or docker
 	)
+	
+	# Vars to be set for each command. Optional.
 	declare -g -A ARMBIAN_COMMANDS_TO_VARS_DICT=(
 		["docker-purge"]="DOCKER_SUBCMD='purge'"
 		["dockerpurge"]="DOCKER_SUBCMD='purge'"
@@ -34,4 +36,7 @@ function armbian_register_commands() {
 		["configdump"]="CONFIG_DEFS_ONLY='yes'"
 
 	)
+
+	# To help with docker-relaunching, global vars.
+	declare -g ARMBIAN_DOCKER_RELAUNCH_EXTRA_ARGS=()
 }
