@@ -45,11 +45,11 @@ function apply_cmdline_params_to_env() {
 
 		# Compare, log, and apply.
 		if [[ "${current_env_value}" != "${param_value}" ]]; then
-			display_alert "Command line: '${__my_reason}': applying '$param_name', changing '${current_env_value_desc}' to" "${param_value_desc}" "info"
+			display_alert "Applying cmdline param, ${__my_reason}" "'$param_name': '${current_env_value_desc}' --> '${param_value_desc}'" "cmdline"
 			# use `declare -g` to make it global, we're in a function.
 			eval "declare -g $param_name=\"$param_value\""
 		else
-			display_alert "Command line: '${__my_reason}': '$param_name' already set to" "${current_env_value_desc}" "debug"
+			display_alert "Skip cmdline param, ${__my_reason}" "'$param_name': already set to --> '${param_value_desc}'" "cmdline"
 		fi
 	done
 }

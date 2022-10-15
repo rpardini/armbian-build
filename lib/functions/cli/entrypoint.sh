@@ -44,7 +44,7 @@ function cli_entrypoint() {
 
 	# If we don't have a command decided yet, use the undecided command.
 	if [[ "${ARMBIAN_COMMAND}" == "" ]]; then
-		display_alert "No command found, using default" "undecided" "wrn"
+		display_alert "No command found, using default" "undecided" "debug"
 		ARMBIAN_COMMAND="undecided"
 	fi
 
@@ -56,7 +56,7 @@ function cli_entrypoint() {
 	# each _pre_run can change the command and vars to run too, so do it in a loop until it stops changing.
 	declare -g ARMBIAN_CHANGE_COMMAND_TO="${ARMBIAN_COMMAND}"
 	while [[ "${ARMBIAN_CHANGE_COMMAND_TO}" != "" ]]; do
-		display_alert "Still a command to pre-run, this time:" "${ARMBIAN_CHANGE_COMMAND_TO}" "info"
+		display_alert "Still a command to pre-run, this time:" "${ARMBIAN_CHANGE_COMMAND_TO}" "debug"
 
 		ARMBIAN_COMMAND="${ARMBIAN_CHANGE_COMMAND_TO}"
 		armbian_prepare_cli_command_to_run "${ARMBIAN_COMMAND}"
@@ -138,10 +138,11 @@ function cli_entrypoint() {
 		apply_cmdline_params_to_env "after config '${config_filename}'" # which uses ARMBIAN_PARSED_CMDLINE_PARAMS
 	done
 
-	display_alert "Eh will run the command here: ${ARMBIAN_COMMAND}"
+	display_alert "Executing final CLI command" "${ARMBIAN_COMMAND}" "debug"
 	armbian_cli_run_command
+	display_alert "Done Executing final CLI command" "${ARMBIAN_COMMAND}" "debug"
 
 	# Build done, run the cleanup handlers explicitly.
-	# This zeroes out the list of cleanups, so it's not done again when the main script exits normally and trap = 0 runs.
+	# This zeroes out the list of cleanups, so it"s not done again when the main script exits normally and trap = 0 runs.
 	run_cleanup_handlers
 }
