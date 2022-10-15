@@ -176,7 +176,7 @@ function docker_cli_prepare() {
 		ENV ARMBIAN_RUNNING_IN_CONTAINER=yes
 		ADD . ${DOCKER_ARMBIAN_TARGET_PATH}/
 		RUN echo "--> CACHE MISS IN DOCKERFILE: running Armbian requirements initialization." >&2 && \
-			/bin/bash "${DOCKER_ARMBIAN_TARGET_PATH}/compile.sh" requirements SHOW_DEBUG=yes SHOW_COMMAND=yes SHOW_LOG=yes && \
+			/bin/bash "${DOCKER_ARMBIAN_TARGET_PATH}/compile.sh" requirements SHOW_LOG=yes && \
 			rm -rf "${DOCKER_ARMBIAN_TARGET_PATH}/output" "${DOCKER_ARMBIAN_TARGET_PATH}/.tmp" "${DOCKER_ARMBIAN_TARGET_PATH}/cache" 
 	INITIAL_DOCKERFILE
 
@@ -298,7 +298,7 @@ function docker_cli_prepare_launch() {
 }
 
 function docker_cli_launch() {
-	display_alert "Showing Docker characteristics" "Docker args: '${DOCKER_ARGS[*]}'" "info"
+	display_alert "Showing Docker cmdline" "Docker args: '${DOCKER_ARGS[*]}'" "debug"
 
 	display_alert "Running" "real build: ${*}" "info"
 	local -i docker_build_result=1
@@ -322,11 +322,13 @@ function docker_cli_show_armbian_volumes_disk_usage() {
 		display_alert "Could not get Docker volumes disk usage" "docker failed to report disk usage" "warn"
 		return 0 # not really a problem, just move on.
 	}
-	display_alert "Showing docker volumes disk usage" "Docker Armbian volume disk usage" "info"
-	docker system df -v | grep -e "^armbian-cache" | grep -v "\b0B" | tr -s " " | cut -d " " -f 1,3 || true
+	local docker_volume_usage
+	docker_volume_usage="$(docker system df -v | grep -e "^armbian-cache" | grep -v "\b0B" | tr -s " " | cut -d " " -f 1,3 | tr " " ":" | xargs echo || true)"
+	display_alert "Docker Armbian volume usage" "${docker_volume_usage}" "info"
 }
 
 function docker_cli_show_armbian_volumes_disk_usage_internal() {
+	# This fails sometimes, for no reason. Test it.
 	if docker system df -v &> /dev/null; then
 		return 0
 	else
