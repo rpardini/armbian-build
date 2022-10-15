@@ -433,14 +433,16 @@ function trap_handler_cleanup_logging() {
 		for one_old_logfile in "${existing_log_files_array[@]}"; do
 			old_logfile_fn="$(basename "${one_old_logfile}")"
 			display_alert "Archiving old logfile" "${old_logfile_fn}" "debug"
-			mkdir -p "${target_archive_path}"
+			mkdir_recursive_and_set_uid_owner "${target_archive_path}"
 
 			# Check if we have `zstdmt` at this stage; if not, use standard gzip
 			if [[ -n "$(command -v zstdmt)" ]]; then
 				zstdmt --quiet "${one_old_logfile}" -o "${target_archive_path}/${old_logfile_fn}.zst"
+				reset_uid_owner "${target_archive_path}/${old_logfile_fn}.zst"
 			else
 				# shellcheck disable=SC2002 # my cat is not useless. a bit whiny. not useless.
 				cat "${one_old_logfile}" | gzip > "${target_archive_path}/${old_logfile_fn}.gz"
+				reset_uid_owner "${target_archive_path}/${old_logfile_fn}.gz"
 			fi
 			rm -f "${one_old_logfile}"
 		done
@@ -449,10 +451,12 @@ function trap_handler_cleanup_logging() {
 	if [[ "${EXPORT_HTML_LOG}" == "yes" ]]; then
 		local target_file="${target_path}/armbian-logs-${ARMBIAN_BUILD_UUID}.html"
 		export_html_logs
+		reset_uid_owner "${target_file}"
 	fi
 
 	local target_file="${target_path}/armbian-logs-ansi-${ARMBIAN_BUILD_UUID}.txt.log"
 	export_ansi_logs
+	reset_uid_owner "${target_file}"
 
 	discard_logs_tmp_dir
 }

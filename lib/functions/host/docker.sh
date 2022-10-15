@@ -28,6 +28,29 @@ function check_and_install_docker_daemon() {
 	fi
 
 }
+# Usage: if is_docker_ready_to_go; then ...; fi
+function is_docker_ready_to_go() {
+	# For either Linux or Darwin.
+	# Gotta tick all these boxes:
+	# 0) NOT ALREADY UNDER DOCKER.
+	# 1) can find the `docker` command in the path, via command -v
+	# 2) can run `docker info` without errors
+	if [[ "$ARMBIAN_RUNNING_IN_CONTAINER}" == "yes" ]]; then
+		display_alert "Can't use Docker" "Actually ALREADY UNDER DOCKER!" "debug"
+		return 1
+	fi
+	if [[ ! -n "$(command -v docker)" ]]; then
+		display_alert "Can't use Docker" "docker command not found" "debug"
+		return 1
+	fi
+	if ! docker info > /dev/null 2>&1; then
+		display_alert "Can't use Docker" "docker info failed" "debug"
+		return 1
+	fi
+
+	# If we get here, we're good to go.
+	return 0
+}
 
 # Called by the cli-entrypoint. At this moment ${1} is already shifted; we know it via ${DOCKER_SUBCMD} now.
 function cli_handle_docker() {
@@ -154,7 +177,7 @@ function docker_cli_prepare() {
 		ADD . ${DOCKER_ARMBIAN_TARGET_PATH}/
 		RUN echo "--> CACHE MISS IN DOCKERFILE: running Armbian requirements initialization." >&2 && \
 			/bin/bash "${DOCKER_ARMBIAN_TARGET_PATH}/compile.sh" requirements SHOW_DEBUG=yes SHOW_COMMAND=yes SHOW_LOG=yes && \
-			rm -rfv "${DOCKER_ARMBIAN_TARGET_PATH}/output" "${DOCKER_ARMBIAN_TARGET_PATH}/.tmp" "${DOCKER_ARMBIAN_TARGET_PATH}/cache" 
+			rm -rf "${DOCKER_ARMBIAN_TARGET_PATH}/output" "${DOCKER_ARMBIAN_TARGET_PATH}/.tmp" "${DOCKER_ARMBIAN_TARGET_PATH}/cache" 
 	INITIAL_DOCKERFILE
 
 }

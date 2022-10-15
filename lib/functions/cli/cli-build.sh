@@ -6,13 +6,26 @@ function cli_standard_build_pre_run() {
 		display_alert "Already running as root" "great" "debug"
 	else
 		# not root.
+		
+		# We've a few options. 
+		# 1) We could check if Docker is working, and do everything under Docker. Users who can use Docker, can "become" root inside a container.
+		# 2) We could ask for sudo (which _might_ require a password)...
+		# @TODO: GitHub actions can do both. Sudo without password _and_ Docker; should we prefer Docker? Might have unintended consequences...
+		if is_docker_ready_to_go; then
+			# add the current user EUID as a parameter when it's relaunched under docker. SET_OWNER_TO_UID="${EUID}"
+			display_alert "Trying to build, not root, but Docker is ready to go" "delegating to Docker" "debug"
+			ARMBIAN_CHANGE_COMMAND_TO="docker"
+			ARMBIAN_DOCKER_RELAUNCH_EXTRA_ARGS+=("SET_OWNER_TO_UID=${EUID}")
+			return 0
+		fi
+		
 		# check if we're on Linux via uname. if not, refuse to do anything.
 		if [[ "$(uname)" != "Linux" ]]; then
-			display_alert "Not running on Linux" "refusing to run" "err"
+			display_alert "Not running on Linux; Docker is not available" "refusing to run" "err"
 			exit 1
 		fi
 
-		display_alert "This script requires root privileges" "trying to use sudo" "wrn"
+		display_alert "This script requires root privileges; Docker is unavailable" "trying to use sudo" "wrn"
 		sudo --preserve-env "${SRC}/compile.sh" "${ARMBIAN_ORIGINAL_ARGV[@]}" # @TODO: relaunch done here!
 		display_alert "AFTER SUDO!!!" "AFTER SUDO!!!" "warn"
 	fi
