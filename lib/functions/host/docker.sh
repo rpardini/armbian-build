@@ -96,7 +96,7 @@ function docker_cli_prepare() {
 		# @TODO: this is rpardini's build. It's done in a different repo, so that's why the strange "armbian-release" name. It should be armbian/build:ubuntu-jammy-latest or something.
 		DOCKER_ARMBIAN_BASE_IMAGE="ghcr.io/rpardini/armbian-release:armbian-next-${wanted_os_tag}-${wanted_release_tag}-latest"
 
-		display_alert "Using official Armbian image as base for '${wanted_os_tag}-${wanted_release_tag}'" "DOCKER_ARMBIAN_BASE_IMAGE: ${DOCKER_ARMBIAN_BASE_IMAGE}" "info"
+		display_alert "Using prebuilt Armbian image as base for '${wanted_os_tag}-${wanted_release_tag}'" "DOCKER_ARMBIAN_BASE_IMAGE: ${DOCKER_ARMBIAN_BASE_IMAGE}" "info"
 	fi
 
 	# @TODO: this might be unified with prepare_basic_deps
@@ -107,32 +107,32 @@ function docker_cli_prepare() {
 
 	declare -a -g host_dependencies=()
 	REQUIREMENTS_DEFS_ONLY=yes early_prepare_host_dependencies
-	display_alert "Pre-game dependencies" "${host_dependencies[*]}" "info"
+	display_alert "Pre-game dependencies" "${host_dependencies[*]}" "debug"
 
 	#############################################################################################################
 	# Detect some docker info.
 
 	DOCKER_SERVER_VERSION="$(docker info | grep -i -e "Server Version\:" | cut -d ":" -f 2 | xargs echo -n)"
-	display_alert "Docker Server version" "${DOCKER_SERVER_VERSION}" "info"
+	display_alert "Docker Server version" "${DOCKER_SERVER_VERSION}" "debug"
 
 	DOCKER_SERVER_KERNEL_VERSION="$(docker info | grep -i -e "Kernel Version\:" | cut -d ":" -f 2 | xargs echo -n)"
-	display_alert "Docker Server Kernel version" "${DOCKER_SERVER_KERNEL_VERSION}" "info"
-
-	DOCKER_BUILDX_VERSION="$(docker info | grep -i -e "buildx\:" | cut -d ":" -f 2 | xargs echo -n)"
-	display_alert "Docker Buildx version" "${DOCKER_BUILDX_VERSION}" "info"
+	display_alert "Docker Server Kernel version" "${DOCKER_SERVER_KERNEL_VERSION}" "debug"
 
 	DOCKER_SERVER_TOTAL_RAM="$(docker info | grep -i -e "Total memory\:" | cut -d ":" -f 2 | xargs echo -n)"
-	display_alert "Docker Server Total RAM" "${DOCKER_SERVER_TOTAL_RAM}" "info"
+	display_alert "Docker Server Total RAM" "${DOCKER_SERVER_TOTAL_RAM}" "debug"
 
 	DOCKER_SERVER_CPUS="$(docker info | grep -i -e "CPUs\:" | cut -d ":" -f 2 | xargs echo -n)"
-	display_alert "Docker Server CPUs" "${DOCKER_SERVER_CPUS}" "info"
+	display_alert "Docker Server CPUs" "${DOCKER_SERVER_CPUS}" "debug"
 
 	DOCKER_SERVER_OS="$(docker info | grep -i -e "Operating System\:" | cut -d ":" -f 2 | xargs echo -n)"
-	display_alert "Docker Server OS" "${DOCKER_SERVER_OS}" "info"
+	display_alert "Docker Server OS" "${DOCKER_SERVER_OS}" "debug"
 
 	declare -g DOCKER_ARMBIAN_HOST_OS_UNAME
 	DOCKER_ARMBIAN_HOST_OS_UNAME="$(uname)"
-	display_alert "Local uname" "${DOCKER_ARMBIAN_HOST_OS_UNAME}" "info"
+	display_alert "Local uname" "${DOCKER_ARMBIAN_HOST_OS_UNAME}" "debug"
+
+	DOCKER_BUILDX_VERSION="$(docker info | grep -i -e "buildx\:" | cut -d ":" -f 2 | xargs echo -n)"
+	display_alert "Docker Buildx version" "${DOCKER_BUILDX_VERSION}" "debug"
 
 	declare -g DOCKER_HAS_BUILDX=no
 	declare -g -a DOCKER_BUILDX_OR_BUILD=("build")
@@ -140,9 +140,12 @@ function docker_cli_prepare() {
 		DOCKER_HAS_BUILDX=yes
 		DOCKER_BUILDX_OR_BUILD=("buildx" "build" "--progress=plain")
 	fi
-	display_alert "Docker has buildx?" "${DOCKER_HAS_BUILDX}" "info"
+	display_alert "Docker has buildx?" "${DOCKER_HAS_BUILDX}" "debug"
 
-	# @TODO: grab git info, add as labels et al to Docker...
+	# Info summary message. Thank you, GitHub Co-pilot!
+	display_alert "Docker info" "Docker ${DOCKER_SERVER_VERSION} Kernel:${DOCKER_SERVER_KERNEL_VERSION} RAM:${DOCKER_SERVER_TOTAL_RAM} CPUs:${DOCKER_SERVER_CPUS} OS:'${DOCKER_SERVER_OS}' under '${DOCKER_ARMBIAN_HOST_OS_UNAME}' - buildx ${DOCKER_HAS_BUILDX}" "sysinfo"
+
+	# @TODO: grab git info, add as labels et al to Docker... (already done in GHA workflow)
 
 	display_alert "Creating" ".dockerignore" "info"
 	cat <<- DOCKERIGNORE > "${SRC}"/.dockerignore
@@ -182,7 +185,6 @@ function docker_cli_prepare() {
 
 }
 function docker_cli_build_dockerfile() {
-	display_alert "Armbian docker launcher" "docker" "info"
 	local do_force_pull="no"
 	local local_image_sha
 
@@ -243,7 +245,7 @@ function docker_cli_prepare_launch() {
 		["cache/sources/linux-kernel"]="linux=bind darwin=namedvolume" # working tree for kernel builds. huge. contains both sources and the built object files. needs to be local to the container, so it's a volume by default. On Linux, it's a bind-mount by default.
 	)
 
-	display_alert "Preparing" "common Docker arguments" "info"
+	display_alert "Preparing" "common Docker arguments" "debug"
 	declare -g -a DOCKER_ARGS=(
 		"--rm" # side effect - named volumes are considered not attached to anything and are removed on "docker volume prune", since container was removed.
 
@@ -300,7 +302,8 @@ function docker_cli_prepare_launch() {
 function docker_cli_launch() {
 	display_alert "Showing Docker cmdline" "Docker args: '${DOCKER_ARGS[*]}'" "debug"
 
-	display_alert "Running" "real build: ${*}" "info"
+	display_alert "Relaunching in Docker" "${*}" "debug"
+	display_alert "Relaunching in Docker" "here comes the 🐳" "info"
 	local -i docker_build_result=1
 	if docker run -it "${DOCKER_ARGS[@]}" "${DOCKER_ARMBIAN_INITIAL_IMAGE_TAG}" /bin/bash "${DOCKER_ARMBIAN_TARGET_PATH}/compile.sh" "$@"; then
 		display_alert "Docker Build finished" "successfully" "info"

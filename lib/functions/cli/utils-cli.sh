@@ -45,11 +45,12 @@ function apply_cmdline_params_to_env() {
 
 		# Compare, log, and apply.
 		if [[ "${current_env_value}" != "${param_value}" ]]; then
-			display_alert "Applying cmdline param, ${__my_reason}" "'$param_name': '${current_env_value_desc}' --> '${param_value_desc}'" "cmdline"
+			display_alert "Applying cmdline param" "'$param_name': '${current_env_value_desc}' --> '${param_value_desc}' ${__my_reason}" "cmdline"
 			# use `declare -g` to make it global, we're in a function.
 			eval "declare -g $param_name=\"$param_value\""
 		else
-			display_alert "Skip cmdline param, ${__my_reason}" "'$param_name': already set to --> '${param_value_desc}'" "cmdline"
+			# rpardini: strategic amount of spacing in log files show the kinda neuroticism that drives me.
+			display_alert "Skip     cmdline param" "'$param_name': already set to '${param_value_desc}' ${__my_reason}" "info"
 		fi
 	done
 }
