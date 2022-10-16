@@ -14,7 +14,8 @@ function parse_cmdline_params() {
 			param_name=${arg%%=*}
 			param_value=${arg##*=}
 			param_value_desc="${param_value:-(empty)}"
-			ARMBIAN_PARSED_CMDLINE_PARAMS["${param_name}"]="${param_value}"
+			ARMBIAN_PARSED_CMDLINE_PARAMS["${param_name}"]="${param_value}" # For current run.
+			ARMBIAN_CLI_RELAUNCH_PARAMS["${param_name}"]="${param_value}"   # For relaunch.
 			display_alert "Command line: parsed parameter '$param_name' to" "${param_value_desc}" "debug"
 		elif [[ "x${arg}x" != "xx" ]]; then # not a param, not empty, store it in the non-param array for later usage
 			local non_param_value="${arg}"
@@ -146,8 +147,9 @@ function parse_each_cmdline_arg_as_command_param_or_config() {
 		exit_with_error "You cannot have a configuration file named '${config_file}'. '${argument}' is a command name and is reserved for internal Armbian usage. Sorry. Please rename your config file and pass its name it an argument, and I'll use it. PS: You don't need a config file for 'docker' anymore, Docker is all managed by Armbian now."
 	elif [[ "${is_config}" == "yes" ]]; then # we have a config only
 		display_alert "Adding config file to list" "${config_file}" "debug"
-		ARMBIAN_CONFIG_FILES+=("${config_file}")
-	elif [[ "${is_command}" == "yes" ]]; then # we have a command, only.
+		ARMBIAN_CONFIG_FILES+=("${config_file}")    # full path to be sourced
+		ARMBIAN_CLI_RELAUNCH_CONFIGS+="${argument}" # name reference to be relaunched
+	elif [[ "${is_command}" == "yes" ]]; then    # we have a command, only.
 		# sanity check. we can't have more than one command. decide!
 		if [[ -n "${ARMBIAN_COMMAND}" ]]; then
 			exit_with_error "You cannot specify more than one command. You have '${ARMBIAN_COMMAND}' and '${argument}'. Please decide which one you want to run and pass only that one."
@@ -159,4 +161,21 @@ function parse_each_cmdline_arg_as_command_param_or_config() {
 		ARMBIAN_HAS_UNKNOWN_ARG="yes"
 		display_alert "Unknown argument" "${argument}" "err"
 	fi
+}
+
+# Produce relaunch parameters. Add the running configs, arguments, and command.
+# Declare and use ARMBIAN_CLI_RELAUNCH_ARGS as "${ARMBIAN_CLI_RELAUNCH_ARGS[@]}"
+function produce_relaunch_parameters() {
+	declare -g -a ARMBIAN_CLI_RELAUNCH_ARGS=()
+	# add the running parameters from ARMBIAN_CLI_RELAUNCH_PARAMS dict
+	for param in "${!ARMBIAN_CLI_RELAUNCH_PARAMS[@]}"; do
+		ARMBIAN_CLI_RELAUNCH_ARGS+=("${param}=${ARMBIAN_CLI_RELAUNCH_PARAMS[${param}]}")
+	done
+	# add the running configs
+	for config in ${ARMBIAN_CLI_RELAUNCH_CONFIGS}; do
+		ARMBIAN_CLI_RELAUNCH_ARGS+=("${config}")
+	done
+	display_alert "Produced relaunch args:" "ARMBIAN_CLI_RELAUNCH_ARGS: ${ARMBIAN_CLI_RELAUNCH_ARGS[*]}" "debug"
+	# @TODO: add the command. if we have one.
+	
 }

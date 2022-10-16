@@ -197,6 +197,7 @@ function reset_uid_owner() {
 	# Loop over args..
 	local arg
 	for arg in "$@"; do
+		display_alert "reset_uid_owner: '${arg}' will be owner id '${SET_OWNER_TO_UID}'" "reset_uid_owner" "debug"
 		if [[ -d "${arg}" ]]; then
 			chown -R "${SET_OWNER_TO_UID}" "${arg}"
 		elif [[ -f "${arg}" ]]; then

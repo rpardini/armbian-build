@@ -25,6 +25,13 @@ function cli_docker_run() {
 	SHOW_LOG=yes LOG_SECTION="docker_cli_build_dockerfile" do_with_logging docker_cli_build_dockerfile
 
 	LOG_SECTION="docker_cli_prepare_launch" do_with_logging docker_cli_prepare_launch
-	# @TODO: cleanup this. I want an array with original args, and the original configs, so I can change command and add params easily
-	docker_cli_launch "${ARMBIAN_ORIGINAL_ARGV[@]}" "${ARMBIAN_DOCKER_RELAUNCH_EXTRA_ARGS[@]}" # @TODO: this "re-launches", docker case.
+
+	ARMBIAN_CLI_RELAUNCH_PARAMS+=(["SET_OWNER_TO_UID"]="${EUID}")                 # fix the owner of files to our UID
+	ARMBIAN_CLI_RELAUNCH_PARAMS+=(["ARMBIAN_BUILD_UUID"]="${ARMBIAN_BUILD_UUID}") # pass down our uuid to the docker instance
+	ARMBIAN_CLI_RELAUNCH_PARAMS+=(["SKIP_LOG_ARCHIVE"]="yes")                     # launched docker instance will not cleanup logs.
+	declare -g SKIP_LOG_ARCHIVE=yes                                               # Don't archive logs in the parent instance either.
+
+	declare -g ARMBIAN_CLI_RELAUNCH_ARGS=()
+	produce_relaunch_parameters                         # produces ARMBIAN_CLI_RELAUNCH_ARGS
+	docker_cli_launch "${ARMBIAN_CLI_RELAUNCH_ARGS[@]}" # MARK: this "re-launches" using the passed params.
 }

@@ -312,6 +312,11 @@ function docker_cli_launch() {
 		display_alert "Docker Build failed" "with errors" "err"
 	fi
 
+	# Find and show the path to the log file for the ARMBIAN_BUILD_UUID.
+	local logs_path="${DEST}/logs" log_file
+	log_file="$(find "${logs_path}" -type f -name "*${ARMBIAN_BUILD_UUID}*.*" -print -quit)"
+	display_alert "Build log done inside Docker" "${log_file}" "info"
+
 	# Show and help user understand space usage in Docker volumes.
 	# This is done in a loop; `docker df` fails sometimes (for no good reason).
 	docker_cli_show_armbian_volumes_disk_usage

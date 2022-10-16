@@ -77,11 +77,17 @@ function cli_entrypoint() {
 	# set unique mounting directory for this execution.
 	# basic deps, which include "uuidgen", will be installed _after_ this, so we gotta tolerate it not being there yet.
 	declare -g ARMBIAN_BUILD_UUID
-	if [[ -f /usr/bin/uuidgen ]]; then
-		ARMBIAN_BUILD_UUID="$(uuidgen)"
+	if [[ "${ARMBIAN_BUILD_UUID}" != "" ]]; then
+		display_alert "Using passed-in ARMBIAN_BUILD_UUID" "${ARMBIAN_BUILD_UUID}" "debug"
 	else
-		display_alert "uuidgen not found" "uuidgen not installed yet" "info"
-		ARMBIAN_BUILD_UUID="no-uuidgen-yet-${RANDOM}-$((1 + $RANDOM % 10))$((1 + $RANDOM % 10))$((1 + $RANDOM % 10))$((1 + $RANDOM % 10))"
+		if [[ -f /usr/bin/uuidgen ]]; then
+			ARMBIAN_BUILD_UUID="$(uuidgen)"
+		else
+			display_alert "uuidgen not found" "uuidgen not installed yet" "info"
+			ARMBIAN_BUILD_UUID="no-uuidgen-yet-${RANDOM}-$((1 + $RANDOM % 10))$((1 + $RANDOM % 10))$((1 + $RANDOM % 10))$((1 + $RANDOM % 10))"
+		fi
+		ARMBIAN_BUILD_UUID="$(uuidgen)"
+		display_alert "Generated ARMBIAN_BUILD_UUID" "${ARMBIAN_BUILD_UUID}" "debug"
 	fi
 	display_alert "Build UUID:" "${ARMBIAN_BUILD_UUID}" "debug"
 
@@ -93,6 +99,10 @@ function cli_entrypoint() {
 	export MOUNT="${SRC}/.tmp/mount-${ARMBIAN_BUILD_UUID}"                          # MOUNT ("mounted on the loop") is the mounted root on final image (via loop). "image" stage
 	export EXTENSION_MANAGER_TMP_DIR="${SRC}/.tmp/extensions-${ARMBIAN_BUILD_UUID}" # EXTENSION_MANAGER_TMP_DIR used to store extension-composed functions
 	export DESTIMG="${SRC}/.tmp/image-${ARMBIAN_BUILD_UUID}"                        # DESTIMG is where the backing image (raw, huge, sparse file) is kept (not the final destination)
+
+	# Make sure ARMBIAN_LOG_CLI_ID is set, and unique.
+	# Pre-runs might change it, but if not set, default to ARMBIAN_COMMAND.
+	declare -g ARMBIAN_LOG_CLI_ID="${ARMBIAN_LOG_CLI_ID:-${ARMBIAN_COMMAND}}"
 
 	LOG_SECTION="entrypoint" start_logging_section   # This creates LOGDIR. @TODO: also maybe causes a spurious group to be created in the log file
 	add_cleanup_handler trap_handler_cleanup_logging # cleanup handler for logs; it rolls it up from LOGDIR into DEST/logs @TODO: use the COMMAND in the filenames.

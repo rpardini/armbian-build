@@ -4,10 +4,11 @@ function cli_standard_build_pre_run() {
 	# Super early handling. If no command and not root, become root by using sudo. Some exceptions apply.
 	if [[ "${EUID}" == "0" ]]; then # we're already root. Either running as real root, or already sudo'ed.
 		display_alert "Already running as root" "great" "debug"
-	else
-		# not root.
-		
-		# We've a few options. 
+	else # not root.
+		# Pass the current UID to any further relaunchings (under docker or sudo).
+		ARMBIAN_CLI_RELAUNCH_PARAMS+=(["SET_OWNER_TO_UID"]="${EUID}") # add params when relaunched under docker
+
+		# We've a few options.
 		# 1) We could check if Docker is working, and do everything under Docker. Users who can use Docker, can "become" root inside a container.
 		# 2) We could ask for sudo (which _might_ require a password)...
 		# @TODO: GitHub actions can do both. Sudo without password _and_ Docker; should we prefer Docker? Might have unintended consequences...
@@ -15,10 +16,9 @@ function cli_standard_build_pre_run() {
 			# add the current user EUID as a parameter when it's relaunched under docker. SET_OWNER_TO_UID="${EUID}"
 			display_alert "Trying to build, not root, but Docker is ready to go" "delegating to Docker" "debug"
 			ARMBIAN_CHANGE_COMMAND_TO="docker"
-			ARMBIAN_DOCKER_RELAUNCH_EXTRA_ARGS+=("SET_OWNER_TO_UID=${EUID}")
 			return 0
 		fi
-		
+
 		# check if we're on Linux via uname. if not, refuse to do anything.
 		if [[ "$(uname)" != "Linux" ]]; then
 			display_alert "Not running on Linux; Docker is not available" "refusing to run" "err"
@@ -26,10 +26,11 @@ function cli_standard_build_pre_run() {
 		fi
 
 		display_alert "This script requires root privileges; Docker is unavailable" "trying to use sudo" "wrn"
-		sudo --preserve-env "${SRC}/compile.sh" "${ARMBIAN_ORIGINAL_ARGV[@]}" # @TODO: relaunch done here!
+		declare -g ARMBIAN_CLI_RELAUNCH_ARGS=()
+		produce_relaunch_parameters                                               # produces ARMBIAN_CLI_RELAUNCH_ARGS
+		sudo --preserve-env "${SRC}/compile.sh" "${ARMBIAN_CLI_RELAUNCH_ARGS[@]}" # MARK: relaunch done here!
 		display_alert "AFTER SUDO!!!" "AFTER SUDO!!!" "warn"
 	fi
-
 }
 
 function cli_standard_build_run() {

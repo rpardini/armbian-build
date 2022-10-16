@@ -19,7 +19,7 @@ function armbian_register_commands() {
 
 		["undecided"]="undecided" # implemented in cli_undecided_pre_run and cli_undecided_run - relaunches either build or docker
 	)
-	
+
 	# Vars to be set for each command. Optional.
 	declare -g -A ARMBIAN_COMMANDS_TO_VARS_DICT=(
 		["docker-purge"]="DOCKER_SUBCMD='purge'"
@@ -37,6 +37,13 @@ function armbian_register_commands() {
 
 	)
 
-	# To help with docker-relaunching, global vars.
-	declare -g ARMBIAN_DOCKER_RELAUNCH_EXTRA_ARGS=()
+	# Override the LOG_CLI_ID to change the log file name.
+	# Will be set to ARMBIAN_COMMAND if not set after all pre-runs done.
+	declare -g ARMBIAN_LOG_CLI_ID
+
+	# Keep a running dict of params/variables. Can't repeat stuff here. Dict.
+	declare -g -A ARMBIAN_CLI_RELAUNCH_PARAMS=(["ARMBIAN_RELAUNCHED"]="yes")
+
+	# Keep a running array of config files needed for relaunch.
+	declare -g -a ARMBIAN_CLI_RELAUNCH_CONFIGS=()
 }

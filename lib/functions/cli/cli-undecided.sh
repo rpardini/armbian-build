@@ -8,7 +8,6 @@ function cli_undecided_pre_run() {
 	else
 		display_alert "Not under Linux; use docker..." "func cli_undecided_pre_run go to docker" "debug"
 		ARMBIAN_CHANGE_COMMAND_TO="docker"
-		ARMBIAN_DOCKER_RELAUNCH_EXTRA_ARGS+=("SET_OWNER_TO_UID=${EUID}") # Why not? Even though it would still work on Darwin without it.
 	fi
 }
 
