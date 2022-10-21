@@ -1,6 +1,3 @@
-## Configuration
-export LOG_ALL_HOOK_TRACES=no # Should we log all hook function traces to stdout? (no, or level: wrn info)
-
 ## Hooks
 
 # A honeypot wishful hooking. To make sure the whole thing works.
@@ -25,11 +22,7 @@ function extension_metadata_ready__999_detect_wishful_hooking() {
 		line_info="${hook_point_function_trace_lines["${one_defined_function}"]}"
 		stack="$(get_extension_hook_stracktrace "${source_info}" "${line_info}")"
 		if [[ "$source_info" != "" ]]; then
-			# log to debug log. it's reassuring.
-			echo "\$\$\$ Hook function stacktrace for '${one_defined_function}': '${stack}' (${defined_info})" >> "${EXTENSION_MANAGER_LOG_FILE}"
-			if [[ "${LOG_ALL_HOOK_TRACES}" != "no" ]]; then
-				display_alert "Hook function stacktrace for '${one_defined_function}'" "${stack}" "${LOG_ALL_HOOK_TRACES}"
-			fi
+			display_alert "Hook function stacktrace for '${one_defined_function}'" "${stack}" "extensionstrace"
 			continue # found a caller, move on.
 		fi
 
@@ -39,12 +32,11 @@ function extension_metadata_ready__999_detect_wishful_hooking() {
 			found_honeypot_function=1
 		else
 			# unexpected wishful hooking. Log and wrn the user.
-			echo "\$\$\$ Wishful hooking detected" "Function '${one_defined_function}' is defined (${defined_info}) but never called by the build." >> "${EXTENSION_MANAGER_LOG_FILE}"
 			display_alert "Wishful hooking detected" "Function '${one_defined_function}' is defined (${defined_info}) but never called by the build." "wrn"
 		fi
 	done
 
 	if [[ $found_honeypot_function -lt 1 ]]; then
-		display_alert "Wishful hook DETECTION FAILED" "detect-wishful-hooking is not working. Good chance the environment vars are corrupted. Avoid child shells. Sorry." "wrn" | tee -a "${EXTENSION_MANAGER_LOG_FILE}"
+		display_alert "Wishful hook DETECTION FAILED" "detect-wishful-hooking is not working. Good chance the environment vars are corrupted. Avoid child shells. Sorry." "wrn"
 	fi
 }
