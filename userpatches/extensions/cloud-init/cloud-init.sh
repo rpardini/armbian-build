@@ -27,7 +27,6 @@ extension_prepare_config__990_late_finish_cloud_init_config() {
 	fi
 
 	export CLOUD_INIT_REMOVE_IFUPDOWN="yes"
-	export CLOUD_INIT_REMOVE_RESOLVCONF="yes"
 	if [[ "${DISTRIBUTION}" == "Debian" ]] && [[ "${CLOUD_INIT_USE_NETPLAN}" == "yes" ]]; then
 		display_alert "${DISTRIBUTION} requires ifupdown for cloud-init" "${DISTRIBUTION}" "wrn"
 		export CLOUD_INIT_REMOVE_IFUPDOWN="no"
@@ -55,6 +54,11 @@ extension_prepare_config__990_late_finish_cloud_init_config() {
 	# Release specific packages; @TODO: needed?
 	if [[ "${DISTRIBUTION}" == "Ubuntu" ]]; then
 		export DEBOOTSTRAP_COMPONENTS="main,universe"
+
+		if [[ "${RELEASE}" == "kinetic" ]]; then
+			display_alert "Hack for Ubuntu Kinetic" "${DISTRIBUTION} ${RELEASE} split systemd-resolved from systemd" "wrn"
+			EXTRA_WANTED_PACKAGES="${EXTRA_WANTED_PACKAGES} systemd-resolved"
+		fi
 	fi
 
 	# Enable cloud-init; this changes bring-up process radically.
@@ -146,19 +150,11 @@ user_config_post_aggregate_packages__900_confirm_cloudinit_packages() {
 
 }
 
-config_post_debootstrap_tweaks__restore_systemd_resolved_from_resolvconf_and_armbian() {
-	if [[ "${CLOUD_INIT_REMOVE_RESOLVCONF}" == "yes" ]]; then
-		# do away with the resolv.conf leftover in the image.
-		# set up systemd-resolved which is the way cloud images generally work
-		rm -f "${SDCARD}"/etc/resolv.conf
-		ln -s ../run/systemd/resolve/stub-resolv.conf "${SDCARD}"/etc/resolv.conf
-	else
-		# Resolvconf...
-		display_alert "Configuring resolvconf" "${DISTRIBUTION} ${RELEASE}" "info"
-		rm -f "${SDCARD}"/etc/resolv.conf
-		ln -s /run/resolvconf/resolv.conf "${SDCARD}"/etc/resolv.conf
-		ls -la "${SDCARD}"/etc/resolv.conf
-	fi
+config_post_debootstrap_tweaks__restore_systemd_resolved() {
+	# do away with the resolv.conf leftover in the image.
+	# set up systemd-resolved which is the way cloud images generally work
+	rm -f "${SDCARD}"/etc/resolv.conf
+	ln -s ../run/systemd/resolve/stub-resolv.conf "${SDCARD}"/etc/resolv.conf
 }
 
 config_pre_install_distribution_specific__preserve_pristine_etc_systemd() {
