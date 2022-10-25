@@ -1,0 +1,37 @@
+Index: arch/arm64/boot/dts/amlogic/Makefile
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/arch/arm64/boot/dts/amlogic/Makefile b/arch/arm64/boot/dts/amlogic/Makefile
+--- a/arch/arm64/boot/dts/amlogic/Makefile	(revision f00bd7568b29e5df2ed2613d51d5a672df3dbf87)
++++ b/arch/arm64/boot/dts/amlogic/Makefile	(date 1666714072064)
+@@ -7,6 +7,7 @@
+ dtb-$(CONFIG_ARCH_MESON) += meson-g12a-u200.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-g12a-x96-max.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-g12b-a311d-khadas-vim3.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-g12b-a311d-khadas-vim3-spi.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-g12b-gsking-x.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-g12b-gtking-pro.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-g12b-gtking.dtb
+Index: arch/arm64/boot/dts/amlogic/meson-g12b-a311d-khadas-vim3-spi.dts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12b-a311d-khadas-vim3-spi.dts b/arch/arm64/boot/dts/amlogic/meson-g12b-a311d-khadas-vim3-spi.dts
+new file mode 100644
+--- /dev/null	(date 1666714181563)
++++ b/arch/arm64/boot/dts/amlogic/meson-g12b-a311d-khadas-vim3-spi.dts	(date 1666714181563)
+@@ -0,0 +1,11 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++
++/dts-v1/;
++
++#include "meson-g12b-a311d-khadas-vim3.dts"
++
++/ {
++	model = "Khadas VIM3 A311D with SPI";
++};
++
++#include "meson-g12b-odroid-n2-enable-spi.dtsi"
