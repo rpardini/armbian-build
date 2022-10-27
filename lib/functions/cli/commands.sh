@@ -16,6 +16,7 @@ function armbian_register_commands() {
 		["configdump"]="config_dump"  # idem
 
 		["build"]="standard_build" # implemented in cli_standard_build_pre_run and cli_standard_build_run
+		["distccd"]="distccd"      # implemented in cli_distccd_pre_run and cli_distccd_run
 
 		["undecided"]="undecided" # implemented in cli_undecided_pre_run and cli_undecided_run - relaunches either build or docker
 	)
