@@ -289,6 +289,9 @@ function docker_cli_prepare_launch() {
 
 		# Pass env var ARMBIAN_RUNNING_IN_CONTAINER to indicate we're running under Docker. This is also set in the Dockerfile; make sure.
 		"--env" "ARMBIAN_RUNNING_IN_CONTAINER=yes"
+		
+		# This env var is used super early (in entrypoint.sh), so set it as an env to current value.
+		"--env" "ARMBIAN_ENABLE_CALL_TRACING=${DOCKER_ARMBIAN_ENABLE_CALL_TRACING:-no}"
 
 		# @TODO: if user on terminal, pass the TERM down to the container.
 		"--env" "TERM=${TERM}"
