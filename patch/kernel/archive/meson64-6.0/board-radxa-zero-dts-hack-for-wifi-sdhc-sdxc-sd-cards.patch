@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ricardo Pardini <rpardini@armbian.com>
+Date: Sun, 6 Nov 2022 13:06:32 +0100
+Subject: [PATCH] Radxa Zero total SD/SDIO slowdown for Wi-Fi and SDXC
+
+Total SD/SDIO slowdown for Radxa Zero to avoid:
+- Wifi trouble, Credit: c0rnelius from Armbian
+- SDXC trouble, newer/larger SD cards can be used without errors, but are slow.
+
+Signed-off-by: Ricardo Pardini <rpardini@armbian.com>
+---
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
+--- a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts	(revision 900e88e149c2d5cf85ae64e4518b7a05859ff598)
++++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts	(date 1667733748018)
+@@ -309,9 +309,9 @@
+ 	#size-cells = <0>;
+ 
+ 	bus-width = <4>;
+-	cap-sd-highspeed;
+-	sd-uhs-sdr50;
+-	max-frequency = <100000000>;
++	/* cap-sd-highspeed; */ /* SDIO: Completely remove any highspeed capability */
++	/* sd-uhs-sdr50; */ /* SDIO: Completely remove any highspeed capability */
++	max-frequency = <80000000>; /* SDIO: Reduce speed */
+ 
+ 	non-removable;
+ 	disable-wp;
+@@ -338,8 +338,8 @@
+ 	pinctrl-names = "default", "clk-gate";
+ 
+ 	bus-width = <4>;
+-	cap-sd-highspeed;
+-	max-frequency = <100000000>;
++	/* cap-sd-highspeed; */ /* SD: Completely remove highspeed capability */
++	max-frequency = <80000000>; /* SD: Reduce speed */
+ 	disable-wp;
+ 
+ 	cd-gpios = <&gpio GPIOC_6 GPIO_ACTIVE_LOW>;
