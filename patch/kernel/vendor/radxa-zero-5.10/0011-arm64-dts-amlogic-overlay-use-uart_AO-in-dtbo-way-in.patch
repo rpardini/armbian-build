@@ -1,0 +1,119 @@
+From 8588099f0b60d09e016ea52f7bdbeec159c52076 Mon Sep 17 00:00:00 2001
+From: Stephen <stephen@vamrs.com>
+Date: Tue, 26 Oct 2021 20:00:39 +0800
+Subject: [PATCH 11/29] arm64: dts: amlogic: overlay: use uart_AO in dtbo way
+ instead
+
+Signed-off-by: Stephen <stephen@vamrs.com>
+---
+ .../dts/amlogic/meson-g12a-radxa-zero.dts     | 10 ---------
+ arch/arm64/boot/dts/amlogic/overlay/Makefile  |  1 +
+ .../dts/amlogic/overlay/README.meson-overlays | 22 ++++++++++++++++++-
+ ...on-g12a-uart-ao-a-on-gpioao-0-gpioao-1.dts | 15 +++++++++++++
+ 4 files changed, 37 insertions(+), 11 deletions(-)
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1.dts
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
+index 9519e36ab77b..e1bd1c435b4a 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
+@@ -29,10 +29,6 @@ aliases {
+ 		spi2 = &spifc;
+ 	};
+ 
+-	chosen {
+-		stdout-path = "serial0:115200n8";
+-	};
+-
+ 	memory@0 {
+ 		device_type = "memory";
+ 		reg = <0x0 0x0 0x0 0x40000000>;
+@@ -418,12 +414,6 @@ bluetooth {
+ 	};
+ };
+ 
+-&uart_AO {
+-	status = "okay";
+-	pinctrl-0 = <&uart_ao_a_pins>;
+-	pinctrl-names = "default";
+-};
+-
+ &usb {
+ 	status = "okay";
+ 	dr_mode = "host";
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/Makefile b/arch/arm64/boot/dts/amlogic/overlay/Makefile
+index 5cfec2d2b142..6fdb664e6e6c 100644
+--- a/arch/arm64/boot/dts/amlogic/overlay/Makefile
++++ b/arch/arm64/boot/dts/amlogic/overlay/Makefile
+@@ -7,6 +7,7 @@ dtbo-$(CONFIG_ARCH_MESON) += \
+ 	meson-g12a-pwmao-a-on-gpioao-11.dtbo \
+ 	meson-g12a-pwm-c-on-gpiox-8.dtbo \
+ 	meson-g12a-spi-spidev.dtbo \
++	meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1.dtbo \
+ 	meson-g12a-uart-ao-b-on-gpioao-2-gpioao-3.dtbo \
+ 	meson-g12a-uart-ao-b-on-gpioao-8-gpioao-9.dtbo \
+ 	meson-g12a-uart-ee-c.dtbo
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/README.meson-overlays b/arch/arm64/boot/dts/amlogic/overlay/README.meson-overlays
+index 73dd035aa829..c9aa45c709fc 100644
+--- a/arch/arm64/boot/dts/amlogic/overlay/README.meson-overlays
++++ b/arch/arm64/boot/dts/amlogic/overlay/README.meson-overlays
+@@ -29,7 +29,7 @@ Add optional parameters with their values to /boot/uEnv.txt if you want to chang
+ - meson-g12a-i2c-ao-m0-gpioao-2-gpioao-3 meson-g12a-i2c-ee-m1-gpioh-6-gpioh-7 meson-g12a-i2c-ee-m1-gpiox-10-gpiox-11 meson-g12a-i2c-ee-m3-gpioa-14-gpioa-15
+ - meson-g12a-pwmao-a-on-gpioao-11 meson-g12a-pwm-c-on-gpiox-8
+ - meson-g12a-spi-spidev
+-- meson-g12a-uart-ao-b-on-gpioao-2-gpioao-3 meson-g12a-uart-ao-b-on-gpioao-8-gpioao-9 meson-g12a-uart-ee-c
++- meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1 meson-g12a-uart-ao-b-on-gpioao-2-gpioao-3 meson-g12a-uart-ao-b-on-gpioao-8-gpioao-9 meson-g12a-uart-ee-c
+ 
+ #### meson-g12a-i2c-ee-m1-gpioh-6-gpioh-7
+ 
+@@ -75,6 +75,26 @@ Pins (SCL, SDA): GPIOAO_2, GPIOAO_3
+ Usage: add one line in /boot/uEnv.txt
+ overlays=meson-g12a-i2c-ao-m0-gpioao-2-gpioao-3
+ 
++#### meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1
++
++Activates UART AO A (/dev/ttyAML0)
++
++pins (RX, TX): GPIOAO_1, GPIOAO_0
++
++Usage: add one line in /boot/uEnv.txt
++overlays=meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1
++
++This dtbo meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1 enables us to use /dev/ttyAML0 as serial console or common serial communication.
++
++For usage of serial console, add the following lines to /boot/uEnv.txt
++
++console=ttyAML0,115200
++overlays=meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1
++
++For usage of common serial communication, add the following line to /boot/uEnv.txt
++
++overlays=meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1
++
+ #### meson-g12a-uart-ao-b-on-gpioao-2-gpioao-3
+ 
+ Activates UART AO B (/dev/ttyAML1)
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1.dts b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1.dts
+new file mode 100644
+index 000000000000..350448d20d88
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-uart-ao-a-on-gpioao-0-gpioao-1.dts
+@@ -0,0 +1,15 @@
++/dts-v1/;
++/plugin/;
++
++/ {
++	compatible = "radxa,zero", "amlogic,g12a";
++
++	fragment@0 {
++		target = <&uart_AO>;
++		__overlay__ {
++			status = "okay";
++			pinctrl-0 = <&uart_ao_a_pins>;
++			pinctrl-names = "default";
++		};
++	};
++};
+-- 
+2.38.1
+

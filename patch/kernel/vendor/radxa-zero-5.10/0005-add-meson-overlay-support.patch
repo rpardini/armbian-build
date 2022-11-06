@@ -1,0 +1,296 @@
+From bcd60aaddec736212fc4eb3c3043e2d429c27d3f Mon Sep 17 00:00:00 2001
+From: Stephen <stephen@vamrs.com>
+Date: Sun, 10 Oct 2021 15:16:00 +0800
+Subject: [PATCH 05/29] add meson overlay support
+
+Signed-off-by: Stephen <stephen@vamrs.com>
+---
+ arch/arm64/boot/dts/amlogic/Makefile          |  2 +
+ arch/arm64/boot/dts/amlogic/overlay/Makefile  | 19 +++++
+ .../dts/amlogic/overlay/README.meson-overlays | 84 +++++++++++++++++++
+ .../dts/amlogic/overlay/meson-fixup.scr-cmd   |  4 +
+ .../amlogic/overlay/meson-g12a-i2c-ao-m0.dts  | 15 ++++
+ .../amlogic/overlay/meson-g12a-i2c-ee-m1.dts  | 15 ++++
+ .../amlogic/overlay/meson-g12a-i2c-ee-m3.dts  | 15 ++++
+ .../overlay/meson-g12a-pwm-c-on-gpiox-8.dts   | 17 ++++
+ .../meson-g12a-pwmao-a-on-gpioao-11.dts       | 17 ++++
+ .../amlogic/overlay/meson-g12a-uart-ee-c.dts  | 15 ++++
+ 10 files changed, 203 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/Makefile
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/README.meson-overlays
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/meson-fixup.scr-cmd
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ao-m0.dts
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ee-m1.dts
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ee-m3.dts
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/meson-g12a-pwm-c-on-gpiox-8.dts
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/meson-g12a-pwmao-a-on-gpioao-11.dts
+ create mode 100644 arch/arm64/boot/dts/amlogic/overlay/meson-g12a-uart-ee-c.dts
+
+diff --git a/arch/arm64/boot/dts/amlogic/Makefile b/arch/arm64/boot/dts/amlogic/Makefile
+index 0e1e43054c39..d7b10fdebf4d 100644
+--- a/arch/arm64/boot/dts/amlogic/Makefile
++++ b/arch/arm64/boot/dts/amlogic/Makefile
+@@ -49,3 +49,5 @@ dtb-$(CONFIG_ARCH_MESON) += meson-sm1-sei610.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-sm1-khadas-vim3l.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-sm1-odroid-c4.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-a1-ad401.dtb
++
++subdir-y	:= $(dts-dirs) overlay
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/Makefile b/arch/arm64/boot/dts/amlogic/overlay/Makefile
+new file mode 100644
+index 000000000000..5b862d4ee4c3
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/Makefile
+@@ -0,0 +1,19 @@
++# SPDX-License-Identifier: GPL-2.0
++dtbo-$(CONFIG_ARCH_MESON) += \
++	meson-g12a-i2c-ee-m1.dtbo \
++	meson-g12a-i2c-ee-m3.dtbo \
++	meson-g12a-i2c-ao-m0.dtbo \
++	meson-g12a-pwmao-a-on-gpioao-11.dtbo \
++	meson-g12a-pwm-c-on-gpiox-8.dtbo \
++	meson-g12a-uart-ee-c.dtbo
++
++scr-$(CONFIG_ARCH_MESON) += \
++	meson-fixup.scr
++
++dtbotxt-$(CONFIG_ARCH_MESON) += \
++	README.meson-overlays
++
++targets += $(dtbo-y) $(scr-y) $(dtbotxt-y)
++
++always			:= $(dtbo-y) $(scr-y) $(dtbotxt-y)
++clean-files		:= *.dtbo *.scr
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/README.meson-overlays b/arch/arm64/boot/dts/amlogic/overlay/README.meson-overlays
+new file mode 100644
+index 000000000000..956d173b159b
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/README.meson-overlays
+@@ -0,0 +1,84 @@
++## Introduction
++
++This document describes overlays provided in the kernel packages.
++For generic device tree overlays documentation please see
++https://wiki.radxa.com/Device-tree-overlays
++
++## Platform and Chips:
++
++Amlogic
++- meson-g12a / S905Y2
++
++#### usage
++
++Kernel provided DT overlay files are in
++  /boot/dtbs/$(uname -r)/amlogic/overlay/
++
++/boot/uEnv.txt contents:
++
++overlays=meson-g12a-i2c-ee-m3 meson-g12a-i2c-ao-m0 meson-g12a-uart-ee-c
++
++Add names of overlays you want to activate to overlays= line in /boot/uEnv.txt, separated with spaces.
++Add required parameters with their values to /boot/uEnv.txt, one per line.
++Add optional parameters with their values to /boot/uEnv.txt if you want to change the default value, one per line.
++
++#### Meson Overlay details:
++
++- meson-g12a-i2c-ee-m1 meson-g12a-i2c-ee-m3 meson-g12a-i2c-ao-m0
++- meson-g12a-uart-ee-c
++- meson-g12a-pwm-c-on-gpiox-8 meson-g12a-pwmao-a-on-gpioao-11
++
++#### meson-g12a-i2c-ee-m1
++
++Activates I2C EE M3
++
++Device name: /dev/i2c-1
++
++Pins (SCL, SDA): GPIOH_7, GPIOH_6
++
++Usage: add one line in /boot/uEnv.txt
++overlays=meson-g12a-i2c-ee-m1
++
++#### meson-g12a-i2c-ee-m3
++
++Activates I2C EE M3
++
++Device name: /dev/i2c-3
++
++Pins (SCL, SDA): GPIOA_15, GPIOA_14
++
++Usage: add one line in /boot/uEnv.txt
++overlays=meson-g12a-i2c-ee-m3
++
++#### meson-g12a-i2c-ao-m0
++
++Activates I2C AO M0
++
++Device name: /dev/i2c-4
++
++Pins (SCL, SDA): GPIOAO_2, GPIOAO_3
++
++Usage: add one line in /boot/uEnv.txt
++overlays=meson-g12a-i2c-ao-m0
++
++#### meson-g12a-uart-ee-c
++
++Activates UART EE C (/dev/ttyAML4)
++
++pins (RX, TX, RTS, CTS): GPIOH_6, GPIOH_7, GPIOH_4, GPIOH_5
++
++Usage: add one line in /boot/uEnv.txt
++overlays=meson-g12a-uart-ee-c
++
++#### meson-g12a-pwm-c-on-gpiox-8
++
++Activates PWM_C
++
++Pins: GPIOX_8
++
++#### meson-g12a-pwmao-a-on-gpioao-11
++
++Activates PWMAO_A
++
++Pins: GPIOAO_11
++
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/meson-fixup.scr-cmd b/arch/arm64/boot/dts/amlogic/overlay/meson-fixup.scr-cmd
+new file mode 100644
+index 000000000000..d4c39e20a3a2
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/meson-fixup.scr-cmd
+@@ -0,0 +1,4 @@
++# overlays fixup script
++# implements (or rather substitutes) overlay arguments functionality
++# using u-boot scripting, environment variables and "fdt" command
++
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ao-m0.dts b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ao-m0.dts
+new file mode 100644
+index 000000000000..3f241cb60179
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ao-m0.dts
+@@ -0,0 +1,15 @@
++/dts-v1/;
++/plugin/;
++
++/ {
++	compatible = "radxa,zero", "amlogic,g12a";
++
++	fragment@0 {
++		target = <&i2c_AO>;
++		__overlay__ {
++			status = "okay";
++			pinctrl-0 = <&i2c_ao_sck_pins &i2c_ao_sda_pins>;
++			pinctrl-names = "default";
++		};
++	};
++};
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ee-m1.dts b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ee-m1.dts
+new file mode 100644
+index 000000000000..0b7915d122fb
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ee-m1.dts
+@@ -0,0 +1,15 @@
++/dts-v1/;
++/plugin/;
++
++/ {
++	compatible = "radxa,zero", "amlogic,g12a";
++
++	fragment@0 {
++		target = <&i2c1>;
++		__overlay__ {
++			status = "okay";
++			pinctrl-0 = <&i2c1_sck_x_pins &i2c1_sda_h6_pins>;
++			pinctrl-names = "default";
++		};
++	};
++};
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ee-m3.dts b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ee-m3.dts
+new file mode 100644
+index 000000000000..12a7bc4d460b
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-i2c-ee-m3.dts
+@@ -0,0 +1,15 @@
++/dts-v1/;
++/plugin/;
++
++/ {
++	compatible = "radxa,zero", "amlogic,g12a";
++
++	fragment@0 {
++		target = <&i2c3>;
++		__overlay__ {
++			status = "okay";
++			pinctrl-0 = <&i2c3_sck_a_pins &i2c3_sda_a_pins>;
++			pinctrl-names = "default";
++		};
++	};
++};
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-pwm-c-on-gpiox-8.dts b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-pwm-c-on-gpiox-8.dts
+new file mode 100644
+index 000000000000..14ca6c1964f8
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-pwm-c-on-gpiox-8.dts
+@@ -0,0 +1,17 @@
++/dts-v1/;
++/plugin/;
++
++/ {
++	compatible = "radxa,zero", "amlogic,g12a";
++
++	fragment@0 {
++		target = <&pwm_cd>;
++		__overlay__ {
++			status = "okay";
++			pinctrl-0 = <&pwm_c_x8_pins>;
++			pinctrl-names = "default";
++			clocks = <&xtal>;
++			clock-names = "clkin2";
++		};
++	};
++};
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-pwmao-a-on-gpioao-11.dts b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-pwmao-a-on-gpioao-11.dts
+new file mode 100644
+index 000000000000..6edbe62224cc
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-pwmao-a-on-gpioao-11.dts
+@@ -0,0 +1,17 @@
++/dts-v1/;
++/plugin/;
++
++/ {
++	compatible = "radxa,zero", "amlogic,g12a";
++
++	fragment@0 {
++		target = <&pwm_AO_ab>;
++		__overlay__ {
++			status = "okay";
++			pinctrl-0 = <&pwm_ao_a_pins>;
++			pinctrl-names = "default";
++			clocks = <&xtal>;
++			clock-names = "clkin3";
++		};
++	};
++};
+diff --git a/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-uart-ee-c.dts b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-uart-ee-c.dts
+new file mode 100644
+index 000000000000..afcf79eeab21
+--- /dev/null
++++ b/arch/arm64/boot/dts/amlogic/overlay/meson-g12a-uart-ee-c.dts
+@@ -0,0 +1,15 @@
++/dts-v1/;
++/plugin/;
++
++/ {
++	compatible = "radxa,zero", "amlogic,g12a";
++
++	fragment@0 {
++		target = <&uart_C>;
++		__overlay__ {
++			status = "okay";
++			pinctrl-0 = <&uart_c_pins &uart_c_cts_rts_pins>;
++			pinctrl-names = "default";
++		};
++	};
++};
+-- 
+2.38.1
+

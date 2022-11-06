@@ -1,0 +1,36 @@
+From f57ad4129977937694a67c1caf23c6c4c6a409a5 Mon Sep 17 00:00:00 2001
+From: Steev Klimaszewski <steev@kali.org>
+Date: Thu, 15 Sep 2022 12:41:45 -0500
+Subject: [PATCH 25/29] drm/meson: venc: add support for Waveshare HDMI
+
+The Waveshare 7.9" display is 400x1280, additionaly, they have a 5.5"
+AMOLED display that is 1080x1920, so make the lower h bounds 384 which
+is what the 7.9" EDID says is the lowest resolution it can do.
+Additionally, since the 5.5" is 1080x1920, make the upper v bounds be
+1920.
+
+Signed-off-by: Steev Klimaszewski <steev@kali.org>
+---
+ drivers/gpu/drm/meson/meson_venc.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/meson/meson_venc.c b/drivers/gpu/drm/meson/meson_venc.c
+index f93c725b6f02..e1c42ee1751c 100644
+--- a/drivers/gpu/drm/meson/meson_venc.c
++++ b/drivers/gpu/drm/meson/meson_venc.c
+@@ -866,10 +866,10 @@ meson_venc_hdmi_supported_mode(const struct drm_display_mode *mode)
+ 			    DRM_MODE_FLAG_PVSYNC | DRM_MODE_FLAG_NVSYNC))
+ 		return MODE_BAD;
+ 
+-	if (mode->hdisplay < 640 || mode->hdisplay > 1920)
++	if (mode->hdisplay < 384 || mode->hdisplay > 1920)
+ 		return MODE_BAD_HVALUE;
+ 
+-	if (mode->vdisplay < 480 || mode->vdisplay > 1200)
++	if (mode->vdisplay < 384 || mode->vdisplay > 1920)
+ 		return MODE_BAD_VVALUE;
+ 
+ 	return MODE_OK;
+-- 
+2.38.1
+

@@ -1,0 +1,32 @@
+From ef74335d020be3e1b852651e40f004ed8a035675 Mon Sep 17 00:00:00 2001
+From: Stephen <stephen@vamrs.com>
+Date: Thu, 4 Nov 2021 12:08:06 +0800
+Subject: [PATCH 13/29] arm64: dts: radxa zero: remove dai-link-0 node
+
+This patch aims to fix the issue of kernel complains:
+
+    [   19.188742]  fe.dai-link-0: ASoC: no backend DAIs enabled for fe.dai-link-0
+
+Signed-off-by: Stephen <stephen@vamrs.com>
+---
+ arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
+index fb891f726b3f..4b2405cdd7e8 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
+@@ -166,10 +166,6 @@ sound {
+ 				       <393216000>;
+ 		status = "okay";
+ 
+-		dai-link-0 {
+-			sound-dai = <&frddr_a>;
+-		};
+-
+ 		dai-link-1 {
+ 			sound-dai = <&frddr_b>;
+ 		};
+-- 
+2.38.1
+

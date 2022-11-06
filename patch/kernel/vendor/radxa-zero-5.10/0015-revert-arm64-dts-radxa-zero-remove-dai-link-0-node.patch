@@ -1,0 +1,30 @@
+From 5b3240f1a01565d15fc273794c10811ec057eb9a Mon Sep 17 00:00:00 2001
+From: Stephen <stephen@vamrs.com>
+Date: Sun, 12 Dec 2021 21:57:16 +0800
+Subject: [PATCH 15/29] revert "arm64: dts: radxa zero: remove dai-link-0 node"
+
+This reverts commit "fd159ba07d5cc71e6d9c11d9daf23a2a7d7543e9"
+
+Signed-off-by: Stephen <stephen@vamrs.com>
+---
+ arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
+index b3d3232f86ce..8306caff5b3e 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
+@@ -166,6 +166,10 @@ sound {
+ 				       <393216000>;
+ 		status = "okay";
+ 
++		dai-link-0 {
++			sound-dai = <&frddr_a>;
++		};
++
+ 		dai-link-1 {
+ 			sound-dai = <&frddr_b>;
+ 		};
+-- 
+2.38.1
+
