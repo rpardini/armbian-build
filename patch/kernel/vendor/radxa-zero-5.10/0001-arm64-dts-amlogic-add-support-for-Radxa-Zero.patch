@@ -1,9 +1,10 @@
-From a95ebb212d798493010d8348f5aa07ee326ec77d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Stephen <stephen@vamrs.com>
 Date: Mon, 27 Sep 2021 16:33:47 +0800
-Subject: [PATCH 01/29] arm64: dts: amlogic: add support for Radxa Zero
+Subject: [PATCH] arm64: dts: amlogic: add support for Radxa Zero
 
 Signed-off-by: Stephen <stephen@vamrs.com>
+Signed-off-by: Yuntian Zhang <yt@radxa.com>
 ---
  .../devicetree/bindings/arm/amlogic.yaml      |   1 +
  arch/arm64/boot/dts/amlogic/Makefile          |   1 +
@@ -12,7 +13,7 @@ Signed-off-by: Stephen <stephen@vamrs.com>
  create mode 100644 arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 
 diff --git a/Documentation/devicetree/bindings/arm/amlogic.yaml b/Documentation/devicetree/bindings/arm/amlogic.yaml
-index 3341788d1096..6e6f523d5d91 100644
+index 3341788d10..6e6f523d5d 100644
 --- a/Documentation/devicetree/bindings/arm/amlogic.yaml
 +++ b/Documentation/devicetree/bindings/arm/amlogic.yaml
 @@ -138,6 +138,7 @@ properties:
@@ -24,19 +25,20 @@ index 3341788d1096..6e6f523d5d91 100644
            - const: amlogic,g12a
  
 diff --git a/arch/arm64/boot/dts/amlogic/Makefile b/arch/arm64/boot/dts/amlogic/Makefile
-index ced03946314f..0e1e43054c39 100644
+index 8da30c9418..f3db46fd39 100644
 --- a/arch/arm64/boot/dts/amlogic/Makefile
 +++ b/arch/arm64/boot/dts/amlogic/Makefile
-@@ -1,5 +1,6 @@
- # SPDX-License-Identifier: GPL-2.0
- dtb-$(CONFIG_ARCH_MESON) += meson-axg-s400.dtb
-+dtb-$(CONFIG_ARCH_MESON) += meson-g12a-radxa-zero.dtb
+@@ -5,6 +5,7 @@ dtb-$(CONFIG_ARCH_MESON) += meson-axg-s400.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-g12a-sei510.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-g12a-u200.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-g12a-x96-max.dtb
++dtb-$(CONFIG_ARCH_MESON) += meson-g12a-radxa-zero.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-g12b-gtking.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-g12b-gtking-pro.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-g12b-a311d-khadas-vim3.dtb
 diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 new file mode 100644
-index 000000000000..d44d3881d9b9
+index 0000000000..d44d3881d9
 --- /dev/null
 +++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 @@ -0,0 +1,418 @@
@@ -459,5 +461,5 @@ index 000000000000..d44d3881d9b9
 +	dr_mode = "host";
 +};
 -- 
-2.38.1
+2.36.1
 

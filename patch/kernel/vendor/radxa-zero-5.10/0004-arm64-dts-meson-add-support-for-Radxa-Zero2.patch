@@ -1,9 +1,9 @@
-From 026958e0508a166b3d1b155ad725616658b24da5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Yuntian Zhang <yt@radxa.com>
-Date: Mon, 17 Jan 2022 12:08:13 +0800
-Subject: [PATCH 17/29] arm64: dts: meson: add support for Radxa Zero 2
+Date: Fri, 14 Jan 2022 15:50:02 +0000
+Subject: [PATCH] arm64: dts: meson: add support for Radxa Zero2
 
-Radxa Zero 2 is a small form factor SBC based on the Amlogic A311D
+Radxa Zero2 is a small form factor SBC based on the Amlogic A311D
 chipset that ships in a number of eMMC configurations:
 
 - Amlogic A311D (Quad A73 + Dual A53) CPU
@@ -20,29 +20,16 @@ chipset that ships in a number of eMMC configurations:
 Signed-off-by: Yuntian Zhang <yt@radxa.com>
 Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
 ---
- .../devicetree/bindings/arm/amlogic.yaml      |   1 +
  arch/arm64/boot/dts/amlogic/Makefile          |   1 +
- .../dts/amlogic/meson-g12b-radxa-zero2.dts    | 499 ++++++++++++++++++
- 3 files changed, 501 insertions(+)
+ .../dts/amlogic/meson-g12b-radxa-zero2.dts    | 576 ++++++++++++++++++
+ 2 files changed, 577 insertions(+)
  create mode 100644 arch/arm64/boot/dts/amlogic/meson-g12b-radxa-zero2.dts
 
-diff --git a/Documentation/devicetree/bindings/arm/amlogic.yaml b/Documentation/devicetree/bindings/arm/amlogic.yaml
-index 6e6f523d5d91..131f13015eb0 100644
---- a/Documentation/devicetree/bindings/arm/amlogic.yaml
-+++ b/Documentation/devicetree/bindings/arm/amlogic.yaml
-@@ -146,6 +146,7 @@ properties:
-         items:
-           - enum:
-               - khadas,vim3
-+              - radxa,zero2
-           - const: amlogic,a311d
-           - const: amlogic,g12b
- 
 diff --git a/arch/arm64/boot/dts/amlogic/Makefile b/arch/arm64/boot/dts/amlogic/Makefile
-index d7b10fdebf4d..8e798c3789f9 100644
+index 5148cd9e5..c65266d26 100644
 --- a/arch/arm64/boot/dts/amlogic/Makefile
 +++ b/arch/arm64/boot/dts/amlogic/Makefile
-@@ -10,6 +10,7 @@ dtb-$(CONFIG_ARCH_MESON) += meson-g12b-a311d-khadas-vim3.dtb
+@@ -12,6 +12,7 @@ dtb-$(CONFIG_ARCH_MESON) += meson-g12b-a311d-khadas-vim3.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-g12b-s922x-khadas-vim3.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-g12b-odroid-n2.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-g12b-odroid-n2-plus.dtb
@@ -52,10 +39,10 @@ index d7b10fdebf4d..8e798c3789f9 100644
  dtb-$(CONFIG_ARCH_MESON) += meson-gxbb-nanopi-k2.dtb
 diff --git a/arch/arm64/boot/dts/amlogic/meson-g12b-radxa-zero2.dts b/arch/arm64/boot/dts/amlogic/meson-g12b-radxa-zero2.dts
 new file mode 100644
-index 000000000000..259791f99e93
+index 000000000..f7da62ccf
 --- /dev/null
 +++ b/arch/arm64/boot/dts/amlogic/meson-g12b-radxa-zero2.dts
-@@ -0,0 +1,499 @@
+@@ -0,0 +1,576 @@
 +// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 +/*
 + * Copyright (c) 2019 BayLibre, SAS
@@ -75,7 +62,7 @@ index 000000000000..259791f99e93
 +
 +/ {
 +	compatible = "radxa,zero2", "amlogic,a311d", "amlogic,g12b";
-+	model = "Radxa Zero2";
++	model = "Radxa Zero 2";
 +
 +	aliases {
 +		serial0 = &uart_AO;
@@ -84,6 +71,13 @@ index 000000000000..259791f99e93
 +
 +	chosen {
 +		stdout-path = "serial0:115200n8";
++	};
++
++   fan0: pwm-fan {
++		compatible = "pwm-fan";
++		#cooling-cells = <2>;
++		cooling-levels = <0 64 128 192 255>;
++		pwms = <&pwm_AO_ab 0 40000 0>;
 +	};
 +
 +	memory@0 {
@@ -146,6 +140,14 @@ index 000000000000..259791f99e93
 +		clock-names = "ext_clock";
 +	};
 +
++	typec2_vbus: regulator-typec2_vbus {
++		compatible = "regulator-fixed";
++		regulator-name = "TYPEC2_VBUS";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		vin-supply = <&ao_5v>;
++	};
++
 +	ao_5v: regulator-ao_5v {
 +		compatible = "regulator-fixed";
 +		regulator-name = "AO_5V";
@@ -199,7 +201,7 @@ index 000000000000..259791f99e93
 +
 +		regulator-name = "VDDCPU_A";
 +		regulator-min-microvolt = <730000>;
-+		regulator-max-microvolt = <1010000>;
++		regulator-max-microvolt = <1022000>;
 +
 +		pwm-supply = <&ao_5v>;
 +
@@ -218,7 +220,7 @@ index 000000000000..259791f99e93
 +
 +		regulator-name = "VDDCPU_B";
 +		regulator-min-microvolt = <730000>;
-+		regulator-max-microvolt = <1010000>;
++		regulator-max-microvolt = <1022000>;
 +
 +		pwm-supply = <&ao_5v>;
 +
@@ -289,6 +291,18 @@ index 000000000000..259791f99e93
 +		#clock-cells = <0>;
 +		clock-frequency = <32768>;
 +		pwms = <&pwm_ef 0 30518 0>; /* PWM_E at 32.768KHz */
++	};
++};
++
++&periphs_pinctrl {
++	/* Ensure the TYPE C controller irq pin is not driven by the SoC */
++	fusb302_irq_pins: fusb302_irq {
++		mux {
++			groups = "GPIOA_13";
++			function = "gpio_periphs";
++			bias-pull-up;
++			output-disable;
++		};
 +	};
 +};
 +
@@ -378,7 +392,7 @@ index 000000000000..259791f99e93
 +	gpio-line-names =
 +		/* GPIOZ */
 +		"PIN_27", "PIN_28", "PIN_7", "PIN_11", "PIN_13", "PIN_15", "PIN_18", "PIN_40",
-+		"", "", "", "", "", "", "", "",
++		"PIN_16", "PIN_22", "", "", "", "", "", "",
 +		/* GPIOH */
 +		"", "", "", "", "PIN_19", "PIN_21", "PIN_24", "PIN_23",
 +		"",
@@ -388,7 +402,7 @@ index 000000000000..259791f99e93
 +		/* GPIOC */
 +		"", "", "", "", "", "", "SD_CD", "PIN_36",
 +		/* GPIOA */
-+		"PIN_32", "PIN_12", "PIN_35", "", "", "PIN_38", "", "",
++		"PIN_32", "PIN_12", "PIN_35", "", "FUSB_IRQ", "PIN_38", "", "",
 +		"", "", "", "", "LED_GREEN", "PIN_31", "PIN_3", "PIN_5",
 +		/* GPIOX */
 +		"", "", "", "", "", "", "SDIO_PWRSEQ", "",
@@ -400,7 +414,7 @@ index 000000000000..259791f99e93
 +	gpio-line-names =
 +		/* GPIOAO */
 +		"PIN_8", "PIN_10", "", "BTN_POWER", "", "", "", "PIN_29",
-+		"PIN_33", "PIN_37", "FAN", "",
++		"PIN_33", "PIN_37", "", "FAN",
 +		/* GPIOE */
 +		"", "", "";
 +};
@@ -418,10 +432,48 @@ index 000000000000..259791f99e93
 +	};
 +};
 +
++&cpu_thermal {
++	cooling-maps {
++		map0 {
++			trip = <&cpu_passive>;
++			cooling-device = <&fan0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&ddr_thermal {
++	cooling-maps {
++		map0 {
++			trip = <&ddr_passive>;
++			cooling-device = <&fan0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
 +&ir {
 +	status = "disabled";
 +	pinctrl-0 = <&remote_input_ao_pins>;
 +	pinctrl-names = "default";
++};
++
++&i2c3 {
++	pinctrl-0 = <&i2c3_sda_a_pins>, <&i2c3_sck_a_pins>;
++	pinctrl-names = "default";
++	status = "okay";
++
++	fusb302@22 {
++		compatible = "fcs,fusb302";
++		reg = <0x22>;
++
++		pinctrl-0 = <&fusb302_irq_pins>;
++		pinctrl-names = "default";
++		interrupt-parent = <&gpio_intc>;
++		interrupts = <74 IRQ_TYPE_LEVEL_LOW>;
++
++		vbus-supply = <&typec2_vbus>;
++
++		status = "okay";
++	};
 +};
 +
 +&pwm_ab {
@@ -437,6 +489,14 @@ index 000000000000..259791f99e93
 +	pinctrl-names = "default";
 +	clocks = <&xtal>;
 +	clock-names = "clkin2";
++	status = "okay";
++};
++
++&pwm_AO_ab {
++	pinctrl-0 = <&pwm_ao_a_pins>;
++	pinctrl-names = "default";
++	clocks = <&xtal>;
++	clock-names = "clkin3";
 +	status = "okay";
 +};
 +
@@ -464,7 +524,7 @@ index 000000000000..259791f99e93
 +
 +	bus-width = <4>;
 +	cap-sd-highspeed;
-+	max-frequency = <100000000>;
++	max-frequency = <80000000>;
 +
 +	non-removable;
 +	disable-wp;
@@ -555,7 +615,10 @@ index 000000000000..259791f99e93
 +&usb {
 +	status = "okay";
 +};
-\ No newline at end of file
++
++&usb3_pcie_phy {
++	phy-supply = <&typec2_vbus>;
++};
 -- 
-2.38.1
+2.36.1
 

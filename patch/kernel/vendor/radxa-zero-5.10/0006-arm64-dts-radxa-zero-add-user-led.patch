@@ -1,20 +1,21 @@
-From 74ad639ae468855d3d594c78fae54ae75e3e5f41 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ken <ken@radxa.com>
 Date: Fri, 5 Nov 2021 17:33:06 +0800
-Subject: [PATCH 14/29] arm64: dts: radxa zero: add user led
+Subject: [PATCH] arm64: dts: radxa zero: add user led
 
 Radxa Zero V1.4/V1.5 add user led. Flashing LED shows running kernel.
 
 Signed-off-by: Ken <ken@radxa.com>
+Signed-off-by: Yuntian Zhang <yt@radxa.com>
 ---
  arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts | 11 +++++++++++
  1 file changed, 11 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
-index 4b2405cdd7e8..b3d3232f86ce 100644
+index 9095ad9018..7ba7e5b016 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 +++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
-@@ -204,6 +204,17 @@ wifi32k: wifi32k {
+@@ -212,6 +212,17 @@ wifi32k: wifi32k {
  		clock-frequency = <32768>;
  		pwms = <&pwm_ef 0 30518 0>; /* PWM_E at 32.768KHz */
  	};
@@ -33,5 +34,5 @@ index 4b2405cdd7e8..b3d3232f86ce 100644
  
  &arb {
 -- 
-2.38.1
+2.36.1
 

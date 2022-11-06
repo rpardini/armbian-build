@@ -1,15 +1,16 @@
-From 979534ae6f6bfe256b3140c21c21a4fa3480b39a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Stephen <stephen@vamrs.com>
 Date: Mon, 11 Oct 2021 15:32:41 +0800
-Subject: [PATCH 06/29] arm64: dts: Radxa Zero: set aliases for spi
+Subject: [PATCH] arm64: dts: Radxa Zero: set aliases for spi
 
 Signed-off-by: Stephen <stephen@vamrs.com>
+Signed-off-by: Yuntian Zhang <yt@radxa.com>
 ---
  arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts | 3 +++
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
-index e7b992ece9ad..9519e36ab77b 100644
+index e7b992ece9..9519e36ab7 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 +++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 @@ -24,6 +24,9 @@ aliases {
@@ -23,5 +24,5 @@ index e7b992ece9ad..9519e36ab77b 100644
  
  	chosen {
 -- 
-2.38.1
+2.36.1
 

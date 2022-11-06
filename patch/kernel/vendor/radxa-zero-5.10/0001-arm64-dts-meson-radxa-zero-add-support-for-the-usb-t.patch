@@ -1,8 +1,8 @@
-From 5ec969ce44486a95bc664d5135a496dd3630a2b6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Tue, 17 Aug 2021 16:16:43 +0000
-Subject: [PATCH 21/29] arm64: dts: meson: radxa-zero: add support for the usb
- type-c controller
+Subject: [PATCH] arm64: dts: meson: radxa-zero: add support for the usb type-c
+ controller
 
 Radxa Zero uses an FUSB302 type-c controller, so lets enable it.
 
@@ -15,13 +15,13 @@ Signed-off-by: Christian Hewitt <christianshewitt@gmail.com>
 Signed-off-by: Yuntian Zhang <yt@radxa.com>
 ---
  .../dts/amlogic/meson-g12a-radxa-zero.dts     | 48 +++++++++++++++++++
- 1 file changed, 48 insertions(+)
+ 1 file changed, 44 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
-index 59bb0361d3f6..39c2ee196e95 100644
+index e3bb6df42..5e3dc0134 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 +++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
-@@ -68,6 +68,14 @@ sdio_pwrseq: sdio-pwrseq {
+@@ -60,6 +60,14 @@ sdio_pwrseq: sdio-pwrseq {
  		clock-names = "ext_clock";
  	};
  
@@ -30,13 +30,13 @@ index 59bb0361d3f6..39c2ee196e95 100644
 +		regulator-name = "TYPEC2_VBUS";
 +		regulator-min-microvolt = <5000000>;
 +		regulator-max-microvolt = <5000000>;
-+		vin-supply = <&dc_in>;
++		vin-supply = <&ao_5v>;
 +	};
 +
- 	flash_1v8: regulator-flash_1v8 {
+ 	ao_5v: regulator-ao_5v {
  		compatible = "regulator-fixed";
- 		regulator-name = "FLASH_1V8";
-@@ -221,6 +229,18 @@ led-green {
+ 		regulator-name = "AO_5V";
+@@ -191,6 +199,18 @@ wifi32k: wifi32k {
  	};
  };
  
@@ -55,7 +55,7 @@ index 59bb0361d3f6..39c2ee196e95 100644
  &arb {
  	status = "okay";
  };
-@@ -308,6 +328,26 @@ &ir {
+@@ -278,6 +298,26 @@ &ir {
  	pinctrl-names = "default";
  };
  
@@ -71,7 +71,7 @@ index 59bb0361d3f6..39c2ee196e95 100644
 +		pinctrl-0 = <&fusb302_irq_pins>;
 +		pinctrl-names = "default";
 +		interrupt-parent = <&gpio_intc>;
-+		interrupts = <59 IRQ_TYPE_LEVEL_LOW>;
++		interrupts = <5 IRQ_TYPE_LEVEL_LOW>;
 +
 +		vbus-supply = <&typec2_vbus>;
 +
@@ -82,9 +82,9 @@ index 59bb0361d3f6..39c2ee196e95 100644
  &pwm_AO_cd {
  	pinctrl-0 = <&pwm_ao_d_e_pins>;
  	pinctrl-names = "default";
-@@ -428,3 +468,11 @@ bluetooth {
- &usb {
+@@ -403,3 +439,11 @@ &usb {
  	status = "okay";
+ 	dr_mode = "host";
  };
 +
 +&usb2_phy0 {
@@ -94,7 +94,6 @@ index 59bb0361d3f6..39c2ee196e95 100644
 +&usb3_pcie_phy {
 +	phy-supply = <&typec2_vbus>;
 +};
-\ No newline at end of file
 -- 
-2.38.1
+2.36.1
 

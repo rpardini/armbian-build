@@ -1,15 +1,16 @@
-From 1cd6e5eb2750ebb19895a5e908906154698044fe Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Stephen <stephen@vamrs.com>
 Date: Sun, 10 Oct 2021 15:12:20 +0800
-Subject: [PATCH 04/29] arm64: dts: Radxa Zero: set aliases for serial and i2c
+Subject: [PATCH] arm64: dts: Radxa Zero: set aliases for serial and i2c
 
 Signed-off-by: Stephen <stephen@vamrs.com>
+Signed-off-by: Yuntian Zhang <yt@radxa.com>
 ---
  arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts | 9 +++++++++
  1 file changed, 9 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
-index d44d3881d9b9..e7b992ece9ad 100644
+index d44d3881d9..e7b992ece9 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 +++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 @@ -15,6 +15,15 @@ / {
@@ -29,5 +30,5 @@ index d44d3881d9b9..e7b992ece9ad 100644
  
  	chosen {
 -- 
-2.38.1
+2.36.1
 

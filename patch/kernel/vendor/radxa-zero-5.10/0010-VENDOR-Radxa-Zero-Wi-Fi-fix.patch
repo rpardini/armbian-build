@@ -1,9 +1,9 @@
-From 512fdfb567ea8b815bba3083ea38230951f71a89 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Yuntian Zhang <yt@radxa.com>
-Date: Fri, 11 Mar 2022 19:46:47 +0800
-Subject: [PATCH 20/29] arm64: dts: meson: Reduce Wi-Fi SDIO frequency
+Date: Mon, 27 Jun 2022 15:06:32 +0800
+Subject: [PATCH] VENDOR: Radxa Zero Wi-Fi fix
 
-This improves Wi-Fi stability when operating in cold temperature.
+Credit: c0rnelius from Armbian
 
 Signed-off-by: Yuntian Zhang <yt@radxa.com>
 ---
@@ -11,18 +11,18 @@ Signed-off-by: Yuntian Zhang <yt@radxa.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
-index 8306caff5b3e..59bb0361d3f6 100644
+index 40b2b0e3fc..2613f1fe5b 100644
 --- a/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
 +++ b/arch/arm64/boot/dts/amlogic/meson-g12a-radxa-zero.dts
-@@ -341,7 +341,7 @@ &sd_emmc_a {
+@@ -350,7 +350,7 @@ &sd_emmc_a {
+ 
  	bus-width = <4>;
  	cap-sd-highspeed;
- 	sd-uhs-sdr50;
--	max-frequency = <100000000>;
-+	max-frequency = <80000000>;
+-	sd-uhs-sdr50;
++	cap-mmc-highspeed;
+ 	max-frequency = <80000000>;
  
  	non-removable;
- 	disable-wp;
 -- 
-2.38.1
+2.36.1
 

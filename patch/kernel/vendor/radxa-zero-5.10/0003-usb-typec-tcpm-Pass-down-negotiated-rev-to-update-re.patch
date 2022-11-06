@@ -1,8 +1,8 @@
-From 58d5ed0a98ce1e7d3d57761f0c835606f1b8cd98 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Badhri Jagan Sridharan <badhri@google.com>
 Date: Tue, 1 Dec 2020 19:17:33 -0800
-Subject: [PATCH 22/29] usb: typec: tcpm: Pass down negotiated rev to update
- retry count
+Subject: [PATCH] usb: typec: tcpm: Pass down negotiated rev to update retry
+ count
 
 nRetryCount was updated from 3 to 2 between PD2.0 and PD3.0 spec.
 nRetryCount in "Table 6-34 Counter parameters" of the PD 2.0
@@ -29,6 +29,7 @@ Acked-by: Heikki Krogerus <heikki.krogerus@linux.intel.com>
 Signed-off-by: Badhri Jagan Sridharan <badhri@google.com>
 Link: https://lore.kernel.org/r/20201202031733.647808-1-badhri@google.com
 Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Yuntian Zhang <yt@radxa.com>
 ---
  drivers/usb/typec/tcpm/fusb302.c | 16 +++++++++++-----
  drivers/usb/typec/tcpm/tcpci.c   | 12 +++++++-----
@@ -38,7 +39,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  5 files changed, 22 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/usb/typec/tcpm/fusb302.c b/drivers/usb/typec/tcpm/fusb302.c
-index 700e38e92152..0df739403150 100644
+index 700e38e921..0df7394031 100644
 --- a/drivers/usb/typec/tcpm/fusb302.c
 +++ b/drivers/usb/typec/tcpm/fusb302.c
 @@ -343,12 +343,11 @@ static int fusb302_sw_reset(struct fusb302_chip *chip)
@@ -89,7 +90,7 @@ index 700e38e92152..0df739403150 100644
  		if (ret < 0)
  			fusb302_log(chip,
 diff --git a/drivers/usb/typec/tcpm/tcpci.c b/drivers/usb/typec/tcpm/tcpci.c
-index 49420e28a1f7..14d72ff4fd4c 100644
+index 49420e28a1..14d72ff4fd 100644
 --- a/drivers/usb/typec/tcpm/tcpci.c
 +++ b/drivers/usb/typec/tcpm/tcpci.c
 @@ -18,7 +18,8 @@
@@ -126,7 +127,7 @@ index 49420e28a1f7..14d72ff4fd4c 100644
  	if (ret < 0)
  		return ret;
 diff --git a/drivers/usb/typec/tcpm/tcpm.c b/drivers/usb/typec/tcpm/tcpm.c
-index 8333c80b5f7c..b489da55600d 100644
+index 8333c80b5f..b489da5560 100644
 --- a/drivers/usb/typec/tcpm/tcpm.c
 +++ b/drivers/usb/typec/tcpm/tcpm.c
 @@ -685,7 +685,7 @@ static int tcpm_pd_transmit(struct tcpm_port *port,
@@ -139,7 +140,7 @@ index 8333c80b5f7c..b489da55600d 100644
  		return ret;
  
 diff --git a/drivers/usb/typec/tcpm/wcove.c b/drivers/usb/typec/tcpm/wcove.c
-index 7e9c279bf49d..5d125339687a 100644
+index 7e9c279bf4..5d12533968 100644
 --- a/drivers/usb/typec/tcpm/wcove.c
 +++ b/drivers/usb/typec/tcpm/wcove.c
 @@ -356,7 +356,8 @@ static int wcove_set_pd_rx(struct tcpc_dev *tcpc, bool on)
@@ -153,7 +154,7 @@ index 7e9c279bf49d..5d125339687a 100644
  	struct wcove_typec *wcove = tcpc_to_wcove(tcpc);
  	unsigned int info = 0;
 diff --git a/include/linux/usb/tcpm.h b/include/linux/usb/tcpm.h
-index 09762d26fa0c..515be2c91a28 100644
+index 09762d26fa..515be2c91a 100644
 --- a/include/linux/usb/tcpm.h
 +++ b/include/linux/usb/tcpm.h
 @@ -106,7 +106,7 @@ struct tcpc_dev {
@@ -166,5 +167,5 @@ index 09762d26fa0c..515be2c91a28 100644
  	int (*enable_frs)(struct tcpc_dev *dev, bool enable);
  };
 -- 
-2.38.1
+2.36.1
 
