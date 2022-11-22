@@ -23,7 +23,7 @@ function extension_prepare_config__java_build_machine() {
 	export GRAALVM_EXTRACTED_DIR_NAME="graalvm-ce-java17-${GRAALVM_VERSION}"
 
 	display_alert "Adding Java build machine packages" "${EXTENSION}" "info"
-	export PACKAGE_LIST="${PACKAGE_LIST} openjdk-11-jdk maven zlib1g-dev" # This will be default java. zlib1g-dev is needed for graal native builds.
+	add_packages_to_image openjdk-11-jdk maven zlib1g-dev # This will be default java. zlib1g-dev is needed for graal native builds.
 }
 
 function fetch_sources_tools__fetch_graalvm_into_cache() {

@@ -4,10 +4,10 @@ function extension_prepare_config__prepare_mluc() {
 	display_alert "Removing uncloudlike packages: vnstat, chrony, etc." "${EXTENSION}" "info"
 	# crda is needed for linux-modules-extra which is essential albeit the name
 	# crda in turn depends on iw, wireless-regdb
-	remove_packages_everywhere vnstat chrony unattended-upgrades wpasupplicant rng-tools networkd-dispatcher hping3 selinux-policy-default dkms vnstat
-	#remove_packages_everywhere armbian-config # contains the armbian neofetch. keep it
+	remove_packages vnstat chrony unattended-upgrades wpasupplicant rng-tools networkd-dispatcher hping3 selinux-policy-default dkms vnstat
+	#remove_packages armbian-config # contains the armbian neofetch. keep it
 	# remove most packages from additional: find . -name packages.additional | xargs cat  | sort | uniq | xargs echo
-	remove_packages_everywhere alsa-utils aptitude avahi-autoipd btrfs-progs cracklib-runtime evtest f2fs-tools f3 haveged \
+	remove_packages alsa-utils aptitude avahi-autoipd btrfs-progs cracklib-runtime evtest f2fs-tools f3 haveged \
 		hdparm i2c-tools iotop iozone3 iperf3 iputils-arping libcrack2 libdigest-sha-perl \
 		libproc-processtable-perl mc nfs-common ntfs-3g rfkill \
 		wireless-tools
@@ -18,10 +18,10 @@ function extension_prepare_config__prepare_mluc() {
 		display_alert "Setting EXTRA_ROOTFS_MIB_SIZE: ${EXTRA_ROOTFS_MIB_SIZE}" "${EXTENSION}" "info"
 	fi
 
-	local MLUC_WANTED="bash-completion ssh-import-id curl dnsutils dosfstools ethtool git jq lsof nano pciutils pv screen unzip wget zsh tmux"
-	export PACKAGE_LIST="${PACKAGE_LIST} ${MLUC_WANTED} "
-	export PACKAGE_LIST_BOARD="${PACKAGE_LIST_BOARD} systemd-timesyncd" # chrony does not play well with systemd / qemu-agent.
-	export EXTRA_BSP_NAME="${EXTRA_BSP_NAME}-mluc"                      # Unique bsp name for this extension: more like ubuntu cloud
+	add_packages_to_rootfs bash-completion ssh-import-id curl dnsutils dosfstools ethtool git jq lsof nano pciutils pv screen unzip wget zsh tmux
+	add_packages_to_image systemd-timesyncd # chrony does not play well with systemd / qemu-agent.
+
+	export EXTRA_BSP_NAME="${EXTRA_BSP_NAME}-mluc" # Unique bsp name for this extension: more like ubuntu cloud
 }
 
 # Tweak the BSP, removing a bunch of stuff that's great for interactive end-users and memory-deprived systems,

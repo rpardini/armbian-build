@@ -11,8 +11,9 @@ function host_dependencies_known__add_host_deps_to_package_list_board() {
 	# basic deps needed for building, from basic-deps.sh
 	local basic_deps="uuid-runtime dialog psmisc acl curl gnupg gawk"
 
-	# Add deps to PACKAGE_LIST, so it's cached in rootfs.
-	export PACKAGE_LIST="${PACKAGE_LIST} ${FINAL_HOST_DEPS} ${basic_deps}"
+	# Add deps to rootfs, so it's cached in rootfs.
+	# @TODO: use arrays, but this propagates back to the FINAL_HOST_DEPS. See docker.sh too.
+	add_packages_to_rootfs ${FINAL_HOST_DEPS} ${basic_deps}
 	display_alert "Added to package list, for build machine" "${FINAL_HOST_DEPS} ${basic_deps}" "debug"
 }
 

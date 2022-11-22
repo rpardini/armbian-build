@@ -35,16 +35,13 @@ extension_prepare_config__990_late_finish_cloud_init_config() {
 	local CLOUD_INIT_NETWORK_PACKAGE_INSTALL=""
 	local CLOUD_INIT_NETWORK_PACKAGE_REMOVE=""
 	if [[ "${CLOUD_INIT_USE_NETPLAN}" == "yes" ]]; then
+		CLOUD_INIT_NETWORK_PACKAGE_INSTALL="netplan.io"
 		if [[ "${CLOUD_INIT_REMOVE_IFUPDOWN}" == "yes" ]]; then
 			display_alert "Using netplan.io in place of ifupdown" "${DISTRIBUTION}" "info"
-			CLOUD_INIT_NETWORK_PACKAGE_INSTALL="netplan.io"
 			CLOUD_INIT_NETWORK_PACKAGE_REMOVE="ifupdown ifenslave resolvconf"
-			export DEBOOTSTRAP_LIST="${DEBOOTSTRAP_LIST//ifupdown/netplan.io}" # Replace ifupdown with netplan during debootstrap.
 		else
 			display_alert "Using netplan.io + ifupdown" "${DISTRIBUTION}" "info"
-			CLOUD_INIT_NETWORK_PACKAGE_INSTALL="netplan.io"
 			CLOUD_INIT_NETWORK_PACKAGE_REMOVE="ifenslave resolvconf"
-			#export DEBOOTSTRAP_LIST="${DEBOOTSTRAP_LIST} netplan.io}" # ifupdown + netplan
 		fi
 	fi
 
@@ -62,13 +59,15 @@ extension_prepare_config__990_late_finish_cloud_init_config() {
 	fi
 
 	# Enable cloud-init; this changes bring-up process radically.
-	export PACKAGE_LIST="${PACKAGE_LIST} ${EXTRA_WANTED_PACKAGES} ${CLOUD_INIT_PKGS}"
+	# This means "add to rootfs cache list", not "for this board".
+	# @TODO: use real arrays
+	add_packages_to_rootfs ${EXTRA_WANTED_PACKAGES} ${CLOUD_INIT_PKGS}
 
 	# Remove hostapd. Its a cloud-like image, not an access point. @TODO, why not?
 	# Note WPA-supplicant can still be used via network-config... but only as a client.
 	# Remove more end-user oriented stuff.
 	# shellcheck disable=SC2086 # no, lets expand. it's fun.
-	remove_packages_everywhere network-manager-openvpn network-manager ${CLOUD_INIT_NETWORK_PACKAGE_REMOVE}
+	remove_packages network-manager-openvpn network-manager ${CLOUD_INIT_NETWORK_PACKAGE_REMOVE}
 }
 
 pre_umount_final_image__300_prepare_cloud_init_startup() {
@@ -112,7 +111,7 @@ pre_umount_final_image__300_prepare_cloud_init_startup() {
 		display_alert "Using network-config" "network-configs/${CLOUD_INIT_NET_CONFIG_FILE}.yaml" "info"
 		cp "${EXTENSION_DIR}"/config/network-configs/${CLOUD_INIT_NET_CONFIG_FILE}.yaml "${CI_TARGET}${CLOUD_INIT_CONFIG_LOCATION}"/network-config
 	fi
-	
+
 	# Second chance; use a hook to overwrite the network-config file.
 	[[ $(type -t cloud_init_modify_network_config) == function ]] && cloud_init_modify_network_config
 
@@ -132,25 +131,6 @@ pre_umount_final_image__300_prepare_cloud_init_startup() {
 	ln -s "${CLOUD_INIT_CONFIG_LOCATION}/network-config" "${seed_dir}"/network-config
 	ln -s "${CLOUD_INIT_CONFIG_LOCATION}/user-data" "${seed_dir}"/user-data
 	ln -s "${CLOUD_INIT_CONFIG_LOCATION}/meta-data" "${seed_dir}"/meta-data
-}
-
-user_config_post_aggregate_packages__900_confirm_cloudinit_packages() {
-	# Make sure the package aggregation is not insane / changed too much
-	# by checking that the final PACKAGE_LIST contains 'cloud-init' and 'netplan.io'
-	if [[ ${PACKAGE_LIST} == *"cloud-init"* ]]; then
-		display_alert "Package found OK." "cloud-init"
-	else
-		display_alert "Package not found in package list." "cloud-init" "wrn"
-		read
-	fi
-
-	# could be nice checking that network-manager is NOT there too
-	if [[ ${PACKAGE_LIST} == *"network-manager"* ]]; then
-		display_alert "Package found in package list -- should not be!" "network-manager" "wrn"
-	else
-		display_alert "Package not being installed" "network-manager"
-	fi
-
 }
 
 config_post_debootstrap_tweaks__restore_systemd_resolved() {

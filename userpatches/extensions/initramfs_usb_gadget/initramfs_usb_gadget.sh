@@ -38,6 +38,7 @@ pre_customize_image__inject_initramfs_usb_gadget() {
 }
 
 user_config__add_avahi_daemon() {
+	# @TODO: aggregation: why? probably best out of rootfs cache.
 	export PACKAGE_LIST_ADDITIONAL="${PACKAGE_LIST_ADDITIONAL} avahi-daemon"
 }
 
