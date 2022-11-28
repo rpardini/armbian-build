@@ -49,8 +49,6 @@ function prepare_and_config_main_build_single() {
 		exit
 	fi
 
-	backward_compatibility_build_only
-
 	interactive_config_ask_kernel
 	[[ -z $KERNEL_ONLY ]] && exit_with_error "No option selected: KERNEL_ONLY"
 	[[ -z $KERNEL_CONFIGURE ]] && exit_with_error "No option selected: KERNEL_CONFIGURE"
