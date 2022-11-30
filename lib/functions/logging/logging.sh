@@ -116,6 +116,17 @@ function do_with_logging() {
 	return 0
 }
 
+function do_with_logging_unless_user_terminal() {
+	# Is user on a terminal? If so, don't log, just show on screen.
+	if [[ -t 1 ]]; then
+		display_alert "User is on a terminal, not logging output" "terminal" "debug"
+		"$@"
+	else
+		display_alert "User is not on a terminal, logging output" "terminal" "debug"
+		do_with_logging "$@"
+	fi
+}
+
 # This takes LOG_ASSET, which can and should include an extension.
 function do_with_log_asset() {
 	# @TODO: check that CURRENT_LOGGING_COUNTER is set, otherwise crazy?
