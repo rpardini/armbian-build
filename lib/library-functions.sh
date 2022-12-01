@@ -168,6 +168,15 @@ source "${SRC}"/lib/functions/compilation/distcc.sh
 #set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
 set -o errtrace # trace ERR through - enabled
 set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/compilation/kernel-config.sh
+# shellcheck source=lib/functions/compilation/kernel-config.sh
+source "${SRC}"/lib/functions/compilation/kernel-config.sh
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
 ### lib/functions/compilation/kernel-debs.sh
 # shellcheck source=lib/functions/compilation/kernel-debs.sh
 source "${SRC}"/lib/functions/compilation/kernel-debs.sh
@@ -180,6 +189,24 @@ set -o errexit  ## set -e : exit the script if any statement returns a non-true 
 ### lib/functions/compilation/kernel-git.sh
 # shellcheck source=lib/functions/compilation/kernel-git.sh
 source "${SRC}"/lib/functions/compilation/kernel-git.sh
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/compilation/kernel-make.sh
+# shellcheck source=lib/functions/compilation/kernel-make.sh
+source "${SRC}"/lib/functions/compilation/kernel-make.sh
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/compilation/kernel-patching.sh
+# shellcheck source=lib/functions/compilation/kernel-patching.sh
+source "${SRC}"/lib/functions/compilation/kernel-patching.sh
 
 # no errors tolerated. invoked before each sourced file to make sure.
 #set -o pipefail  # trace ERR through pipes - will be enabled "soon"
@@ -243,6 +270,15 @@ set -o errexit  ## set -e : exit the script if any statement returns a non-true 
 ### lib/functions/compilation/uboot-git.sh
 # shellcheck source=lib/functions/compilation/uboot-git.sh
 source "${SRC}"/lib/functions/compilation/uboot-git.sh
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/compilation/uboot-patching.sh
+# shellcheck source=lib/functions/compilation/uboot-patching.sh
+source "${SRC}"/lib/functions/compilation/uboot-patching.sh
 
 # no errors tolerated. invoked before each sourced file to make sure.
 #set -o pipefail  # trace ERR through pipes - will be enabled "soon"
@@ -369,6 +405,15 @@ set -o errexit  ## set -e : exit the script if any statement returns a non-true 
 ### lib/functions/general/git.sh
 # shellcheck source=lib/functions/general/git.sh
 source "${SRC}"/lib/functions/general/git.sh
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/general/python-tools.sh
+# shellcheck source=lib/functions/general/python-tools.sh
+source "${SRC}"/lib/functions/general/python-tools.sh
 
 # no errors tolerated. invoked before each sourced file to make sure.
 #set -o pipefail  # trace ERR through pipes - will be enabled "soon"
