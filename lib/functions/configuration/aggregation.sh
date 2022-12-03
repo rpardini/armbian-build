@@ -8,6 +8,7 @@ function aggregate_all_packages() {
 	declare -a aggregation_params_quoted=(
 		"SRC=${SRC}"
 		"OUTPUT=${temp_file_for_aggregation}"
+		"ASSET_LOG_BASE=$(print_current_asset_log_base_file)" # base file name for the asset log; to write .md summaries.
 
 		# For the main packages, and others; main packages are not mixed with BOARD or DESKTOP packages.
 		# Results:
