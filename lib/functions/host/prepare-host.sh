@@ -169,7 +169,7 @@ prepare_host() {
 		mkdir -p "${DEST}"/debs-beta/extra "${DEST}"/debs/extra "${DEST}"/{config,debug,patch} "${USERPATCHES_PATH}"/overlay "${SRC}"/cache/{sources,hash,hash-beta,toolchain,utility,rootfs} "${SRC}"/.tmp
 
 		# build aarch64
-		if [[ $(dpkg --print-architecture) == amd64 ]]; then
+		if [[ $(dpkg --print-architecture) == amd64 ]] | [[ $(dpkg --print-architecture) == riscv64 ]]; then
 			if [[ "${SKIP_EXTERNAL_TOOLCHAINS}" != "yes" ]]; then
 
 				# bind mount toolchain if defined
@@ -244,6 +244,9 @@ prepare_host() {
 		if [[ "$(arch)" != "aarch64" ]]; then
 			test -e /proc/sys/fs/binfmt_misc/qemu-arm || update-binfmts --enable qemu-arm
 			test -e /proc/sys/fs/binfmt_misc/qemu-aarch64 || update-binfmts --enable qemu-aarch64
+		fi
+		if [[ "$(arch)" != "riscv64" ]]; then
+			test -e /proc/sys/fs/binfmt_misc/qemu-aarch64 || update-binfmts --enable qemu-riscv64
 		fi
 	fi
 

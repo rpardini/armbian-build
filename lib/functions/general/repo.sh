@@ -232,6 +232,7 @@ repo-manipulate() {
 				repo-remove-old-packages "$release" "armhf" "5"
 				repo-remove-old-packages "$release" "arm64" "5"
 				repo-remove-old-packages "$release" "amd64" "5"
+				repo-remove-old-packages "$release" "riscv64" "5"
 				repo-remove-old-packages "$release" "all" "5"
 				aptly -config="${SCRIPTPATH}config/${REPO_CONFIG}" -passphrase="${GPG_PASS}" publish update "${release}" > /dev/null 2>&1
 			done
@@ -243,6 +244,7 @@ repo-manipulate() {
 				repo-remove-old-packages "$release" "armhf" "3" "edge"
 				repo-remove-old-packages "$release" "arm64" "3" "edge"
 				repo-remove-old-packages "$release" "amd64" "3" "edge"
+				repo-remove-old-packages "$release" "riscv64" "3" "edge"
 				repo-remove-old-packages "$release" "all" "3" "edge"
 				aptly -config="${SCRIPTPATH}config/${REPO_CONFIG}" -passphrase="${GPG_PASS}" publish update "${release}" > /dev/null 2>&1
 			done
