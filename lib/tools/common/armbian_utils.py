@@ -1,5 +1,8 @@
+import logging
 import os
 import sys
+
+log: logging.Logger = logging.getLogger("armbian_utils")
 
 
 def parse_env_for_tokens(env_name):
@@ -38,6 +41,13 @@ def yes_or_no_or_bomb(value):
 
 
 def show_incoming_environment():
-	print("--ENV-- Environment:", file=sys.stderr)
+	log.debug("--ENV-- Environment:")
 	for key in os.environ:
-		print(f"--ENV-- {key}={os.environ[key]}", file=sys.stderr)
+		log.debug(f"--ENV-- {key}={os.environ[key]}")
+
+
+def setup_logging():
+	level = logging.INFO
+	if get_from_env("LOG_DEBUG") == "yes":
+		level = logging.DEBUG
+	logging.basicConfig(level=level, stream=sys.stderr)

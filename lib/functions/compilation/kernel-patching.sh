@@ -1,43 +1,23 @@
 #!/usr/bin/env bash
 
 function kernel_main_patching_python() {
-	# HACK: install the unidiff package via pip3
-	# @TODO: virtualenv? system-wide for now
-	display_alert "Installing required Python packages" "via pip3" "info"
-	run_host_command_logged pip3 install unidiff GitPython unidecode
-
-	# Get a temporary file for the output. This is not WORKDIR yet, since we're still in configuration phase.
-	temp_file_for_output="$(mktemp)"
-
+	prepare_pip_packages_for_python_tools
+	
+	temp_file_for_output="$(mktemp)" # Get a temporary file for the output.
 	# array with all parameters; will be auto-quoted by bash's @Q modifier below
 	declare -a params_quoted=(
-		"SRC=${SRC}"
-		"OUTPUT=${temp_file_for_output}"
+		"LOG_DEBUG=${SHOW_DEBUG}"                             # Logging level for python.
+		"SRC=${SRC}"                                          # Armbian root
+		"OUTPUT=${temp_file_for_output}"                      # Output file for the python script.
 		"ASSET_LOG_BASE=$(print_current_asset_log_base_file)" # base file name for the asset log; to write .md summaries.
-
-		# "Where to apply patches?" - this is mostly optional; I might wanna get just the hash, or just export a series...
-		"GIT_WORK_DIR=${kernel_work_dir}"
-		# Inside: get the hash of that git tree;
-		# Inside: parse the Makefile version?
-		# Get the date of the git revision; only when actually patching.
-
-		# "What patches to apply?"
-		# A space-separated list of directories to apply...
-		"PATCH_TYPE=kernel" # or, u-boot, or, atf
-		"PATCH_DIRS_TO_APPLY=${KERNELPATCHDIR}"
-		# Each item in PATCH_DIRS_TO_APPLY can result in multiple patchsets:
-		# - if series.conf file is present, we need to parse it for a preordered list of patches
-		# - then the dir itself is parsed for patches using advanced_patch logic
-
-		# BOARD is needed for the patchset selection logic; mostly for u-boot. empty for kernel.
-		"BOARD="
-		# TARGET is need for u-boot's SPI/SATA etc selection logic. empty for kernel
-		"TARGET="
-
-		# Needed to find the userpatches.
-		"USERPATCHES_PATH=${USERPATCHES_PATH}"
+		"GIT_WORK_DIR=${kernel_work_dir}"                     # "Where to apply patches?"
+		"PATCH_TYPE=kernel"                                   # or, u-boot, or, atf
+		"PATCH_DIRS_TO_APPLY=${KERNELPATCHDIR}"               # A space-separated list of directories to apply...
+		"BOARD="                                              # BOARD is needed for the patchset selection logic; mostly for u-boot. empty for kernel.
+		"TARGET="                                             # TARGET is need for u-boot's SPI/SATA etc selection logic. empty for kernel
+		"USERPATCHES_PATH=${USERPATCHES_PATH}"                # Needed to find the userpatches.
 	)
-	display_alert "Calling Python patching script" "with parameters: ${params_quoted[*]}" "info"
+	display_alert "Calling Python patching script" "for kernel" "info"
 	run_host_command_logged env -i "${params_quoted[@]@Q}" python3 "${SRC}/lib/tools/patching.py" "||" true
 	#run_host_command_logged cat "${temp_file_for_output}"
 	# shellcheck disable=SC1090

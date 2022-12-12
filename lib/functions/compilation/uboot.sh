@@ -50,6 +50,9 @@ function compile_uboot_target() {
 	fasthash_debug "init"
 
 	maybe_make_clean_uboot
+	
+	# Python patching for u-boot!
+	do_with_hooks uboot_main_patching_python
 
 	fasthash_branch "patches-${uboot_target_counter}-${BOOTPATCHDIR}-$BRANCH"
 	advanced_patch "u-boot" "$BOOTPATCHDIR" "$BOARD" "$target_patchdir" "$BRANCH" "${LINUXFAMILY}-${BOARD}-${BRANCH}"

@@ -1,7 +1,10 @@
 import fnmatch
+import logging
 import os
 
 from . import armbian_utils as armbian_utils
+
+log: logging.Logger = logging.getLogger("aggregation_utils")
 
 AGGREGATION_SEARCH_ROOT_ABSOLUTE_DIRS = []
 DEBOOTSTRAP_SEARCH_RELATIVE_DIRS = []

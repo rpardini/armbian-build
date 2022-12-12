@@ -7,12 +7,16 @@
 # -- rpardini, 23/11/2022
 
 import hashlib
+import logging
 import os
-import sys
 
 import common.aggregation_utils as util
 import common.armbian_utils as armbian_utils
 from common.md_asset_log import SummarizedMarkdownWriter
+
+# Prepare logging
+armbian_utils.setup_logging()
+log: logging.Logger = logging.getLogger("aggregation")
 
 # Read SRC from the environment, treat it.
 armbian_build_directory = armbian_utils.get_from_env_or_bomb("SRC")
@@ -194,4 +198,4 @@ with open(output_file, "w") as bash, SummarizedMarkdownWriter("aggregation.md", 
 	#    PACKAGE_LIST_UNINSTALL="$(cleanup_list aggregated_content)"
 	#    unset aggregated_content
 
-	print(f"Done. Output written to {output_file}", file=sys.stderr)
+	log.debug(f"Done. Output written to {output_file}")

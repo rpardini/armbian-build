@@ -1,6 +1,8 @@
-import sys
+import logging
 
 from . import armbian_utils as armbian_utils
+
+log: logging.Logger = logging.getLogger("md_asset_log")
 
 ASSET_LOG_BASE = armbian_utils.get_from_env("ASSET_LOG_BASE")
 
@@ -8,12 +10,12 @@ ASSET_LOG_BASE = armbian_utils.get_from_env("ASSET_LOG_BASE")
 def write_md_asset_log(file: str, contents: str):
 	"""Log a message to the asset log file."""
 	if ASSET_LOG_BASE is None:
-		print(f"ASSET_LOG_BASE not defined; here's the contents:\n{contents}", file=sys.stderr)
+		log.debug(f"ASSET_LOG_BASE not defined; here's the contents:\n{contents}")
 		return
 	target_file = ASSET_LOG_BASE + file
 	with open(target_file, "w") as asset_log:
 		asset_log.write(contents)
-	print(f"- Wrote to {target_file}.\n", file=sys.stderr)
+	log.debug(f"- Wrote to {target_file}.")
 
 
 class SummarizedMarkdownWriter:

@@ -1,5 +1,5 @@
 #! /bin/env python3
-import sys
+import logging
 import traceback
 
 # Let's use GitPython to query and manipulate the git repo
@@ -8,6 +8,10 @@ from git import Repo, GitCmdObjectDB, InvalidGitRepositoryError
 import common.armbian_utils as armbian_utils
 import common.patching_utils as patching_utils
 from common.md_asset_log import SummarizedMarkdownWriter
+
+# Prepare logging
+armbian_utils.setup_logging()
+log: logging.Logger = logging.getLogger("patching")
 
 # Show the environment variables we've been called with
 armbian_utils.show_incoming_environment()
@@ -92,10 +96,10 @@ for patch in VALID_PATCHES:
 	try:
 		patch.parse_patch()  # this handles diff-level parsing; modifies itself; throws exception if invalid
 	except Exception as invalid_exception:
-		print(
-			f"- Exception while reading {patch.parent.full_file_path()}:{patch.counter}: {invalid_exception}",
-			file=sys.stderr)
-		traceback.print_tb(invalid_exception.__traceback__, file=sys.stderr)
+		log.fatal(
+			f"- Exception while reading {patch.parent.full_file_path()}:{patch.counter}: {invalid_exception}")
+		# log the exception stacktrace
+		log.fatal(traceback.format_exc())
 
 # Now, for patches missing description, try to recover descriptions from the Armbian repo.
 # It might be the SRC is not a git repo (say, when building in Docker), so we need to check.
@@ -103,7 +107,7 @@ try:
 	armbian_git_repo = Repo(SRC)
 except InvalidGitRepositoryError:
 	armbian_git_repo = None
-	print(f"- SRC is not a git repo, so cannot recover descriptions from there.", file=sys.stderr)
+	log.warning(f"- SRC is not a git repo, so cannot recover descriptions from there.")
 
 if apply_patches_to_git and armbian_git_repo is not None:
 	for patch in VALID_PATCHES:
@@ -120,7 +124,7 @@ with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patchi
 
 # Now, we need to apply the patches.
 if not apply_patches:
-	print("Not applying patches.")
+	log.warning("Not applying patches.")
 	exit(0)
 
 git_repo = Repo(GIT_WORK_DIR, odbt=GitCmdObjectDB)
@@ -133,15 +137,15 @@ if apply_patches_to_git:
 			raise Exception("BASE_GIT_REVISION or BASE_GIT_TAG must be set")
 		else:
 			BASE_GIT_REVISION = git_repo.tags[BASE_GIT_TAG].commit.hexsha
-			print(f"Found BASE_GIT_REVISION={BASE_GIT_REVISION} for BASE_GIT_TAG={BASE_GIT_TAG}")
+			log.debug(f"Found BASE_GIT_REVISION={BASE_GIT_REVISION} for BASE_GIT_TAG={BASE_GIT_TAG}")
 
 	patching_utils.prepare_clean_git_tree_for_patching(git_repo, BASE_GIT_REVISION, BRANCH_FOR_PATCHES)
 else:
-	print("Not applying patches to git.")
+	log.info("Not applying patches to git.")
 
 # Loop over the VALID_PATCHES, and apply them.
 for one_patch in VALID_PATCHES:
-	print(f"Applying patch {one_patch}")
+	log.info(f"Applying patch {one_patch}")
 	one_patch.apply_patch(GIT_WORK_DIR)
 	if apply_patches_to_git:
 		committed = one_patch.commit_changes_to_git(git_repo, (not rewrite_patches_in_place))
