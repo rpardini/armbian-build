@@ -96,10 +96,10 @@ for patch in VALID_PATCHES:
 	try:
 		patch.parse_patch()  # this handles diff-level parsing; modifies itself; throws exception if invalid
 	except Exception as invalid_exception:
-		log.fatal(
-			f"- Exception while reading {patch.parent.full_file_path()}:{patch.counter}: {invalid_exception}")
+		log.error(
+			f"Exception while reading {patch.parent.full_file_path()}:{patch.counter}: {invalid_exception}")
 		# log the exception stacktrace
-		log.fatal(traceback.format_exc())
+		log.debug(traceback.format_exc())
 
 # Now, for patches missing description, try to recover descriptions from the Armbian repo.
 # It might be the SRC is not a git repo (say, when building in Docker), so we need to check.

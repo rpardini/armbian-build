@@ -52,7 +52,7 @@ def setup_logging():
 		level = "INFO"
 		if get_from_env("LOG_DEBUG") == "yes":
 			level = "DEBUG"
-		format = "%(name)-15s %(levelname)-7s %(message)s"
+		format = "%(levelname)-8s %(message)s"
 		coloredlogs.install(level=level, stream=sys.stderr, isatty=True, fmt=format)
 	except ImportError:
 		level = logging.INFO
