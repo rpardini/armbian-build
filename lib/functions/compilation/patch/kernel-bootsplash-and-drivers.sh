@@ -21,7 +21,6 @@ compilation_prepare() {
 			s/^KBUILD_IMAGE	:= \$(boot)\/Image\.gz$/KBUILD_IMAGE	:= \$(boot)\/Image/
 		' ${kerneldir}/arch/riscv/Makefile
 
-
 		rm -f ${kerneldir}/scripts/package/{builddeb,mkdebian}
 
 		cp ${SRC}/packages/armbian/builddeb ${kerneldir}/scripts/package/builddeb
