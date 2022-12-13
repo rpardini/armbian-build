@@ -122,17 +122,6 @@ prepare_host() {
 		# create directory structure # @TODO: this should be close to DEST, otherwise super-confusing
 		mkdir -p "${SRC}"/{cache,output} "${USERPATCHES_PATH}"
 
-		# @TODO: rpardini: wtf?
-		if [[ -n $SUDO_USER ]]; then
-			display_alert "ARMBIAN-NEXT UNHANDLED! SUDO_USER variable" "ARMBIAN-NEXT UNHANDLED! SUDO_USER: $SUDO_USER" "wrn"
-			chgrp --quiet sudo cache output "${USERPATCHES_PATH}"
-			# SGID bit on cache/sources breaks kernel dpkg packaging
-			chmod --quiet g+w,g+s output "${USERPATCHES_PATH}"
-			# fix existing permissions
-			find "${SRC}"/output "${USERPATCHES_PATH}" -type d ! -group sudo -exec chgrp --quiet sudo {} \;
-			find "${SRC}"/output "${USERPATCHES_PATH}" -type d ! -perm -g+w,g+s -exec chmod --quiet g+w,g+s {} \;
-		fi
-
 		# @TODO: original: mkdir -p "${DEST}"/debs-beta/extra "${DEST}"/debs/extra "${DEST}"/{config,debug,patch} "${USERPATCHES_PATH}"/overlay "${SRC}"/cache/{sources,hash,hash-beta,toolchain,utility,rootfs} "${SRC}"/.tmp
 		mkdir -p "${USERPATCHES_PATH}"/overlay "${SRC}"/cache/{sources,hash,hash-beta,toolchain,utility,rootfs} "${SRC}"/.tmp
 
