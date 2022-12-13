@@ -12,7 +12,9 @@ post_install_kernel_debs__copy_headers_deb_to_rootfs() {
 		run_host_command_logged ls -lah "${DEB_STORAGE}/${headers_deb}"
 		run_host_command_logged cp -vp "${DEB_STORAGE}/${headers_deb}" "${SDCARD}"/usr/src
 	else
-		display_alert "Headers package not found, will not be included in image" "${headers_deb}" "warn"
+		if [[ "${BRANCH}" != "ddk" ]]; then
+			display_alert "Headers package not found, will not be included in image" "${headers_deb}" "warn"
+		fi
 	fi
 
 }

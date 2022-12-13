@@ -53,7 +53,7 @@ extension_prepare_config__990_late_finish_cloud_init_config() {
 		export DEBOOTSTRAP_COMPONENTS="main,universe"
 
 		if [[ "${RELEASE}" == "kinetic" ]]; then
-			display_alert "Hack for Ubuntu Kinetic" "${DISTRIBUTION} ${RELEASE} split systemd-resolved from systemd" "wrn"
+			display_alert "systemd-resolved" "${DISTRIBUTION} ${RELEASE} split systemd-resolved from systemd" "info"
 			EXTRA_WANTED_PACKAGES="${EXTRA_WANTED_PACKAGES} systemd-resolved"
 		fi
 	fi
