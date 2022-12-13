@@ -25,7 +25,7 @@ compile_uboot() {
 	display_alert "Compiling u-boot" "$version" "info"
 
 	# build aarch64
-	if [[ $(dpkg --print-architecture) == amd64 ]]; then
+	if [[ $(dpkg --print-architecture) == amd64 ]] | [[ $(dpkg --print-architecture) == arm64 ]]; then
 
 		local toolchain
 		toolchain=$(find_toolchain "$UBOOT_COMPILER" "$UBOOT_USE_GCC")

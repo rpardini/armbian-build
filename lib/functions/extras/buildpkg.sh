@@ -8,6 +8,7 @@ create_chroot() {
 	declare -A qemu_binary apt_mirror components
 	qemu_binary['armhf']='qemu-arm-static'
 	qemu_binary['arm64']='qemu-aarch64-static'
+	qemu_binary['riscv64']='qemu-riscv64-static'
 	apt_mirror['buster']="$DEBIAN_MIRROR"
 	apt_mirror['bullseye']="$DEBIAN_MIRROR"
 	apt_mirror['focal']="$UBUNTU_MIRROR"
@@ -122,6 +123,7 @@ chroot_prepare_distccd() {
 	gcc_version['kinetic']='12'
 	gcc_type['armhf']='arm-linux-gnueabihf-'
 	gcc_type['arm64']='aarch64-linux-gnu-'
+	gcc_type['riscv64']='riscv64-linux-gnu-'
 	rm -f "${dest}"/cmdlist
 	mkdir -p "${dest}"
 	local toolchain_path
