@@ -103,16 +103,16 @@ for patch in VALID_PATCHES:
 
 # Now, for patches missing description, try to recover descriptions from the Armbian repo.
 # It might be the SRC is not a git repo (say, when building in Docker), so we need to check.
-try:
-	armbian_git_repo = Repo(SRC)
-except InvalidGitRepositoryError:
-	armbian_git_repo = None
-	log.warning(f"- SRC is not a git repo, so cannot recover descriptions from there.")
-
-if apply_patches_to_git and armbian_git_repo is not None:
-	for patch in VALID_PATCHES:
-		if patch.desc is None:
-			patching_utils.perform_git_archeology(SRC, armbian_git_repo, patch)
+if apply_patches_to_git:
+	try:
+		armbian_git_repo = Repo(SRC)
+	except InvalidGitRepositoryError:
+		armbian_git_repo = None
+		log.warning(f"- SRC is not a git repo, so cannot recover descriptions from there.")
+	if armbian_git_repo is not None:
+		for patch in VALID_PATCHES:
+			if patch.desc is None:
+				patching_utils.perform_git_archeology(SRC, armbian_git_repo, patch)
 
 # Create markdown about the patches
 with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patching") as md:
@@ -127,21 +127,20 @@ if not apply_patches:
 	log.warning("Not applying patches.")
 	exit(0)
 
-git_repo = Repo(GIT_WORK_DIR, odbt=GitCmdObjectDB)
-if apply_patches_to_git:
-	BRANCH_FOR_PATCHES = armbian_utils.get_from_env_or_bomb("BRANCH_FOR_PATCHES")
-	BASE_GIT_REVISION = armbian_utils.get_from_env("BASE_GIT_REVISION")
-	BASE_GIT_TAG = armbian_utils.get_from_env("BASE_GIT_TAG")
-	if BASE_GIT_REVISION is None:
-		if BASE_GIT_TAG is None:
-			raise Exception("BASE_GIT_REVISION or BASE_GIT_TAG must be set")
-		else:
-			BASE_GIT_REVISION = git_repo.tags[BASE_GIT_TAG].commit.hexsha
-			log.debug(f"Found BASE_GIT_REVISION={BASE_GIT_REVISION} for BASE_GIT_TAG={BASE_GIT_TAG}")
+log.info(f"- Applying {len(VALID_PATCHES)} patches...")
 
-	patching_utils.prepare_clean_git_tree_for_patching(git_repo, BASE_GIT_REVISION, BRANCH_FOR_PATCHES)
-else:
-	log.info("Not applying patches to git.")
+git_repo = Repo(GIT_WORK_DIR, odbt=GitCmdObjectDB)
+BRANCH_FOR_PATCHES = armbian_utils.get_from_env_or_bomb("BRANCH_FOR_PATCHES")
+BASE_GIT_REVISION = armbian_utils.get_from_env("BASE_GIT_REVISION")
+BASE_GIT_TAG = armbian_utils.get_from_env("BASE_GIT_TAG")
+if BASE_GIT_REVISION is None:
+	if BASE_GIT_TAG is None:
+		raise Exception("BASE_GIT_REVISION or BASE_GIT_TAG must be set")
+	else:
+		BASE_GIT_REVISION = git_repo.tags[BASE_GIT_TAG].commit.hexsha
+		log.debug(f"Found BASE_GIT_REVISION={BASE_GIT_REVISION} for BASE_GIT_TAG={BASE_GIT_TAG}")
+
+patching_utils.prepare_clean_git_tree_for_patching(git_repo, BASE_GIT_REVISION, BRANCH_FOR_PATCHES)
 
 # Loop over the VALID_PATCHES, and apply them.
 for one_patch in VALID_PATCHES:

@@ -1,5 +1,6 @@
 #! /bin/env python3
 import email.utils
+import logging
 import mailbox
 import os
 import re
@@ -9,6 +10,8 @@ import sys
 import git  # GitPython
 from unidecode import unidecode
 from unidiff import PatchSet
+
+log: logging.Logger = logging.getLogger("patching_utils")
 
 
 class PatchRootDir:
@@ -117,9 +120,8 @@ class PatchFileInDir:
 			# split the patch itself and the description from the payload
 			desc, patch_contents = self.split_description_and_patch(patch)
 			if len(patch_contents) == 0:
-				print(
-					f"WARNING: patch file {self.full_file_path()} fragment {counter} contains an empty patch",
-					file=sys.stderr)
+				log.warning(
+					f"WARNING: patch file {self.full_file_path()} fragment {counter} contains an empty patch")
 				continue
 
 			patches.append(PatchInPatchFile(
@@ -152,10 +154,10 @@ class PatchFileInDir:
 		# The patches are assumed to be in the same order as they were in the original file.
 		# The original file is overwritten.
 		output_file = self.full_file_path()
-		print(f"Rewriting {output_file} with new patches...", file=sys.stderr)
+		log.info(f"Rewriting {output_file} with new patches...")
 		with open(output_file, "w") as f:
 			for patch in patches:
-				print(f"Writing patch {patch.counter} to {output_file}...", file=sys.stderr)
+				log.info(f"Writing patch {patch.counter} to {output_file}...")
 				f.write(patch.rewritten_patch)
 
 
@@ -248,7 +250,7 @@ class PatchInPatchFile:
 		for would_be_created_file in self.created_file_names:
 			full_path = os.path.join(working_dir, would_be_created_file)
 			if os.path.exists(full_path):
-				print(f"-WARNING- File {would_be_created_file} already exists, but patch would re-create it.")
+				log.warning(f"File {would_be_created_file} already exists, but patch would re-create it.")
 		# os.remove(full_path)  # DO NOT COMMIT this...
 
 		# Use the 'patch' utility to apply the patch.
@@ -263,18 +265,18 @@ class PatchInPatchFile:
 		stdout_output = proc.stdout.decode("utf-8")
 		stderr_output = proc.stderr.decode("utf-8")
 		if stdout_output != "":
-			print(f"patch stdout: {stdout_output}", file=sys.stderr)
+			log.debug(f"patch stdout: {stdout_output}")
 		if stderr_output != "":
-			print(f"patch stderr: {stderr_output}", file=sys.stderr)
+			log.warning(f"patch stderr: {stderr_output}")
 		# Check if the exit code is not zero and bomb
 		if proc.returncode != 0:
 			raise Exception(f"Failed to apply patch {self.parent.full_file_path()}: {stderr_output}")
 
 	def commit_changes_to_git(self, repo: git.Repo, add_rebase_tags: bool):
-		print(f"- Committing changes to git: {self.parent.file_base_name}", file=sys.stderr)
+		log.info(f"Committing changes to git: {self.parent.file_base_name}")
 		# add all the files that were touched by the patch
 		for file_name in self.all_file_names_touched:
-			print(f"- Adding file {file_name} to git", file=sys.stderr)
+			log.info(f"Adding file {file_name} to git")
 			repo.git.add(file_name)
 		# Hack: if no files touched, add everything. DO NOT ENABLE THIS
 		# if len(self.all_file_names_touched) == 0:
@@ -295,7 +297,7 @@ class PatchInPatchFile:
 			commit_date=self.date,
 			skip_hooks=True
 		)
-		print(f"- Committed changes to git: {commit.hexsha}", file=sys.stderr)
+		log.info(f"Committed changes to git: {commit.hexsha}")
 		return {"commit_hash": commit.hexsha, "patch": self}
 
 	def patch_rebase_tags_desc(self):
@@ -315,7 +317,7 @@ class PatchInPatchFile:
 def parse_from_name_email(from_str: str) -> tuple["str | None", "str | None"]:
 	m = re.match(r'(?P<name>.*)\s*<\s*(?P<email>.*)\s*>', from_str)
 	if m is None:
-		print(f"-WARNING- Failed to parse name and email from: '{from_str}'", file=sys.stderr)
+		log.warning(f"Failed to parse name and email from: '{from_str}'")
 		return downgrade_to_ascii(from_str), "unknown-email@domain.tld"
 	else:
 		# Return the name and email
@@ -345,18 +347,20 @@ def fix_patch_subject(subject):
 # This is definitely not the right way to do this, but it works for now.
 def prepare_clean_git_tree_for_patching(repo: git.Repo, revision_sha: str, branch_name: str):
 	# Let's find the Commit object for the revision_sha
+	log.info("Resetting git tree to revision '%s'", revision_sha)
 	commit = repo.commit(revision_sha)
 	# Lets checkout, detached HEAD, to that Commit
 	repo.head.reference = commit
 	repo.head.reset(index=True, working_tree=True)
 	# Let's create a new branch, and checkout to it, discarding any existing branch
+	log.info("Creating branch '%s'", branch_name)
 	repo.create_head(branch_name, revision_sha, force=True)
 	repo.head.reference = repo.heads[branch_name]
 	repo.head.reset(index=True, working_tree=True)
 	# Let's remove all the untracked, but not ignored, files from the working copy
 	for file in repo.untracked_files:
 		full_name = os.path.join(repo.working_tree_dir, file)
-		print(f"- Removing untracked file {file} at {full_name}", file=sys.stderr)
+		log.info(f"Removing untracked file '{file}'")
 		os.remove(full_name)
 
 
@@ -381,9 +385,9 @@ def export_commit_as_patch(repo: git.Repo, commit: str):
 	# read the output of the patch command
 	stdout_output = proc.stdout.decode("utf-8")
 	stderr_output = proc.stderr.decode("utf-8")
-	#if stdout_output != "":
+	# if stdout_output != "":
 	#	print(f"git format-patch stdout: \n{stdout_output}", file=sys.stderr)
-	#if stderr_output != "":
+	# if stderr_output != "":
 	#	print(f"git format-patch stderr: {stderr_output}", file=sys.stderr)
 	# Check if the exit code is not zero and bomb
 	if proc.returncode != 0:
@@ -404,7 +408,7 @@ def downgrade_to_ascii(utf8: str) -> str:
 
 # Extremely Armbian-specific.
 def perform_git_archeology(SRC: str, armbian_git_repo: git.Repo, patch: PatchInPatchFile):
-	print(f"- Trying to recover description for {patch.parent.file_name}:{patch.counter}")
+	log.info(f"Trying to recover description for {patch.parent.file_name}:{patch.counter}")
 	patch_file_name = patch.parent.file_name
 	# Find all the files in the repo with the same name as the patch file.
 	# Use the UNIX find command to find all the files with the same name as the patch file.
@@ -412,18 +416,18 @@ def perform_git_archeology(SRC: str, armbian_git_repo: git.Repo, patch: PatchInP
 		["find", SRC, "-name", patch_file_name, "-type", "f"],
 		cwd=SRC, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 	patch_file_paths = proc.stdout.decode("utf-8").splitlines()
-	print(f"- Found {len(patch_file_paths)} files with name {patch_file_name}")
+	log.info(f"Found {len(patch_file_paths)} files with name {patch_file_name}")
 	all_commits: list = []
 	for found_file in patch_file_paths:
 		relative_file_path = os.path.relpath(found_file, SRC)
 		hexshas = armbian_git_repo.git.log('--pretty=%H', '--follow', '--', relative_file_path) \
 			.split('\n')
-		print(f"- Trying to recover description for {relative_file_path} from {len(hexshas)} commits")
+		log.info(f"- Trying to recover description for {relative_file_path} from {len(hexshas)} commits")
 		commits = [armbian_git_repo.rev_parse(c) for c in hexshas]
 		all_commits.extend(commits)
 	all_commits.sort(key=lambda c: c.committed_datetime)
 	main_suspect: git.Commit = all_commits[0]
-	print(f"- Main suspect: {main_suspect}: {main_suspect.message.rstrip()} Author: {main_suspect.author}")
+	log.info(f"- Main suspect: {main_suspect}: {main_suspect.message.rstrip()} Author: {main_suspect.author}")
 	unique_commits: list[git.Commit] = []
 	for commit in all_commits:
 		if commit not in unique_commits:
