@@ -2,7 +2,7 @@
 
 function kernel_main_patching_python() {
 	prepare_pip_packages_for_python_tools
-	
+
 	temp_file_for_output="$(mktemp)" # Get a temporary file for the output.
 	# array with all parameters; will be auto-quoted by bash's @Q modifier below
 	declare -a params_quoted=(
@@ -10,18 +10,25 @@ function kernel_main_patching_python() {
 		"SRC=${SRC}"                                          # Armbian root
 		"OUTPUT=${temp_file_for_output}"                      # Output file for the python script.
 		"ASSET_LOG_BASE=$(print_current_asset_log_base_file)" # base file name for the asset log; to write .md summaries.
-		"GIT_WORK_DIR=${kernel_work_dir}"                     # "Where to apply patches?"
 		"PATCH_TYPE=kernel"                                   # or, u-boot, or, atf
 		"PATCH_DIRS_TO_APPLY=${KERNELPATCHDIR}"               # A space-separated list of directories to apply...
 		"BOARD="                                              # BOARD is needed for the patchset selection logic; mostly for u-boot. empty for kernel.
 		"TARGET="                                             # TARGET is need for u-boot's SPI/SATA etc selection logic. empty for kernel
 		"USERPATCHES_PATH=${USERPATCHES_PATH}"                # Needed to find the userpatches.
+		# What to do?
+		"APPLY_PATCHES=yes"                      # Apply the patches to the filesystem. Does not imply git commiting. If no, still exports the hash.
+		"PATCHES_TO_GIT=${PATCHES_TO_GIT:-no}"   # Commit to git after applying the patches.
+		"REWRITE_PATCHES=${REWRITE_PATCHES:-no}" # Rewrite the original patch files after git commiting.
+		# Git dir, revision, and target branch
+		"GIT_WORK_DIR=${kernel_work_dir}"                                # "Where to apply patches?"
+		"BASE_GIT_REVISION=${kernel_git_revision}"                       # The revision we're building/patching. Python will reset and clean to this.
+		"BRANCH_FOR_PATCHES=kernel-${LINUXFAMILY}-${KERNEL_MAJOR_MINOR}" # When applying patches-to-git, use this branch.
 	)
 	display_alert "Calling Python patching script" "for kernel" "info"
-	run_host_command_logged env -i "${params_quoted[@]@Q}" python3 "${SRC}/lib/tools/patching.py" "||" true
-	#run_host_command_logged cat "${temp_file_for_output}"
+	run_host_command_logged env -i "${params_quoted[@]@Q}" python3 "${SRC}/lib/tools/patching.py"
+	run_host_command_logged cat "${temp_file_for_output}"
 	# shellcheck disable=SC1090
-	#source "${temp_file_for_output}" # SOURCE IT!
+	source "${temp_file_for_output}" # SOURCE IT!
 	run_host_command_logged rm -f "${temp_file_for_output}"
 	return 0
 }
@@ -30,8 +37,8 @@ function kernel_main_patching() {
 	LOG_SECTION="kernel_main_patching_python" do_with_logging do_with_hooks kernel_main_patching_python
 
 	# The old way...
-	LOG_SECTION="kernel_prepare_patching" do_with_logging do_with_hooks kernel_prepare_patching
-	LOG_SECTION="kernel_patching" do_with_logging do_with_hooks kernel_patching
+	#LOG_SECTION="kernel_prepare_patching" do_with_logging do_with_hooks kernel_prepare_patching
+	#LOG_SECTION="kernel_patching" do_with_logging do_with_hooks kernel_patching
 
 	# HACK: STOP HERE, for development.
 	if [[ "${PATCH_ONLY}" == "yes" ]]; then
