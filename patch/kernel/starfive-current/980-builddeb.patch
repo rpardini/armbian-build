@@ -66,7 +66,7 @@
  fi
  
  if is_enabled CONFIG_MODULES; then
-@@ -318,6 +290,8 @@
+@@ -290,6 +262,8 @@
  sed -e "s/exit 0//g" -i $tmpdir/DEBIAN/postinst
  cat >> $tmpdir/DEBIAN/postinst <<- EOT
  	ln -sf $(basename $installed_image_path) /boot/$image_name 2> /dev/null || mv /$installed_image_path /boot/$image_name
