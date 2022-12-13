@@ -299,7 +299,7 @@ POST_FAMILY_CONFIG
 
 	DEBIAN_MIRROR='deb.debian.org/debian'
 	DEBIAN_SECURTY='security.debian.org/'
-	[[ "${ARCH}" == "amd64" ]] &&
+	[[ "${ARCH}" == "amd64" ]] | [[ "${ARCH}" == "arm64" ]] &&
 		UBUNTU_MIRROR='archive.ubuntu.com/ubuntu/' ||
 		UBUNTU_MIRROR='ports.ubuntu.com/'
 
@@ -317,6 +317,18 @@ POST_FAMILY_CONFIG
 		[[ "${ARCH}" == "amd64" ]] &&
 			UBUNTU_MIRROR='mirrors.bfsu.edu.cn/ubuntu/' ||
 			UBUNTU_MIRROR='mirrors.bfsu.edu.cn/ubuntu-ports/'
+	fi
+
+	if [[ "${ARCH}" == "amd64" ]]; then
+		UBUNTU_MIRROR='archive.ubuntu.com/ubuntu' # ports are only for non-amd64, of course.
+			if [[ -n ${CUSTOM_UBUNTU_MIRROR} ]]; then # ubuntu redirector doesn't work well on amd64
+				UBUNTU_MIRROR="${CUSTOM_UBUNTU_MIRROR}"
+			fi
+	fi
+
+	if [[ "${ARCH}" == "riscv64" ]] && [[ $DISTRIBUTION == Debian ]]; then
+		DEBIAN_MIRROR='deb.debian.org/debian-ports'
+		DEBOOTSTRAP_OPTION="--keyring /usr/share/keyrings/debian-ports-archive-keyring.gpg --include=debian-ports-archive-keyring"
 	fi
 
 	[[ -z $DISABLE_IPV6 ]] && DISABLE_IPV6="true"
