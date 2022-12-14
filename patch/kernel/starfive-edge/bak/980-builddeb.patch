@@ -1,9 +1,10 @@
---- scripts/package/builddeb.orig	2022-12-13 22:56:35.058172952 +0000
-+++ scripts/package/builddeb	2022-12-14 00:00:44.581118702 +0000
-@@ -65,25 +65,6 @@
+--- a/scripts/package/builddeb
++++ b/scripts/package/builddeb
+@@ -64,25 +64,6 @@
+ 	chmod -R a+rX "$pdir"
  	# in case we build in a setuid/setgid directory
  	chmod -R ug-s "$pdir"
- 
+-
 -	# Create preinstall and post install script to remove dtb
 -	if [ "$3" = "dtb" ]; then
 -
@@ -22,10 +23,9 @@
 -		chmod 775 $pdir/DEBIAN/preinst
 -		chmod 775 $pdir/DEBIAN/postinst
 -	fi
--
+ 
  	# Create postinst prerm script for headers
  	if [ "$3" = "headers" ]; then
- 
 @@ -187,10 +168,8 @@
  kernel_headers_dir="debian/hdrtmp"
  libc_headers_dir="debian/headertmp"
@@ -50,29 +50,28 @@
  mkdir -m 755 -p "$kernel_headers_dir/lib/modules/$version/"
  mkdir -m 755 -p "$libc_headers_dir/DEBIAN"
  
-@@ -249,15 +226,10 @@
+@@ -249,13 +226,8 @@
  if is_enabled CONFIG_OF_EARLY_FLATTREE; then
  	# Only some architectures with OF support have this target
  	if [ -d "${srctree}/arch/$SRCARCH/boot/dts" ]; then
 -		$MAKE -f $srctree/Makefile INSTALL_DTBS_PATH="$tmpdir/usr/lib/linux-image-$version" dtbs_install
-+		$MAKE -f $srctree/Makefile INSTALL_DTBS_PATH="$tmpdir/boot/linux-image-$version" dtbs_install
- 	fi
- fi
- 
+-	fi
+-fi
+-
 -if grep -q '^CONFIG_OF=y' $KCONFIG_CONFIG; then
 -	#mkdir -p "$tmpdir/boot/dtb"
 -	INSTALL_DTBS_PATH="$dtb_dir/boot/dtb-$version" $MAKE KBUILD_SRC= dtbs_install
--fi
--
++		$MAKE -f $srctree/Makefile INSTALL_DTBS_PATH="$tmpdir/boot/linux-image-$version" dtbs_install
++	fi
+ fi
+ 
  if is_enabled CONFIG_MODULES; then
- 	INSTALL_MOD_PATH="$tmpdir" $MAKE -f $srctree/Makefile modules_install
- 	rm -f "$tmpdir/lib/modules/$version/build"
 @@ -318,6 +290,8 @@
  sed -e "s/exit 0//g" -i $tmpdir/DEBIAN/postinst
  cat >> $tmpdir/DEBIAN/postinst <<- EOT
- 	ln -sf $(basename $installed_image_path) /boot/$image_name 2> /dev/null || cp /$installed_image_path /boot/$image_name
-+        cd /boot
-+        ln -sfT linux-image-$version dtb 2> /dev/null || mv linux-image-$version dtb
+ 	ln -sf $(basename $installed_image_path) /boot/$image_name 2> /dev/null || mv /$installed_image_path /boot/$image_name
++	cd /boot
++	ln -sfT linux-image-$version dtb 2> /dev/null || mv linux-image-$version dtb
  	touch /boot/.next
  	exit 0
  EOT
@@ -99,3 +98,4 @@
  	deploy_libc_headers $libc_headers_dir
  	create_package $libc_headers_packagename $libc_headers_dir
  
+
