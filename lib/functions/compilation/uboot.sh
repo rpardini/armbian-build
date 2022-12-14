@@ -28,9 +28,13 @@ compile_uboot() {
 	if [[ $(dpkg --print-architecture) == amd64 ]] | [[ $(dpkg --print-architecture) == arm64 ]]; then
 
 		local toolchain
-		toolchain=$(find_toolchain "$UBOOT_COMPILER" "$UBOOT_USE_GCC")
-		[[ -z $toolchain ]] && exit_with_error "Could not find required toolchain" "${UBOOT_COMPILER}gcc $UBOOT_USE_GCC"
-
+		if [[ $ARCH = "riscv64" ]]; then
+			toolchain=$UBOOT_COMPILER
+    	else
+    	toolchain=$(find_toolchain "$UBOOT_COMPILER" "$UBOOT_USE_GCC")
+    	[[ -z $toolchain ]] && exit_with_error "Could not find required toolchain" "${UBOOT_COMPILER}gcc $UBOOT_USE_GCC"
+		fi
+		
 		if [[ -n $UBOOT_TOOLCHAIN2 ]]; then
 			local toolchain2_type toolchain2_ver toolchain2
 			toolchain2_type=$(cut -d':' -f1 <<< "${UBOOT_TOOLCHAIN2}")
