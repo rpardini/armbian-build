@@ -5,7 +5,6 @@ import mailbox
 import os
 import re
 import subprocess
-import sys
 
 import git  # GitPython
 from unidecode import unidecode
@@ -110,7 +109,10 @@ class PatchFileInDir:
 					raise Exception(
 						f"Failed to read {self.full_file_path()} as utf-8: {unicode_decode_error}") \
 						from unicode_decode_error
-			return [PatchInPatchFile(self, counter, diff, None, None, None, None)]
+			bare_patch = PatchInPatchFile(self, counter, diff, None, None, None, None)
+			bare_patch.problems.append("not_mbox")
+			log.warning(f"Patch file {self.full_file_path()} is not properly mbox-formatted.")
+			return [bare_patch]
 
 		# loop over the emails in the mbox
 		patches: list[PatchInPatchFile] = []
@@ -144,7 +146,7 @@ class PatchFileInDir:
 			desc = full_message_text[:separator_pos]
 			patch = full_message_text[separator_pos + len(separator):]
 			return desc, patch
-		else:  # no separator, so no description, patch is the full message. this is an error for sure
+		else:  # no separator, so no description, patch is the full message
 			desc = None
 			patch = full_message_text
 		return desc, patch
@@ -169,6 +171,8 @@ def shorten_patched_file_name_for_stats(path):
 class PatchInPatchFile:
 
 	def __init__(self, parent: PatchFileInDir, counter: int, diff: str, desc, from_hdr, sbj_hdr, date_hdr):
+		self.problems: list[str] = []
+		self.applied_ok: bool = False
 		self.rewritten_patch: str | None = None
 
 		self.parent: PatchFileInDir = parent
@@ -177,7 +181,7 @@ class PatchInPatchFile:
 
 		# Basic parsing of properly mbox-formatted patches
 		self.desc: str = downgrade_to_ascii(desc) if desc is not None else None
-		self.from_name, self.from_email = parse_from_name_email(from_hdr) if from_hdr is not None else (
+		self.from_name, self.from_email = self.parse_from_name_email(from_hdr) if from_hdr is not None else (
 			None, None)
 		self.subject: str = downgrade_to_ascii(fix_patch_subject(sbj_hdr)) if sbj_hdr is not None else None
 		self.date = email.utils.parsedate_to_datetime(date_hdr) if date_hdr is not None else None
@@ -191,6 +195,17 @@ class PatchInPatchFile:
 		self.files_removed: int = 0
 		self.created_file_names = []
 		self.all_file_names_touched = []
+
+	def parse_from_name_email(self, from_str: str) -> tuple["str | None", "str | None"]:
+		m = re.match(r'(?P<name>.*)\s*<\s*(?P<email>.*)\s*>', from_str)
+		if m is None:
+			self.problems.append("invalid_author")
+			log.warning(
+				f"Failed to parse name and email from: '{from_str}' while parsing patch {self.counter} in file {self.parent.full_file_path()}")
+			return downgrade_to_ascii(from_str), "unknown-email@domain.tld"
+		else:
+			# Return the name and email
+			return downgrade_to_ascii(m.group("name")), m.group("email")
 
 	def one_line_patch_stats(self) -> str:
 		operations: list[str] = []
@@ -206,6 +221,7 @@ class PatchInPatchFile:
 		try:
 			patch = PatchSet(self.diff, encoding=None)
 		except Exception as e:
+			self.problems.append("invalid_diff")
 			raise Exception(f"Failed to parse patch file {self.parent.full_file_path()}: {e}") from e
 
 		self.total_additions = 0
@@ -235,23 +251,28 @@ class PatchInPatchFile:
 		# sanity check; if all the values are zeroes, throw an exception
 		if self.total_additions == 0 and self.total_deletions == 0 and \
 			self.files_modified == 0 and self.files_added == 0 and self.files_removed == 0:
+			self.problems.append("diff_has_no_changes")
 			raise Exception(
 				f"Patch file {self.parent.full_file_path()} has no changes. diff is {len(self.diff)} bytes: '{self.diff}'")
 
 	def __str__(self) -> str:
 		desc: str = \
-			f"<Patch {self.counter} {self.parent.file_base_name}:" + \
+			f"<{self.parent.file_base_name}(:{self.counter}):" + \
 			f"{self.one_line_patch_stats()}: {self.from_email}: '{self.subject}' >"
 		return desc
 
-	def apply_patch(self, working_dir: str):
+	def apply_patch(self, working_dir: str, options: dict[str, bool]):
 		# Sanity check: if patch would create files, make sure they don't exist to begin with.
 		# This avoids patches being able to overwrite the mainline.
 		for would_be_created_file in self.created_file_names:
 			full_path = os.path.join(working_dir, would_be_created_file)
 			if os.path.exists(full_path):
-				log.warning(f"File {would_be_created_file} already exists, but patch would re-create it.")
-		# os.remove(full_path)  # DO NOT COMMIT this...
+				self.problems.append("recreating_existing_file")
+				log.warning(
+					f"File {would_be_created_file} already exists, but patch {self} would re-create it.")
+				if options["allow_recreate_existing_files"]:
+					log.warning(f"Tolerating recreation in {self} as instructed.")
+					os.remove(full_path)
 
 		# Use the 'patch' utility to apply the patch.
 		proc = subprocess.run(
@@ -262,15 +283,28 @@ class PatchInPatchFile:
 			stderr=subprocess.PIPE,
 			check=False)
 		# read the output of the patch command
-		stdout_output = proc.stdout.decode("utf-8")
-		stderr_output = proc.stderr.decode("utf-8")
+		stdout_output = proc.stdout.decode("utf-8").strip()
+		stderr_output = proc.stderr.decode("utf-8").strip()
 		if stdout_output != "":
 			log.debug(f"patch stdout: {stdout_output}")
 		if stderr_output != "":
 			log.warning(f"patch stderr: {stderr_output}")
+
+		# Look at stdout. If it contains:
+		if " (offset" in stdout_output or " with fuzz " in stdout_output:
+			log.warning(f"Patch {self} needs rebase: offset/fuzz used during apply.")
+			self.problems.append("needs_rebase")
+
 		# Check if the exit code is not zero and bomb
 		if proc.returncode != 0:
-			raise Exception(f"Failed to apply patch {self.parent.full_file_path()}: {stderr_output}")
+			# prefix each line of the stderr_output with "STDERR: ", then join again
+			stderr_output = "\n".join([f"STDERR: {line}" for line in stderr_output.splitlines()])
+			stderr_output = "\n" + stderr_output if stderr_output != "" else stderr_output
+			stdout_output = "\n".join([f"STDOUT: {line}" for line in stdout_output.splitlines()])
+			stdout_output = "\n" + stdout_output if stdout_output != "" else stdout_output
+			self.problems.append("failed_to_apply")
+			raise Exception(
+				f"Failed to apply patch {self.parent.full_file_path()}:{stderr_output}{stdout_output}")
 
 	def commit_changes_to_git(self, repo: git.Repo, add_rebase_tags: bool):
 		log.info(f"Committing changes to git: {self.parent.file_base_name}")
@@ -312,16 +346,6 @@ class PatchInPatchFile:
 		for k, v in tags.items():
 			ret += f"X-Armbian: {k}: {v}\n"
 		return ret
-
-
-def parse_from_name_email(from_str: str) -> tuple["str | None", "str | None"]:
-	m = re.match(r'(?P<name>.*)\s*<\s*(?P<email>.*)\s*>', from_str)
-	if m is None:
-		log.warning(f"Failed to parse name and email from: '{from_str}'")
-		return downgrade_to_ascii(from_str), "unknown-email@domain.tld"
-	else:
-		# Return the name and email
-		return downgrade_to_ascii(m.group("name")), m.group("email")
 
 
 def fix_patch_subject(subject):

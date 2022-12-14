@@ -52,8 +52,16 @@ def setup_logging():
 		level = "INFO"
 		if get_from_env("LOG_DEBUG") == "yes":
 			level = "DEBUG"
-		format = "%(levelname)-8s %(message)s"
-		coloredlogs.install(level=level, stream=sys.stderr, isatty=True, fmt=format)
+		format = "%(message)s"
+		styles = {
+			'trace': {'color': 'white', },
+			'debug': {'color': 'white'},
+			'info': {'color': 'white', 'bold': True},
+			'warning': {'color': 'yellow', 'bold': True},
+			'error': {'color': 'red'},
+			'critical': {'bold': True, 'color': 'red'}
+		}
+		coloredlogs.install(level=level, stream=sys.stderr, isatty=True, fmt=format, level_styles=styles)
 	except ImportError:
 		level = logging.INFO
 		if get_from_env("LOG_DEBUG") == "yes":

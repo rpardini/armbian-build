@@ -23,6 +23,8 @@ function kernel_main_patching_python() {
 		"GIT_WORK_DIR=${kernel_work_dir}"                                # "Where to apply patches?"
 		"BASE_GIT_REVISION=${kernel_git_revision}"                       # The revision we're building/patching. Python will reset and clean to this.
 		"BRANCH_FOR_PATCHES=kernel-${LINUXFAMILY}-${KERNEL_MAJOR_MINOR}" # When applying patches-to-git, use this branch.
+		# Lenience: allow problematic patches to be applied.
+		"ALLOW_RECREATE_EXISTING_FILES=yes" # Allow patches to recreate files that already exist.
 	)
 	display_alert "Calling Python patching script" "for kernel" "info"
 	run_host_command_logged env -i "${params_quoted[@]@Q}" python3 "${SRC}/lib/tools/patching.py"
