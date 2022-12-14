@@ -120,6 +120,8 @@ with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patchi
 	for one_patch in VALID_PATCHES:
 		md.write(f"- `{one_patch}`\n")
 		patch_count += 1
+	if patch_count == 0:
+		md.write(f"- No patches found.\n")
 	md.add_summary(f"{patch_count} patches")
 
 # Now, we need to apply the patches.
