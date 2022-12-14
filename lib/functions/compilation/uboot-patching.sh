@@ -23,7 +23,7 @@ function uboot_main_patching_python() {
 		"BRANCH_FOR_PATCHES=u-boot-${BRANCH}-${BOARD}" # When applying patches-to-git, use this branch.
 	)
 	display_alert "Calling Python patching script" "for u-boot target" "info"
-	SHOW_LOG=yes run_host_command_logged env -i "${params_quoted[@]@Q}" python3 "${SRC}/lib/tools/patching.py"
+	run_host_command_logged env -i "${params_quoted[@]@Q}" python3 "${SRC}/lib/tools/patching.py"
 	run_host_command_logged cat "${temp_file_for_output}"
 	# shellcheck disable=SC1090
 	source "${temp_file_for_output}" # SOURCE IT!
