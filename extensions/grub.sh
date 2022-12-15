@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # This runs *after* user_config. Don't change anything not coming from other variables or meant to be configured by the u ser.
-function extension_prepare_config__prepare_flash_kernel() {
+function extension_prepare_config__prepare_grub_standard() {
 	# Extension configuration defaults.
 	export DISTRO_GENERIC_KERNEL=${DISTRO_GENERIC_KERNEL:-no}             # if yes, does not build our own kernel, instead, uses generic one from distro
 	export UEFI_GRUB_TERMINAL="${UEFI_GRUB_TERMINAL:-serial console}"     # 'serial' forces grub menu on serial console. empty to not include
@@ -103,7 +103,7 @@ pre_umount_final_image__install_grub() {
 	fi
 
 	configure_grub
-	local chroot_target=$MOUNT
+	local chroot_target="${MOUNT}"
 	display_alert "Installing bootloader" "GRUB" "info"
 
 	# getting rid of the dtb package, if installed, is hard. for now just zap it, otherwise update-grub goes bananas
