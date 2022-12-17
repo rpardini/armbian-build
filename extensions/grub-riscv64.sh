@@ -21,8 +21,16 @@ function extension_prepare_config__prepare_grub-riscv64() {
 	export UEFI_GRUB_TARGET_BIOS=""                                              # Target for BIOS GRUB install, set to i386-pc when UEFI_ENABLE_BIOS_AMD64=yes and target is amd64
 	export UEFI_GRUB_TARGET="riscv64-efi"                                        # Default for x86_64
 
-	if [[ "${DISTRIBUTION}" != "Ubuntu" && "${KERNEL_ONLY}" == "no" ]]; then
-		exit_with_error "${DISTRIBUTION} is not supported yet"
+	if [[ "${DISTRIBUTION}" == "Ubuntu" ]]; then
+		display_alert "Prepare config Ubuntu" "${EXTENSION}" "info"
+
+		local uefi_packages="efibootmgr efivar cloud-initramfs-growroot os-prober grub-efi-${ARCH}-bin grub-efi-${ARCH}"
+
+	elif [[ "${DISTRIBUTION}" == "Debian" ]]; then
+		display_alert "Prepare config Debian" "${EXTENSION}" "info"
+
+		local uefi_packages=""
+
 	fi
 
 	declare uefi_packages="efibootmgr efivar cloud-initramfs-growroot os-prober grub-efi-${ARCH}-bin grub-efi-${ARCH}"
@@ -121,6 +129,10 @@ pre_umount_final_image__900_export_kernel_and_initramfs() {
 }
 
 configure_grub() {
+	[[ -n "$SRC_CMDLINE" ]] &&
+        GRUB_CMDLINE_LINUX_DEFAULT+=" ${SRC_CMDLINE}"
+    [[ -n "$MAIN_CMDLINE" ]] &&
+		GRUB_CMDLINE_LINUX_DEFAULT+=" ${MAIN_CMDLINE}"
 	[[ -n "$SERIALCON" ]] &&
 		GRUB_CMDLINE_LINUX_DEFAULT+=" console=${SERIALCON}"
 
