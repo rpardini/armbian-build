@@ -4,4 +4,8 @@ BOARDFAMILY="starfive"
 KERNEL_TARGET="edge"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
-BOOT_FDT_FILE="starfive/jh7110-visionfive-v2.dtb"  # @TODO: Does not exist at https://github.com/starfive-tech/linux/tree/visionfive/arch/riscv/boot/dts/starfive
+BOOT_FDT_FILE="starfive/jh7110-visionfive-v2.dtb"
+SRC_EXTLINUX="yes"
+SRC_CMDLINE="console=ttyS0,115200n8 console=tty0 earlycon=sbi"
+BOOTCONFIG=none
+PACKAGE_LIST_BOARD_REMOVE="hostapd"

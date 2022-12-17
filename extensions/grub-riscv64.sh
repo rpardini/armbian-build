@@ -121,6 +121,10 @@ pre_umount_final_image__900_export_kernel_and_initramfs() {
 }
 
 configure_grub() {
+	[[ -n "$SRC_CMDLINE" ]] &&
+		GRUB_CMDLINE_LINUX_DEFAULT+=" ${SRC_CMDLINE}"
+	[[ -n "$MAIN_CMDLINE" ]] &&
+		GRUB_CMDLINE_LINUX_DEFAULT+=" ${MAIN_CMDLINE}"
 	[[ -n "$SERIALCON" ]] &&
 		GRUB_CMDLINE_LINUX_DEFAULT+=" console=${SERIALCON}"
 
