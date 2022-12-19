@@ -25,9 +25,11 @@ PATCHES_TO_GIT = armbian_utils.get_from_env("PATCHES_TO_GIT")
 REWRITE_PATCHES = armbian_utils.get_from_env("REWRITE_PATCHES")
 ALLOW_RECREATE_EXISTING_FILES = armbian_utils.get_from_env("ALLOW_RECREATE_EXISTING_FILES")
 GIT_ARCHEOLOGY = armbian_utils.get_from_env("GIT_ARCHEOLOGY")
+FAST_ARCHEOLOGY = armbian_utils.get_from_env("FAST_ARCHEOLOGY")
 apply_patches = APPLY_PATCHES == "yes"
 apply_patches_to_git = PATCHES_TO_GIT == "yes"
 git_archeology = GIT_ARCHEOLOGY == "yes"
+fast_archeology = FAST_ARCHEOLOGY == "yes"
 rewrite_patches_in_place = REWRITE_PATCHES == "yes"
 apply_options = {"allow_recreate_existing_files": (ALLOW_RECREATE_EXISTING_FILES == "yes")}
 
@@ -123,9 +125,12 @@ if apply_patches_to_git and git_archeology:
 		armbian_git_repo = None
 		log.warning(f"- SRC is not a git repo, so cannot recover descriptions from there.")
 	if armbian_git_repo is not None:
+		bad_archeology_hexshas = ["something"]
+
 		for patch in VALID_PATCHES:
 			if patch.desc is None:
-				patching_utils.perform_git_archeology(SRC, armbian_git_repo, patch)
+				patching_utils.perform_git_archeology(
+					SRC, armbian_git_repo, patch, bad_archeology_hexshas, fast_archeology)
 
 # Now, we need to apply the patches.
 if apply_patches:
@@ -156,9 +161,11 @@ if apply_patches:
 
 		if one_patch.applied_ok and apply_patches_to_git:
 			committed = one_patch.commit_changes_to_git(git_repo, (not rewrite_patches_in_place))
+			commit_hash = committed['commit_hash']
+			one_patch.git_commit_hash = commit_hash
 			if rewrite_patches_in_place:
-				rewritten_patch = patching_utils.export_commit_as_patch(git_repo,
-											committed['commit_hash'])
+				rewritten_patch = patching_utils.export_commit_as_patch(
+					git_repo, commit_hash)
 				one_patch.rewritten_patch = rewritten_patch
 
 	if rewrite_patches_in_place:
@@ -193,14 +200,14 @@ with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patchi
 		md.write(f"- No patches found.\n")
 	else:
 		# Prepare the Markdown table header
-		md.write("| Applied? | Problems | Patch  | Diffstat Summary | Files patched | Author | Subject |\n")
+		md.write(
+			"| Applied? | Problems | Patch  | Diffstat Summary | Files patched | Author | Subject | Link to patch |\n")
 		# Markdown table hyphen line and column alignment
-		md.write("| :---:    | :---:    | :---   | :---   | :---   | :---   | :--- |\n")
-		table_header = ["Patch", "Description", "Status"]
+		md.write("| :---:    | :---:    | :---   | :---   | :---   | :---   | :--- | :--- |\n")
 	for one_patch in VALID_PATCHES:
 		# Markdown table row
 		md.write(
-			f"| {one_patch.markdown_applied()} | {one_patch.markdown_problems()} | `{one_patch.parent.file_base_name}` | {one_patch.markdown_diffstat()} | {one_patch.markdown_files()} | {one_patch.markdown_author()} | {one_patch.markdown_subject()} |\n")
+			f"| {one_patch.markdown_applied()} | {one_patch.markdown_problems()} | `{one_patch.parent.file_base_name}` | {one_patch.markdown_diffstat()} | {one_patch.markdown_files()} | {one_patch.markdown_author()} | {one_patch.markdown_subject()} | {one_patch.git_commit_hash} |\n")
 		patch_count += 1
 		if one_patch.applied_ok:
 			patches_applied += 1
