@@ -95,6 +95,9 @@ class PatchFileInDir:
 	def full_file_path(self):
 		return os.path.join(self.patch_dir.full_dir, self.file_name)
 
+	def relative_to_src_filepath(self):
+		return os.path.join(self.patch_dir.rel_dir, self.file_name)
+
 	def split_patches_from_file(self) -> list["PatchInPatchFile"]:
 		counter: int = 1
 		mbox: mailbox.mbox = mailbox.mbox(self.full_file_path())
@@ -184,6 +187,7 @@ class PatchInPatchFile:
 		self.problems: list[str] = []
 		self.applied_ok: bool = False
 		self.rewritten_patch: str | None = None
+		self.git_commit_hash: str | None = None
 
 		self.parent: PatchFileInDir = parent
 		self.counter: int = counter
@@ -350,11 +354,11 @@ class PatchInPatchFile:
 			repo.git.add(repo.working_tree_dir)
 
 		# commit the changes, using GitPython; show the produced commit hash
-		commit_message = f"{self.subject}\n\n{self.desc}"
+		commit_message = f"{self.parent.file_base_name}(:{self.counter})\n\nOriginal-Subject: {self.subject}\n{self.desc}"
 		if add_rebase_tags:
 			commit_message = f"{commit_message}\n{self.patch_rebase_tags_desc()}"
 		author: git.Actor = git.Actor(self.from_name, self.from_email)
-		committer: git.Actor = git.Actor("Committer Patches", "commiter@localhost")
+		committer: git.Actor = git.Actor("Armbian AutoPatcher", "patching@armbian.com")
 		commit = repo.index.commit(
 			message=commit_message,
 			author=author,
@@ -379,6 +383,8 @@ class PatchInPatchFile:
 		tags["Patch-Type"] = self.parent.patch_dir.patch_root_dir.patch_type
 		tags["Patch-Root-Type"] = self.parent.patch_dir.root_type
 		tags["Patch-Sub-Type"] = self.parent.patch_dir.sub_type
+		if self.subject is not None:
+			tags["Original-Subject"] = self.subject
 		ret = ""
 		for k, v in tags.items():
 			ret += f"X-Armbian: {k}: {v}\n"
@@ -524,46 +530,80 @@ def read_file_as_utf8(file_name: str) -> tuple[str, list[str]]:
 
 
 # Extremely Armbian-specific.
-def perform_git_archeology(SRC: str, armbian_git_repo: git.Repo, patch: PatchInPatchFile):
+def perform_git_archeology(
+	base_armbian_src_dir: str, armbian_git_repo: git.Repo, patch: PatchInPatchFile,
+	bad_archeology_hexshas: list[str], fast: bool):
 	log.info(f"Trying to recover description for {patch.parent.file_name}:{patch.counter}")
 	patch_file_name = patch.parent.file_name
-	# Find all the files in the repo with the same name as the patch file.
-	# Use the UNIX find command to find all the files with the same name as the patch file.
-	proc = subprocess.run(
-		["find", SRC, "-name", patch_file_name, "-type", "f"],
-		cwd=SRC, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-	patch_file_paths = proc.stdout.decode("utf-8").splitlines()
+
+	patch_file_paths: list[str] = []
+	if fast:
+		patch_file_paths = [patch.parent.full_file_path()]
+	else:
+		# Find all the files in the repo with the same name as the patch file.
+		# Use the UNIX find command to find all the files with the same name as the patch file.
+		proc = subprocess.run(
+			[
+				"find", base_armbian_src_dir,
+				"-name", patch_file_name,
+				"-type", "f"
+			],
+			cwd=base_armbian_src_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+		patch_file_paths = proc.stdout.decode("utf-8").splitlines()
 	log.info(f"Found {len(patch_file_paths)} files with name {patch_file_name}")
 	all_commits: list = []
 	for found_file in patch_file_paths:
-		relative_file_path = os.path.relpath(found_file, SRC)
+		relative_file_path = os.path.relpath(found_file, base_armbian_src_dir)
 		hexshas = armbian_git_repo.git.log('--pretty=%H', '--follow', '--', relative_file_path) \
 			.split('\n')
 		log.info(f"- Trying to recover description for {relative_file_path} from {len(hexshas)} commits")
+
+		# filter out hexshas that are in the known-bad archeology list
+		hexshas = [hexsha for hexsha in hexshas if hexsha not in bad_archeology_hexshas]
+
 		commits = [armbian_git_repo.rev_parse(c) for c in hexshas]
 		all_commits.extend(commits)
-	all_commits.sort(key=lambda c: c.committed_datetime)
-	main_suspect: git.Commit = all_commits[0]
-	log.info(f"- Main suspect: {main_suspect}: {main_suspect.message.rstrip()} Author: {main_suspect.author}")
+
 	unique_commits: list[git.Commit] = []
 	for commit in all_commits:
 		if commit not in unique_commits:
 			unique_commits.append(commit)
-	# remove the main suspect from the unique commits
-	unique_commits.remove(main_suspect)
+
+	unique_commits.sort(key=lambda c: c.committed_datetime)
+
+	main_suspect: git.Commit = unique_commits[0]
+	log.info(f"- Main suspect: {main_suspect}: {main_suspect.message.rstrip()} Author: {main_suspect.author}")
+
 	# From the main_suspect, set the subject and the author, and the dates.
-	main_suspect_subject = main_suspect.message.splitlines()[0].strip()
+	main_suspect_msg_lines = main_suspect.message.splitlines()
+	# strip each line
+	main_suspect_msg_lines = [line.strip() for line in main_suspect_msg_lines]
+	# remove empty lines
+	main_suspect_msg_lines = [line for line in main_suspect_msg_lines if line != ""]
+	main_suspect_subject = main_suspect_msg_lines[0].strip()
+	# remove the first line, which is the subject
+	suspect_desc_lines = main_suspect_msg_lines[1:]
+
 	# Now, create a list for all other non-main suspects.
-	other_suspects_desc = [main_suspect.message + "\n\n"]
+	other_suspects_desc: list[str] = []
+	other_suspects_desc.extend(
+		[f"> recovered message: > {suspect_desc_line}" for suspect_desc_line in suspect_desc_lines])
+	other_suspects_desc.extend("")
 	for commit in unique_commits:
 		subject = commit.message.splitlines()[0].strip()
-		other_suspects_desc.append(
-			f"- {commit}: {commit.committed_date}: {commit.author.name} <{commit.author.email}>: '{subject}'")
+		rfc822_date = commit.committed_datetime.strftime("%a, %d %b %Y %H:%M:%S %z")
+		other_suspects_desc.extend([
+			f"- Revision {commit.hexsha}: https://github.com/armbian/build/commit/{commit.hexsha}",
+			f"  Date: {rfc822_date}",
+			f"  From: {commit.author.name} <{commit.author.email}>",
+			f"  Subject: {subject}",
+			""
+		])
 
-	patch.desc = downgrade_to_ascii("\n".join(other_suspects_desc))
+	patch.desc = downgrade_to_ascii("\n".join([f"> X-Git-Archeology: {line}" for line in other_suspects_desc]))
 
 	if patch.subject is None:
-		patch.subject = downgrade_to_ascii(f"** {main_suspect_subject}")
+		patch.subject = downgrade_to_ascii("[ARCHEOLOGY] " + main_suspect_subject)
 	if patch.date is None:
 		patch.date = main_suspect.committed_datetime
 	if patch.from_name is None or patch.from_email is None:
