@@ -339,6 +339,7 @@ class PatchInPatchFile:
 				raise Exception(
 					f"Patch {self} has no files touched, but is not marked as failed to parse.")
 			# add all files to git staging area
+			all_files_to_add: list[str] = []
 			for file_name in self.all_file_names_touched:
 				log.info(f"Adding file {file_name} to git")
 				full_path = os.path.join(repo.working_tree_dir, file_name)
@@ -347,7 +348,9 @@ class PatchInPatchFile:
 					log.error(f"File '{full_path}' does not exist, but is touched by {self}")
 					add_all_changes_in_git = True
 				else:
-					repo.git.add(file_name)
+					all_files_to_add.append(file_name)
+			if not add_all_changes_in_git:
+				repo.git.add("-f", all_files_to_add)
 
 		if self.failed_to_parse or add_all_changes_in_git:
 			log.warning(f"Rescue: adding all changed files to git for {self}")
