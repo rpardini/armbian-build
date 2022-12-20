@@ -1,12 +1,13 @@
 #! /bin/env python3
 import logging
+import os
 
 # Let's use GitPython to query and manipulate the git repo
-from git import Repo, GitCmdObjectDB, InvalidGitRepositoryError
+from git import Repo, GitCmdObjectDB, InvalidGitRepositoryError, Actor
 
 import common.armbian_utils as armbian_utils
 import common.patching_utils as patching_utils
-from common.md_asset_log import SummarizedMarkdownWriter
+from common.md_asset_log import SummarizedMarkdownWriter, get_gh_pages_workflow_script
 
 # Prepare logging
 armbian_utils.setup_logging()
@@ -133,6 +134,7 @@ if apply_patches_to_git and git_archeology:
 					SRC, armbian_git_repo, patch, bad_archeology_hexshas, fast_archeology)
 
 # Now, we need to apply the patches.
+git_repo: "git.Repo | None" = None
 if apply_patches:
 	log.info("Cleaning target git directory...")
 	git_repo = Repo(GIT_WORK_DIR, odbt=GitCmdObjectDB)
@@ -157,6 +159,7 @@ if apply_patches:
 			one_patch.apply_patch(GIT_WORK_DIR, apply_options)
 			one_patch.applied_ok = True
 		except Exception as e:
+			one_patch.problems.append("failed_apply")
 			log.error(f"Exception while applying patch {one_patch}: {e}", exc_info=True)
 
 		if one_patch.applied_ok and apply_patches_to_git:
@@ -191,6 +194,7 @@ if apply_patches:
 				f"it was not applied successfully.")
 
 # Create markdown about the patches
+readme_markdown: "str | None" = None
 with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patching") as md:
 	patch_count = 0
 	patches_applied = 0
@@ -201,13 +205,13 @@ with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patchi
 	else:
 		# Prepare the Markdown table header
 		md.write(
-			"| Applied? | Problems | Patch  | Diffstat Summary | Files patched | Author | Subject | Link to patch |\n")
+			"| Problems | Patch  | Diffstat Summary | Files patched | Author / Subject |\n")
 		# Markdown table hyphen line and column alignment
-		md.write("| :---:    | :---:    | :---   | :---   | :---   | :---   | :--- | :--- |\n")
+		md.write("| :---:    | :---   | :---   | :---   | :---  |\n")
 	for one_patch in VALID_PATCHES:
 		# Markdown table row
 		md.write(
-			f"| {one_patch.markdown_applied()} | {one_patch.markdown_problems()} | `{one_patch.parent.file_base_name}` | {one_patch.markdown_diffstat()} | {one_patch.markdown_files()} | {one_patch.markdown_author()} | {one_patch.markdown_subject()} | {one_patch.git_commit_hash} |\n")
+			f"| {one_patch.markdown_problems()} | `{one_patch.parent.file_base_name}`{one_patch.markdown_link_to_patch()} | {one_patch.markdown_diffstat()} | {one_patch.markdown_files()} | {one_patch.markdown_author()}: {one_patch.markdown_subject()} |\n")
 		patch_count += 1
 		if one_patch.applied_ok:
 			patches_applied += 1
@@ -222,3 +226,28 @@ with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patchi
 	md.add_summary(f"{patches_with_problems} with problems")
 	for problem in problem_by_type:
 		md.add_summary(f"{problem_by_type[problem]} {problem}")
+	# capture the markdown
+	readme_markdown = md.get_readme_markdown()
+
+# Finally, write the README.md and the GH pages workflow file to the git dir, add them, and commit them.
+if apply_patches_to_git and readme_markdown is not None and git_repo is not None:
+	log.info("Writing README.md and .github/workflows/gh-pages.yml")
+	with open(os.path.join(GIT_WORK_DIR, "README.md"), 'w') as f:
+		f.write(readme_markdown)
+	git_repo.git.add("README.md")
+	github_workflows_dir = os.path.join(GIT_WORK_DIR, ".github", "workflows")
+	if not os.path.exists(github_workflows_dir):
+		os.makedirs(github_workflows_dir)
+	with open(os.path.join(github_workflows_dir, "publish-ghpages.yaml"), 'w') as f:
+		f.write(get_gh_pages_workflow_script())
+	log.info("Committing README.md and .github/workflows/gh-pages.yml")
+	git_repo.git.add("-f", [".github/workflows/publish-ghpages.yaml", "README.md"])
+	maintainer_actor: Actor = Actor("Armbian AutoPatcher", "patching@armbian.com")
+	commit = git_repo.index.commit(
+		message="Armbian patching summary README",
+		author=maintainer_actor,
+		committer=maintainer_actor,
+		skip_hooks=True
+	)
+	log.info(f"Committed changes to git: {commit.hexsha}")
+	log.info("Done with summary commit.")

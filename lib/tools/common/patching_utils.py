@@ -438,6 +438,11 @@ class PatchInPatchFile:
 			return f"_{self.subject}_"
 		return "`?`"
 
+	def markdown_link_to_patch(self):
+		if self.git_commit_hash is None:
+			return ""
+		return f" {self.git_commit_hash}"
+
 
 def fix_patch_subject(subject):
 	# replace newlines with one space
