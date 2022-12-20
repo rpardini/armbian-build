@@ -47,10 +47,9 @@ function kernel_main_patching() {
 	#LOG_SECTION="kernel_prepare_patching" do_with_logging do_with_hooks kernel_prepare_patching
 	#LOG_SECTION="kernel_patching" do_with_logging do_with_hooks kernel_patching
 
-	# HACK: STOP HERE, for development.
+	# STOP HERE, for cli support for patching tools.
 	if [[ "${PATCH_ONLY}" == "yes" ]]; then
-		display_alert "PATCH_ONLY is set, stopping here." "PATCH_ONLY=yes" "info"
-		exit 0
+		return 0
 	fi
 
 	# Interactive!!!

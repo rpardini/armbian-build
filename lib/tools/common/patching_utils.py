@@ -399,15 +399,21 @@ class PatchInPatchFile:
 		return "❌"
 
 	def markdown_problems(self):
-		if len(self.problems) == 0:
-			return "✅"
 		ret = []
+		if len(self.problems) == 0:
+			ret.append("✅ ")
+
 		for problem in self.problems:
 			if problem in ["not_mbox", "needs_rebase"]:
 				# warning emoji
-				ret.append(f"⚠️{problem}")  # normal
+				ret.append(f"⚠️`[{problem}]` ")
 			else:
-				ret.append(f"**❌{problem}**")  # bold
+				ret.append(f"❌`[{problem}]` ")
+
+		# if it's a user patch, add smiley
+		log.warning(f"root_type: {self.parent.patch_dir.patch_root_dir.root_type} for {self}")
+		if self.parent.patch_dir.patch_root_dir.root_type == "user":
+			ret.append(" 🫠`[user]` ")
 
 		return " ".join(ret)
 
@@ -416,10 +422,10 @@ class PatchInPatchFile:
 
 	def markdown_files(self):
 		ret = []
-		max_files_shown = 5
+		max_files_shown = 15
 		# Use the keys of the patch_file_stats_dict which is already sorted by the larger files
 		file_names = list(self.patched_file_stats_dict.keys())
-		# if no files were touched, just return an interrobang
+		# if no files were touched, just return an ?
 		if len(file_names) == 0:
 			return "`?`"
 		for file_name in file_names[:max_files_shown]:
@@ -430,18 +436,18 @@ class PatchInPatchFile:
 
 	def markdown_author(self):
 		if self.from_name:
-			return f"{self.from_name}"
-		return "`?`"
+			return f"`{self.from_name.strip()}`"
+		return "`[no Author]`"
 
 	def markdown_subject(self):
 		if self.subject:
 			return f"_{self.subject}_"
-		return "`?`"
+		return "`[no Subject]`"
 
 	def markdown_link_to_patch(self):
 		if self.git_commit_hash is None:
 			return ""
-		return f" {self.git_commit_hash}"
+		return f"{self.git_commit_hash} "
 
 
 def fix_patch_subject(subject):

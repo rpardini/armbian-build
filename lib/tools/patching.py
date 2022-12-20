@@ -45,8 +45,9 @@ CONST_PATCH_ROOT_DIRS = []
 for patch_dir_to_apply in PATCH_DIRS_TO_APPLY:
 	if USERPATCHES_PATH is not None:
 		CONST_PATCH_ROOT_DIRS.append(
-			patching_utils.PatchRootDir(f"{USERPATCHES_PATH}/{PATCH_TYPE}/{patch_dir_to_apply}", "user",
-						    PATCH_TYPE, USERPATCHES_PATH))
+			patching_utils.PatchRootDir(
+				f"{USERPATCHES_PATH}/{PATCH_TYPE}/{patch_dir_to_apply}", "user", PATCH_TYPE,
+				USERPATCHES_PATH))
 	CONST_PATCH_ROOT_DIRS.append(
 		patching_utils.PatchRootDir(f"{SRC}/patch/{PATCH_TYPE}/{patch_dir_to_apply}", "core", PATCH_TYPE, SRC))
 
@@ -211,7 +212,7 @@ with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patchi
 	for one_patch in VALID_PATCHES:
 		# Markdown table row
 		md.write(
-			f"| {one_patch.markdown_problems()} | `{one_patch.parent.file_base_name}`{one_patch.markdown_link_to_patch()} | {one_patch.markdown_diffstat()} | {one_patch.markdown_files()} | {one_patch.markdown_author()}: {one_patch.markdown_subject()} |\n")
+			f"| {one_patch.markdown_problems()} | `{one_patch.parent.file_base_name}` | {one_patch.markdown_diffstat()} | {one_patch.markdown_link_to_patch()}{one_patch.markdown_files()} | {one_patch.markdown_author()} {one_patch.markdown_subject()} |\n")
 		patch_count += 1
 		if one_patch.applied_ok:
 			patches_applied += 1
