@@ -157,6 +157,7 @@ if apply_patches:
 			one_patch.apply_patch(GIT_WORK_DIR, apply_options)
 			one_patch.applied_ok = True
 		except Exception as e:
+			one_patch.problems.append("failed_apply")
 			log.error(f"Exception while applying patch {one_patch}: {e}", exc_info=True)
 
 		if one_patch.applied_ok and apply_patches_to_git:
@@ -201,13 +202,13 @@ with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patchi
 	else:
 		# Prepare the Markdown table header
 		md.write(
-			"| Applied? | Problems | Patch  | Diffstat Summary | Files patched | Author | Subject | Link to patch |\n")
+			"| Problems | Patch  | Diffstat Summary | Files patched | Author / Subject |\n")
 		# Markdown table hyphen line and column alignment
-		md.write("| :---:    | :---:    | :---   | :---   | :---   | :---   | :--- | :--- |\n")
+		md.write("| :---:    | :---   | :---   | :---   | :---  |\n")
 	for one_patch in VALID_PATCHES:
 		# Markdown table row
 		md.write(
-			f"| {one_patch.markdown_applied()} | {one_patch.markdown_problems()} | `{one_patch.parent.file_base_name}` | {one_patch.markdown_diffstat()} | {one_patch.markdown_files()} | {one_patch.markdown_author()} | {one_patch.markdown_subject()} | {one_patch.git_commit_hash} |\n")
+			f"| {one_patch.markdown_problems()} | `{one_patch.parent.file_base_name}`{one_patch.markdown_link_to_patch()} | {one_patch.markdown_diffstat()} | {one_patch.markdown_files()} | {one_patch.markdown_author()}: {one_patch.markdown_subject()} |\n")
 		patch_count += 1
 		if one_patch.applied_ok:
 			patches_applied += 1
