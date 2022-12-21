@@ -584,6 +584,10 @@ def perform_git_archeology(
 
 	unique_commits.sort(key=lambda c: c.committed_datetime)
 
+	if len(unique_commits) == 0:
+		log.warning(f"Could not find any commits for '{patch_file_name}'.")
+		return
+
 	main_suspect: git.Commit = unique_commits[0]
 	log.info(f"- Main suspect: {main_suspect}: {main_suspect.message.rstrip()} Author: {main_suspect.author}")
 
