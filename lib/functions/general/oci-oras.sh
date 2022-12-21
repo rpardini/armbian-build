@@ -47,7 +47,8 @@ function run_tool_oras() {
 		display_alert "Down URL: ${DOWN_URL}" "ORAS" "debug"
 		display_alert "ORAS_BIN: ${ORAS_BIN}" "ORAS" "debug"
 
-		wget -O "${ORAS_BIN}.tar.gz" "${DOWN_URL}"
+		display_alert "Downloading required" "ORAS tooling" "info"
+		run_host_command_logged wget --progress=dot:giga -O "${ORAS_BIN}.tar.gz" "${DOWN_URL}"
 		run_host_command_logged tar -xf "${ORAS_BIN}.tar.gz" -C "${DIR_ORAS}" "oras"
 		run_host_command_logged rm -rf "${ORAS_BIN}.tar.gz"
 		run_host_command_logged mv -v "${DIR_ORAS}/oras" "${ORAS_BIN}"
@@ -88,26 +89,26 @@ function oras_push_artifact_file() {
 # oras pull is very hard to work with, since we don't determine the filename until after the download.
 function oras_pull_artifact_file() {
 	declare image_full_oci="${1}" # Something like "ghcr.io/rpardini/armbian-git-shallow/kernel-git:latest"
-	declare target_dir="${2}" # temporary directory we'll use for the download to workaround oras being maniac
+	declare target_dir="${2}"     # temporary directory we'll use for the download to workaround oras being maniac
 	declare target_fn="${3}"
-	
+
 	declare full_temp_dir="${target_dir}/${target_fn}.oras.pull.tmp"
 	declare full_tmp_file_path="${full_temp_dir}/${target_fn}"
-	run_host_command_logged mkdir -pv "${full_temp_dir}"
-	
-	pushd "${full_temp_dir}" || exit_with_error "Failed to pushd to ${full_temp_dir} - ORAS download"
-	run_tool_oras pull --verbose "${image_full_oci}" 
-	popd || exit_with_error "Failed to popd - ORAS download"
-	
+	run_host_command_logged mkdir -p "${full_temp_dir}"
+
+	pushd "${full_temp_dir}" &> /dev/null || exit_with_error "Failed to pushd to ${full_temp_dir} - ORAS download"
+	run_tool_oras pull --verbose "${image_full_oci}"
+	popd &> /dev/null || exit_with_error "Failed to popd - ORAS download"
+
 	# sanity check; did we get the file we expected?
 	if [[ ! -f "${full_tmp_file_path}" ]]; then
 		exit_with_error "File not found after ORAS pull: ${full_tmp_file_path} - ORAS download"
 		return 1
 	fi
-	
+
 	# move the file to the target directory
-	run_host_command_logged mv -v "${full_tmp_file_path}" "${target_dir}"
-	
+	run_host_command_logged mv "${full_tmp_file_path}" "${target_dir}"
+
 	# remove the temp directory
 	run_host_command_logged rm -rf "${full_temp_dir}"
 }

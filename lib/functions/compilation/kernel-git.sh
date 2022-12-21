@@ -42,7 +42,7 @@ function download_git_kernel_gitball_via_oras() {
 	declare git_bundles_dir="${SRC}/cache/git-bundles/kernel"
 	declare git_kernel_ball_fn="linux-complete.git.tar"
 
-	run_host_command_logged mkdir -pv "${git_bundles_dir}"
+	run_host_command_logged mkdir -p "${git_bundles_dir}"
 
 	# defines outer scope value
 	linux_kernel_clone_tar_file="${git_bundles_dir}/${git_kernel_ball_fn}"
@@ -94,7 +94,7 @@ function kernel_prepare_bare_repo_from_oras_gitball() {
 
 		if [[ -d "${kernel_git_bare_tree}" ]]; then
 			display_alert "Removing old kernel bare tree" "${kernel_git_bare_tree}" "info"
-			rm -rf "${kernel_git_bare_tree}"
+			run_host_command_logged rm -rf "${kernel_git_bare_tree}"
 		fi
 
 		# now, make sure we've the bundle downloaded correctly...
@@ -105,7 +105,7 @@ function kernel_prepare_bare_repo_from_oras_gitball() {
 		# Just extract the tar_file into the "${kernel_git_bare_tree}" directory, no further work needed.
 		run_host_command_logged mkdir -p "${kernel_git_bare_tree}"
 		# @TODO chance of a pv thingy here?
-		run_host_command_logged tar -xvf "${linux_kernel_clone_tar_file}" -C "${kernel_git_bare_tree}"
+		run_host_command_logged tar -xf "${linux_kernel_clone_tar_file}" -C "${kernel_git_bare_tree}"
 
 		# sanity check
 		if [[ ! -d "${kernel_git_bare_tree}/.git" ]]; then
