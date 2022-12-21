@@ -411,7 +411,6 @@ class PatchInPatchFile:
 				ret.append(f"❌`[{problem}]` ")
 
 		# if it's a user patch, add smiley
-		log.warning(f"root_type: {self.parent.patch_dir.patch_root_dir.root_type} for {self}")
 		if self.parent.patch_dir.patch_root_dir.root_type == "user":
 			ret.append(" 🫠`[user]` ")
 
