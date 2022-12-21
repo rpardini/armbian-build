@@ -60,14 +60,23 @@ if BOARD is not None:
 CONST_PATCH_SUB_DIRS.append(patching_utils.PatchSubDir("", "common"))
 
 # Prepare the full list of patch directories to apply
-ALL_DIRS = []
+ALL_DIRS: list[patching_utils.PatchDir] = []
 for patch_root_dir in CONST_PATCH_ROOT_DIRS:
 	for patch_sub_dir in CONST_PATCH_SUB_DIRS:
 		ALL_DIRS.append(patching_utils.PatchDir(patch_root_dir, patch_sub_dir, SRC))
 
+SERIES_PATCH_FILES: list[patching_utils.PatchFileInDir] = []
 # Now, loop over ALL_DIRS, and find the patch files in each directory
 for one_dir in ALL_DIRS:
-	one_dir.find_patch_files()
+	if one_dir.patch_sub_dir.sub_type == "common":
+		# Handle series; those are directly added to SERIES_PATCH_FILES which is not sorted.
+		series_patches = one_dir.find_series_patch_files()
+		if len(series_patches) > 0:
+			log.debug(f"Directory '{one_dir.full_dir}' contains a series.")
+			SERIES_PATCH_FILES.extend(series_patches)
+
+		# Regular file-based patch files. This adds to the internal list.
+		one_dir.find_files_patch_files()
 
 # Gather all the PatchFileInDir objects into a single list
 ALL_DIR_PATCH_FILES: list[patching_utils.PatchFileInDir] = []
@@ -77,12 +86,14 @@ for one_dir in ALL_DIRS:
 
 ALL_DIR_PATCH_FILES_BY_NAME: dict[(str, patching_utils.PatchFileInDir)] = {}
 for one_patch_file in ALL_DIR_PATCH_FILES:
-	# Hack: do a single one: DO NOT ENABLE THIS
-	# if one_patch_file.file_name == "board-pbp-add-dp-alt-mode.patch":
 	ALL_DIR_PATCH_FILES_BY_NAME[one_patch_file.file_name] = one_patch_file
 
 # sort the dict by the key (file_name, sans dir...)
-ALL_DIR_PATCH_FILES_BY_NAME = dict(sorted(ALL_DIR_PATCH_FILES_BY_NAME.items()))
+# We need a final, ordered list of patch files to apply.
+# This reflects the order in which we want to apply the patches.
+# For series-based patches, we want to apply the serie'd patches first.
+# The other patches are separately sorted.
+ALL_PATCH_FILES_SORTED = SERIES_PATCH_FILES + list(dict(sorted(ALL_DIR_PATCH_FILES_BY_NAME.items())).values())
 
 # Now, actually read the patch files.
 # Patch files might be in mailbox format, and in that case contain more than one "patch".
@@ -91,8 +102,8 @@ ALL_DIR_PATCH_FILES_BY_NAME = dict(sorted(ALL_DIR_PATCH_FILES_BY_NAME.items()))
 # If not, just use the whole file as a single patch.
 # We'll store the patches in a list of Patch objects.
 VALID_PATCHES: list[patching_utils.PatchInPatchFile] = []
-for key in ALL_DIR_PATCH_FILES_BY_NAME:
-	patch_file_in_dir: patching_utils.PatchFileInDir = ALL_DIR_PATCH_FILES_BY_NAME[key]
+patch_file_in_dir: patching_utils.PatchFileInDir
+for patch_file_in_dir in ALL_PATCH_FILES_SORTED:
 	try:
 		patches_from_file = patch_file_in_dir.split_patches_from_file()
 		VALID_PATCHES.extend(patches_from_file)

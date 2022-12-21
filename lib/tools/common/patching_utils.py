@@ -40,23 +40,34 @@ class PatchDir:
 	def __str__(self) -> str:
 		return "<PatchDir: full_dir:'" + str(self.full_dir) + "'>"
 
-	def find_patch_files(self):
+	def find_series_patch_files(self) -> list["PatchFileInDir"]:
 		# do nothing if the self.full_path is not a real, existing, directory
 		if not os.path.isdir(self.full_dir):
-			return
+			return []
 
 		# If the directory contains a series.conf file.
+		series_patches: list[PatchFileInDir] = []
 		series_conf_path = os.path.join(self.full_dir, "series.conf")
 		if os.path.isfile(series_conf_path):
+			counter = 0
 			patches_in_series = self.parse_series_conf(series_conf_path)
 			for patch_file_name in patches_in_series:
 				patch_file_path = os.path.join(self.full_dir, patch_file_name)
 				if os.path.isfile(patch_file_path):
+					counter += 1
 					patch_file = PatchFileInDir(patch_file_path, self)
-					self.patch_files.append(patch_file)
+					patch_file.from_series = True
+					patch_file.series_counter = counter
+					series_patches.append(patch_file)
 				else:
 					raise Exception(
 						f"series.conf file {series_conf_path} contains a patch file {patch_file_name} that does not exist")
+		return series_patches
+
+	def find_files_patch_files(self) -> list["PatchFileInDir"]:
+		# do nothing if the self.full_path is not a real, existing, directory
+		if not os.path.isdir(self.full_dir):
+			return []
 
 		# Find the files in self.full_dir that end in .patch; do not consider subdirectories.
 		# Add them to self.patch_files.
@@ -64,6 +75,7 @@ class PatchDir:
 			# noinspection PyTypeChecker
 			if file.endswith(".patch"):
 				self.patch_files.append(PatchFileInDir(file, self))
+		return self.patch_files
 
 	@staticmethod
 	def parse_series_conf(series_conf_path):
@@ -87,6 +99,8 @@ class PatchFileInDir:
 		self.file_name = file_name
 		self.patch_dir: PatchDir = patch_dir
 		self.file_base_name = os.path.splitext(self.file_name)[0]
+		self.from_series = False
+		self.series_counter = None
 
 	def __str__(self) -> str:
 		desc: str = f"<PatchFileInDir: file_name:'{self.file_name}', dir:{self.patch_dir.__str__()} >"
@@ -400,6 +414,10 @@ class PatchInPatchFile:
 
 	def markdown_problems(self):
 		ret = []
+		# if it's a patch in a series, add emoji
+		if self.parent.from_series:
+			ret.append(f" 📜 ")
+
 		if len(self.problems) == 0:
 			ret.append("✅ ")
 
