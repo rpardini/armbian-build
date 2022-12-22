@@ -74,9 +74,8 @@ for one_dir in ALL_DIRS:
 		if len(series_patches) > 0:
 			log.debug(f"Directory '{one_dir.full_dir}' contains a series.")
 			SERIES_PATCH_FILES.extend(series_patches)
-
-		# Regular file-based patch files. This adds to the internal list.
-		one_dir.find_files_patch_files()
+	# Regular file-based patch files. This adds to the internal list.
+	one_dir.find_files_patch_files()
 
 # Gather all the PatchFileInDir objects into a single list
 ALL_DIR_PATCH_FILES: list[patching_utils.PatchFileInDir] = []
