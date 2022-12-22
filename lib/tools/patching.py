@@ -140,9 +140,11 @@ if apply_patches_to_git and git_archeology:
 		bad_archeology_hexshas = ["something"]
 
 		for patch in VALID_PATCHES:
-			if patch.desc is None:
-				patching_utils.perform_git_archeology(
+			if patch.subject is None:  # archeology only for patches without subject
+				archeology_ok = patching_utils.perform_git_archeology(
 					SRC, armbian_git_repo, patch, bad_archeology_hexshas, fast_archeology)
+				if not archeology_ok:
+					patch.problems.append("archeology_failed")
 
 # Now, we need to apply the patches.
 git_repo: "git.Repo | None" = None
@@ -170,7 +172,6 @@ if apply_patches:
 			one_patch.apply_patch(GIT_WORK_DIR, apply_options)
 			one_patch.applied_ok = True
 		except Exception as e:
-			one_patch.problems.append("failed_apply")
 			log.error(f"Exception while applying patch {one_patch}: {e}", exc_info=True)
 
 		if one_patch.applied_ok and apply_patches_to_git:
@@ -216,13 +217,13 @@ with SummarizedMarkdownWriter(f"patching_{PATCH_TYPE}.md", f"{PATCH_TYPE} patchi
 	else:
 		# Prepare the Markdown table header
 		md.write(
-			"| Problems | Patch  | Diffstat Summary | Files patched | Author / Subject |\n")
+			"| Status | Patch  | Diffstat Summary | Files patched | Author / Subject |\n")
 		# Markdown table hyphen line and column alignment
 		md.write("| :---:    | :---   | :---   | :---   | :---  |\n")
 	for one_patch in VALID_PATCHES:
 		# Markdown table row
 		md.write(
-			f"| {one_patch.markdown_problems()} | `{one_patch.parent.file_base_name}` | {one_patch.markdown_diffstat()} | {one_patch.markdown_link_to_patch()}{one_patch.markdown_files()} | {one_patch.markdown_author()} {one_patch.markdown_subject()} |\n")
+			f"| {one_patch.markdown_problems()} | {one_patch.markdown_name()} | {one_patch.markdown_diffstat()} | {one_patch.markdown_link_to_patch()}{one_patch.markdown_files()} | {one_patch.markdown_author()} {one_patch.markdown_subject()} |\n")
 		patch_count += 1
 		if one_patch.applied_ok:
 			patches_applied += 1
