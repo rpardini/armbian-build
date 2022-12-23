@@ -19,13 +19,13 @@ case $BRANCH in
 
 	current)
 		export KERNEL_MAJOR_MINOR="5.15" # Major and minor versions of this kernel.
-		export KERNELBRANCH="tag:v5.15.84"
+		export KERNELBRANCH="tag:v5.15.85"
 		export KERNELBRANCH_MEGOUS="branch:orange-pi-5.15"
 		;;
 
 	edge)
 		export KERNEL_MAJOR_MINOR="6.1" # Major and minor versions of this kernel.
-		export KERNELBRANCH="tag:v6.1"
+		export KERNELBRANCH="tag:v6.1.1"
 		export KERNELBRANCH_MEGOUS="branch:orange-pi-6.1"
 		;;
 esac
