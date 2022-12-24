@@ -41,6 +41,22 @@ function kernel_main_patching_python() {
 }
 
 function kernel_main_patching() {
+	# read kernel version; for compatibility with drivers/extrawifi code
+	declare version pre_patch_version
+	version=$(grab_version "$kernel_work_dir")
+	pre_patch_version="${version}"
+	display_alert "Pre-patch kernel version" "${pre_patch_version}" "debug"
+	
+	# @TODO: useless; Python patching resets to pristine version
+	# Extension hook: patch_kernel_for_driver
+	call_extension_method "patch_kernel_for_driver" <<- 'PATCH_KERNEL_FOR_DRIVER'
+		*allow to add drivers/patch kernel for drivers before applying the family patches*
+		Patch *series* (not normal family patches) are already applied.
+		Useful for migrating EXTRAWIFI-related stuff to individual extensions.
+		Receives `${version}` and `${kernel_work_dir}` as environment variables.
+	PATCH_KERNEL_FOR_DRIVER
+
+	# Python patching will git reset to the kernel SHA1 git revision, and remove all untracked files.
 	LOG_SECTION="kernel_main_patching_python" do_with_logging do_with_hooks kernel_main_patching_python
 
 	# The old way...
