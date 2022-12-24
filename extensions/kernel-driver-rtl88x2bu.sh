@@ -1,6 +1,6 @@
 function fetch_sources_for_kernel_driver__realtek_wifi_rtl882x2bu() {
-	declare -g rtl88x2buver="branch:5.8.7.1_35809.20191129_COEX20191120-7777"
-	fetch_from_repo "https://github.com/cilynx/rtl88x2bu" "rtl88x2bu" "${rtl88x2buver}" "yes"
+	declare -g rtl88x2buver="commit:2590672d717e2516dd2e96ed66f1037a6815bced"
+	fetch_from_repo "https://github.com/morrownr/88x2bu-20210702" "rtl88x2bu" "${rtl88x2buver}" "yes"
 }
 
 function custom_kernel_config__realtek_wifi_rtl882x2bu() {
