@@ -42,12 +42,15 @@ USERPATCHES_PATH = armbian_utils.get_from_env("USERPATCHES_PATH")
 
 # Some path possibilities
 CONST_PATCH_ROOT_DIRS = []
+
 for patch_dir_to_apply in PATCH_DIRS_TO_APPLY:
 	if USERPATCHES_PATH is not None:
 		CONST_PATCH_ROOT_DIRS.append(
 			patching_utils.PatchRootDir(
 				f"{USERPATCHES_PATH}/{PATCH_TYPE}/{patch_dir_to_apply}", "user", PATCH_TYPE,
 				USERPATCHES_PATH))
+
+	# regular patchset
 	CONST_PATCH_ROOT_DIRS.append(
 		patching_utils.PatchRootDir(f"{SRC}/patch/{PATCH_TYPE}/{patch_dir_to_apply}", "core", PATCH_TYPE, SRC))
 
@@ -64,6 +67,17 @@ ALL_DIRS: list[patching_utils.PatchDir] = []
 for patch_root_dir in CONST_PATCH_ROOT_DIRS:
 	for patch_sub_dir in CONST_PATCH_SUB_DIRS:
 		ALL_DIRS.append(patching_utils.PatchDir(patch_root_dir, patch_sub_dir, SRC))
+
+KERNEL_DRIVER_PATCH_FILES = []
+# drivers for kernel, extra patchset that is generated.
+if PATCH_TYPE == "kernel":
+	LINUXFAMILY = armbian_utils.get_from_env_or_bomb("LINUXFAMILY")
+	KERNEL_MAJOR_MINOR = armbian_utils.get_from_env_or_bomb("KERNEL_MAJOR_MINOR")
+	driver_root_dir = patching_utils.PatchRootDir(
+		f"{SRC}/patch/kernel-drivers/{LINUXFAMILY}-{KERNEL_MAJOR_MINOR}", "drivers", PATCH_TYPE, SRC)
+	driver_sub_dir = patching_utils.PatchSubDir("", "drivers")
+	driver_dir = patching_utils.PatchDir(driver_root_dir, driver_sub_dir, SRC)
+	KERNEL_DRIVER_PATCH_FILES.extend(driver_dir.find_files_patch_files())
 
 SERIES_PATCH_FILES: list[patching_utils.PatchFileInDir] = []
 # Now, loop over ALL_DIRS, and find the patch files in each directory
@@ -92,7 +106,8 @@ for one_patch_file in ALL_DIR_PATCH_FILES:
 # This reflects the order in which we want to apply the patches.
 # For series-based patches, we want to apply the serie'd patches first.
 # The other patches are separately sorted.
-ALL_PATCH_FILES_SORTED = SERIES_PATCH_FILES + list(dict(sorted(ALL_DIR_PATCH_FILES_BY_NAME.items())).values())
+ALL_PATCH_FILES_SORTED = KERNEL_DRIVER_PATCH_FILES + SERIES_PATCH_FILES + \
+			 list(dict(sorted(ALL_DIR_PATCH_FILES_BY_NAME.items())).values())
 
 # Now, actually read the patch files.
 # Patch files might be in mailbox format, and in that case contain more than one "patch".

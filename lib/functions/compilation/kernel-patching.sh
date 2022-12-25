@@ -16,6 +16,9 @@ function kernel_main_patching_python() {
 		"BOARD="                                              # BOARD is needed for the patchset selection logic; mostly for u-boot. empty for kernel.
 		"TARGET="                                             # TARGET is need for u-boot's SPI/SATA etc selection logic. empty for kernel
 		"USERPATCHES_PATH=${USERPATCHES_PATH}"                # Needed to find the userpatches.
+		# Family & kernel major-minor, for the drivers
+		"LINUXFAMILY=${LINUXFAMILY}"               # Family
+		"KERNEL_MAJOR_MINOR=${KERNEL_MAJOR_MINOR}" # Kernel major-minor
 		# What to do?
 		"APPLY_PATCHES=yes"                      # Apply the patches to the filesystem. Does not imply git commiting. If no, still exports the hash.
 		"PATCHES_TO_GIT=${PATCHES_TO_GIT:-no}"   # Commit to git after applying the patches.
@@ -46,15 +49,9 @@ function kernel_main_patching() {
 	version=$(grab_version "$kernel_work_dir")
 	pre_patch_version="${version}"
 	display_alert "Pre-patch kernel version" "${pre_patch_version}" "debug"
-	
-	# @TODO: useless; Python patching resets to pristine version
-	# Extension hook: patch_kernel_for_driver
-	call_extension_method "patch_kernel_for_driver" <<- 'PATCH_KERNEL_FOR_DRIVER'
-		*allow to add drivers/patch kernel for drivers before applying the family patches*
-		Patch *series* (not normal family patches) are already applied.
-		Useful for migrating EXTRAWIFI-related stuff to individual extensions.
-		Receives `${version}` and `${kernel_work_dir}` as environment variables.
-	PATCH_KERNEL_FOR_DRIVER
+
+	# kernel_drivers_create_patches
+	kernel_drivers_create_patches "${version}" "${kernel_work_dir}" "${kernel_git_revision}"
 
 	# Python patching will git reset to the kernel SHA1 git revision, and remove all untracked files.
 	LOG_SECTION="kernel_main_patching_python" do_with_logging do_with_hooks kernel_main_patching_python
