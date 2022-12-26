@@ -16,6 +16,8 @@ log: logging.Logger = logging.getLogger("patching")
 # Show the environment variables we've been called with
 armbian_utils.show_incoming_environment()
 
+# @TODO: test that "patch --version" is >= 2.7.6 using a subprocess and parsing the output.
+
 # Let's start by reading environment variables.
 # Those are always needed, and we should bomb if they're not set.
 SRC = armbian_utils.get_from_env_or_bomb("SRC")
@@ -71,13 +73,17 @@ for patch_root_dir in CONST_PATCH_ROOT_DIRS:
 KERNEL_DRIVER_PATCH_FILES = []
 # drivers for kernel, extra patchset that is generated.
 if PATCH_TYPE == "kernel":
+	log.info("Looking for kernel driver patches")
 	LINUXFAMILY = armbian_utils.get_from_env_or_bomb("LINUXFAMILY")
 	KERNEL_MAJOR_MINOR = armbian_utils.get_from_env_or_bomb("KERNEL_MAJOR_MINOR")
 	driver_root_dir = patching_utils.PatchRootDir(
 		f"{SRC}/patch/kernel-drivers/{LINUXFAMILY}-{KERNEL_MAJOR_MINOR}", "drivers", PATCH_TYPE, SRC)
 	driver_sub_dir = patching_utils.PatchSubDir("", "drivers")
 	driver_dir = patching_utils.PatchDir(driver_root_dir, driver_sub_dir, SRC)
+	driver_dir.is_autogen_dir = True
 	KERNEL_DRIVER_PATCH_FILES.extend(driver_dir.find_files_patch_files())
+	log.info(f"Found {len(KERNEL_DRIVER_PATCH_FILES)} kernel driver patches")
+KERNEL_DRIVER_PATCH_FILES.sort(key=lambda x: x.file_name_no_ext_no_dirs)
 
 SERIES_PATCH_FILES: list[patching_utils.PatchFileInDir] = []
 # Now, loop over ALL_DIRS, and find the patch files in each directory
@@ -115,6 +121,7 @@ ALL_PATCH_FILES_SORTED = KERNEL_DRIVER_PATCH_FILES + SERIES_PATCH_FILES + \
 # We need to read the file, and see if it's a mailbox file; if so, split into multiple patches.
 # If not, just use the whole file as a single patch.
 # We'll store the patches in a list of Patch objects.
+log.info("Splitting patch files into patches")
 VALID_PATCHES: list[patching_utils.PatchInPatchFile] = []
 patch_file_in_dir: patching_utils.PatchFileInDir
 for patch_file_in_dir in ALL_PATCH_FILES_SORTED:
@@ -127,10 +134,12 @@ for patch_file_in_dir in ALL_PATCH_FILES_SORTED:
 			f"Can't continue; please fix the patch file {patch_file_in_dir.full_file_path()} manually. Sorry."
 			, exc_info=True)
 		exit(1)
+log.info("Done splitting patch files into patches")
 
 # Now, some patches might not be mbox-formatted, or somehow else invalid. We can try and recover those.
 # That is only possible if we're applying patches to git.
 # Rebuilding description is only possible if we've the git repo where the patches themselves reside.
+log.info("Parsing patches...")
 for patch in VALID_PATCHES:
 	try:
 		patch.parse_patch()  # this handles diff-level parsing; modifies itself; throws exception if invalid
