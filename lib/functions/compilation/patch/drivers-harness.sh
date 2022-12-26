@@ -14,6 +14,9 @@ function kernel_drivers_create_patches() {
 }
 
 function kernel_drivers_prepare_harness() {
+	declare version="${1}"
+	declare kernel_work_dir="${2}"
+	declare kernel_git_revision="$3"
 	declare -I version kernel_work_dir kernel_driver_commit_date # outer scope variables
 
 	declare -a drivers=(
@@ -40,7 +43,24 @@ function kernel_drivers_prepare_harness() {
 	[[ -d "${tmp_target_dir}" ]] && run_host_command_logged rm -rf "${tmp_target_dir}" # zero it out if exists; it won't.
 	mkdir -p "${tmp_target_dir}"
 
+	# start the counter
+	declare driver_counter=0
+
+	# change cwd to the kernel working dir
+	cd "${kernel_work_dir}" || exit_with_error "Failed to change directory to ${kernel_work_dir}"
+
+	#run_host_command_logged git status
+	run_host_command_logged git reset --hard "${kernel_git_revision}"
+	# git: remove tracked files, but not those in .gitignore
+	run_host_command_logged git clean -fd # no -x here
+
 	for driver in "${drivers[@]}"; do
+		# increment the counter
+		driver_counter=$((driver_counter + 1))
+		# prepare a string with the counter, padded with up to 4 zeroes
+		declare driver_counter_string
+		driver_counter_string=$(printf "%04d" "$driver_counter")
+
 		display_alert "Preparing driver" "${driver}" "info"
 
 		# reset variables used by each driver
@@ -54,11 +74,6 @@ function kernel_drivers_prepare_harness() {
 		# change cwd to the kernel working dir
 		cd "${kernel_work_dir}" || exit_with_error "Failed to change directory to ${kernel_work_dir}"
 
-		run_host_command_logged git status
-		run_host_command_logged git reset --hard "${kernel_git_revision}"
-		# git: remove tracked files, but not those in .gitignore
-		run_host_command_logged git clean -fd # no -x here
-
 		# invoke the driver (@TODO: in a subshell?)
 		"${driver}"
 
@@ -66,13 +81,13 @@ function kernel_drivers_prepare_harness() {
 		cd "${kernel_work_dir}" || exit_with_error "Failed to change directory to ${kernel_work_dir}"
 
 		# calculate the target patch file name
-		declare target_patch_file="${SRC}/${target_patch_dir}/${driver}.patch"
-		run_host_command_logged git status
+		declare target_patch_file="${SRC}/${target_patch_dir}/${driver_counter_string}-${driver}.patch"
+		#run_host_command_logged git status
 
 		# git: check if there are modifications
 		if [[ -n "$(git status --porcelain)" ]]; then
 			display_alert "Driver" "'${driver}' has modifications" "exporting patch into ${target_patch_dir}/${driver}.patch" "info"
-			declare tmp_patch_file="${tmp_target_dir}/${driver}.patch"
+			declare tmp_patch_file="${tmp_target_dir}/${driver_counter_string}-${driver}.patch"
 
 			export_changes_as_patch_via_git_format_patch # takes 41s
 			#export_changes_as_patch_via_git_diff        # takes 38s
@@ -106,7 +121,7 @@ function kernel_drivers_prepare_harness() {
 
 function export_changes_as_patch_via_git_format_patch() {
 	# git: add all modifications
-	run_host_command_logged git add . "2>&1"
+	run_host_command_logged git add . "&>/dev/null"
 
 	# git: commit the changes
 	declare -a commit_params=(
@@ -114,7 +129,7 @@ function export_changes_as_patch_via_git_format_patch() {
 		--date="${kernel_driver_commit_date}"
 		--author="${MAINTAINER} <${MAINTAINERMAIL}>"
 	)
-	GIT_COMMITTER_NAME="${MAINTAINER}" GIT_COMMITTER_EMAIL="${MAINTAINERMAIL}" git commit "${commit_params[@]}"
+	GIT_COMMITTER_NAME="${MAINTAINER}" GIT_COMMITTER_EMAIL="${MAINTAINERMAIL}" git commit "${commit_params[@]}" &> /dev/null
 
 	# export the commit as a patch; first to a temporary file, then move it to the target location if they're not the same
 	declare formatpatch_params=(
@@ -133,6 +148,6 @@ function export_changes_as_patch_via_git_format_patch() {
 
 function export_changes_as_patch_via_git_diff() {
 	# use git to export the working copy's changes as a patch. include newly added files
-	run_host_command_logged git add -N . "2>&1"
+	run_host_command_logged git add -N . "&>/dev/null"
 	git diff --unified=3 > "${tmp_patch_file}"
 }
