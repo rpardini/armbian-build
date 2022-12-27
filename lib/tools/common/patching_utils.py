@@ -5,6 +5,7 @@ import mailbox
 import os
 import re
 import subprocess
+import tempfile
 
 import git  # GitPython
 from unidecode import unidecode
@@ -342,8 +343,12 @@ class PatchInPatchFile:
 		else:
 			real_input = self.diff_bytes
 
+		# create a temporary filename (don't create the file yet: patch will maybe create it)
+		rejects_file = tempfile.mktemp()
+		log.debug(f"Rejects file is {rejects_file}")
+
 		proc = subprocess.run(
-			["patch", "--batch", "-p1", "-N", "--reject-file=patching.rejects"],
+			["patch", "--batch", "-p1", "-N", f"--reject-file={rejects_file}"],
 			cwd=working_dir,
 			input=real_input,
 			stdout=subprocess.PIPE,
@@ -356,6 +361,15 @@ class PatchInPatchFile:
 			log.debug(f"patch stdout: {stdout_output}")
 		if stderr_output != "":
 			log.warning(f"patch stderr: {stderr_output}")
+
+		# Check if the rejects exists:
+		if os.path.exists(rejects_file):
+			log.warning(f"Rejects file {rejects_file} exists.")
+			# Show its contents
+			with open(rejects_file, "r") as f:
+				log.warning(f"Rejects file contents: {f.read()}")
+			# delete it
+			os.remove(rejects_file)
 
 		# Look at stdout. If it contains:
 		if " (offset" in stdout_output or " with fuzz " in stdout_output:
