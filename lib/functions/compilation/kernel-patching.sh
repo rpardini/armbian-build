@@ -3,6 +3,9 @@
 function kernel_main_patching_python() {
 	prepare_pip_packages_for_python_tools
 
+	# outer scope variables
+	declare -I kernel_drivers_patch_file kernel_drivers_patch_hash
+
 	declare patch_debug="${SHOW_DEBUG:-${DEBUG_PATCHING:-"no"}}"
 	declare temp_file_for_output="$(mktemp)" # Get a temporary file for the output.
 	# array with all parameters; will be auto-quoted by bash's @Q modifier below
@@ -16,9 +19,6 @@ function kernel_main_patching_python() {
 		"BOARD="                                              # BOARD is needed for the patchset selection logic; mostly for u-boot. empty for kernel.
 		"TARGET="                                             # TARGET is need for u-boot's SPI/SATA etc selection logic. empty for kernel
 		"USERPATCHES_PATH=${USERPATCHES_PATH}"                # Needed to find the userpatches.
-		# Family & kernel major-minor, for the drivers
-		"LINUXFAMILY=${LINUXFAMILY}"               # Family
-		"KERNEL_MAJOR_MINOR=${KERNEL_MAJOR_MINOR}" # Kernel major-minor
 		# What to do?
 		"APPLY_PATCHES=yes"                      # Apply the patches to the filesystem. Does not imply git commiting. If no, still exports the hash.
 		"PATCHES_TO_GIT=${PATCHES_TO_GIT:-no}"   # Commit to git after applying the patches.
@@ -33,6 +33,9 @@ function kernel_main_patching_python() {
 		# Pass the maintainer info, used for commits.
 		"MAINTAINER_NAME=${MAINTAINER}"      # Name of the maintainer
 		"MAINTAINER_EMAIL=${MAINTAINERMAIL}" # Email of the maintainer
+		# Pass in the drivers extra patches and hashes; will be applied _first_, before series.
+		"EXTRA_PATCH_FILES_FIRST=${kernel_drivers_patch_file}"  # Is a space-separated list.
+		"EXTRA_PATCH_HASHES_FIRST=${kernel_drivers_patch_hash}" # Is a space-separated list.
 	)
 	display_alert "Calling Python patching script" "for kernel" "info"
 	run_host_command_logged env -i "${params_quoted[@]@Q}" python3 "${SRC}/lib/tools/patching.py"
@@ -44,14 +47,9 @@ function kernel_main_patching_python() {
 }
 
 function kernel_main_patching() {
-	# read kernel version; for compatibility with drivers/extrawifi code
-	declare version pre_patch_version
-	version=$(grab_version "$kernel_work_dir")
-	pre_patch_version="${version}"
-	display_alert "Pre-patch kernel version" "${pre_patch_version}" "debug"
-
-	# kernel_drivers_create_patches
-	kernel_drivers_create_patches "${version}" "${kernel_work_dir}" "${kernel_git_revision}"
+	# kernel_drivers_create_patches will fill the variables below
+	declare kernel_drivers_patch_file kernel_drivers_patch_hash
+	LOG_SECTION="kernel_drivers_create_patches" do_with_logging do_with_hooks kernel_drivers_create_patches "${kernel_work_dir}" "${kernel_git_revision}"
 
 	# Python patching will git reset to the kernel SHA1 git revision, and remove all untracked files.
 	LOG_SECTION="kernel_main_patching_python" do_with_logging do_with_hooks kernel_main_patching_python

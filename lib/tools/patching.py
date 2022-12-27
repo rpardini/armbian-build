@@ -70,20 +70,26 @@ for patch_root_dir in CONST_PATCH_ROOT_DIRS:
 	for patch_sub_dir in CONST_PATCH_SUB_DIRS:
 		ALL_DIRS.append(patching_utils.PatchDir(patch_root_dir, patch_sub_dir, SRC))
 
-KERNEL_DRIVER_PATCH_FILES = []
-# drivers for kernel, extra patchset that is generated.
-if PATCH_TYPE == "kernel":
-	log.info("Looking for kernel driver patches")
-	LINUXFAMILY = armbian_utils.get_from_env_or_bomb("LINUXFAMILY")
-	KERNEL_MAJOR_MINOR = armbian_utils.get_from_env_or_bomb("KERNEL_MAJOR_MINOR")
-	driver_root_dir = patching_utils.PatchRootDir(
-		f"{SRC}/patch/kernel-drivers/{LINUXFAMILY}-{KERNEL_MAJOR_MINOR}", "drivers", PATCH_TYPE, SRC)
-	driver_sub_dir = patching_utils.PatchSubDir("", "drivers")
+PATCH_FILES_FIRST: list[patching_utils.PatchFileInDir] = []
+EXTRA_PATCH_FILES_FIRST: list[str] = armbian_utils.parse_env_for_tokens("EXTRA_PATCH_FILES_FIRST")
+EXTRA_PATCH_HASHES_FIRST: list[str] = armbian_utils.parse_env_for_tokens("EXTRA_PATCH_HASHES_FIRST")
+
+for patch_file in EXTRA_PATCH_FILES_FIRST:
+	# if the file does not exist, bomb.
+	if not os.path.isfile(patch_file):
+		raise Exception(f"File {patch_file} does not exist.")
+
+	# get the directory name of the file path
+	patch_dir = os.path.dirname(patch_file)
+
+	# Fabricate fake dirs...
+	driver_root_dir = patching_utils.PatchRootDir(patch_dir, "extra-first", PATCH_TYPE, SRC)
+	driver_sub_dir = patching_utils.PatchSubDir("", "extra-first")
 	driver_dir = patching_utils.PatchDir(driver_root_dir, driver_sub_dir, SRC)
 	driver_dir.is_autogen_dir = True
-	KERNEL_DRIVER_PATCH_FILES.extend(driver_dir.find_files_patch_files())
-	log.info(f"Found {len(KERNEL_DRIVER_PATCH_FILES)} kernel driver patches")
-KERNEL_DRIVER_PATCH_FILES.sort(key=lambda x: x.file_name_no_ext_no_dirs)
+	PATCH_FILES_FIRST.append(patching_utils.PatchFileInDir(patch_file, driver_dir))
+
+log.info(f"Found {len(PATCH_FILES_FIRST)} kernel driver patches")
 
 SERIES_PATCH_FILES: list[patching_utils.PatchFileInDir] = []
 # Now, loop over ALL_DIRS, and find the patch files in each directory
@@ -112,7 +118,7 @@ for one_patch_file in ALL_DIR_PATCH_FILES:
 # This reflects the order in which we want to apply the patches.
 # For series-based patches, we want to apply the serie'd patches first.
 # The other patches are separately sorted.
-ALL_PATCH_FILES_SORTED = KERNEL_DRIVER_PATCH_FILES + SERIES_PATCH_FILES + \
+ALL_PATCH_FILES_SORTED = PATCH_FILES_FIRST + SERIES_PATCH_FILES + \
 			 list(dict(sorted(ALL_DIR_PATCH_FILES_BY_NAME.items())).values())
 
 # Now, actually read the patch files.
