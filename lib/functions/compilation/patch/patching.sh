@@ -1,76 +1,4 @@
 #!/usr/bin/env bash
-# advanced_patch <patch_kind> <{patch_dir}> <board> <target> <branch> <description>
-#
-# parameters:
-# <patch_kind>: u-boot, kernel, atf
-# <{patch_dir}>: u-boot: u-boot, u-boot-neo; kernel: sun4i-default, sunxi-next, ...
-# <board>: cubieboard, cubieboard2, cubietruck, ...
-# <target>: optional subdirectory
-# <description>: additional description text
-
-# calls:
-#                         ${patch_kind}  ${patch_dir}      $board   $target            $branch   $description
-# kernel: advanced_patch "kernel"       "$KERNELPATCHDIR" "$BOARD" ""                 "$BRANCH" "$LINUXFAMILY-$BRANCH"
-# u-boot: advanced_patch "u-boot"       "$BOOTPATCHDIR"   "$BOARD" "$target_patchdir" "$BRANCH" "${LINUXFAMILY}-${BOARD}-${BRANCH}"
-function advanced_patch() {
-	local patch_kind="$1"
-	local patch_dir="$2"
-	local board="$3"
-	local target="$4"
-	local branch="$5"
-	local description="$6"
-
-	display_alert "Started patching process for" "${patch_kind} $description" "info"
-	display_alert "Looking for user patches in" "userpatches/${patch_kind}/${patch_dir}" "info"
-
-	local names=()
-	local dirs=(
-		"$USERPATCHES_PATH/${patch_kind}/${patch_dir}/target_${target}:[\e[33mu\e[0m][\e[34mt\e[0m]"
-		"$USERPATCHES_PATH/${patch_kind}/${patch_dir}/board_${board}:[\e[33mu\e[0m][\e[35mb\e[0m]"
-		"$USERPATCHES_PATH/${patch_kind}/${patch_dir}/branch_${branch}:[\e[33mu\e[0m][\e[33mb\e[0m]"
-		"$USERPATCHES_PATH/${patch_kind}/${patch_dir}:[\e[33mu\e[0m][\e[32mc\e[0m]"
-
-		"$SRC/patch/${patch_kind}/${patch_dir}/target_${target}:[\e[32ml\e[0m][\e[34mt\e[0m]" # used for u-boot "spi" stuff
-		"$SRC/patch/${patch_kind}/${patch_dir}/board_${board}:[\e[32ml\e[0m][\e[35mb\e[0m]"   # used for u-boot board-specific stuff
-		"$SRC/patch/${patch_kind}/${patch_dir}/branch_${branch}:[\e[32ml\e[0m][\e[33mb\e[0m]" # NOT used, I think.
-		"$SRC/patch/${patch_kind}/${patch_dir}:[\e[32ml\e[0m][\e[32mc\e[0m]"                  # used for everything
-	)
-	local links=()
-
-	# required for "for" command
-	# @TODO these shopts leak for the rest of the build script! either make global, or restore them after this function
-	shopt -s nullglob dotglob
-	# get patch file names
-	for dir in "${dirs[@]}"; do
-		for patch in ${dir%%:*}/*.patch; do
-			names+=($(basename "${patch}"))
-		done
-		# add linked patch directories
-		if [[ -d ${dir%%:*} ]]; then
-			local findlinks
-			findlinks=$(find "${dir%%:*}" -maxdepth 1 -type l -print0 2>&1 | xargs -0)
-			[[ -n $findlinks ]] && readarray -d '' links < <(find "${findlinks}" -maxdepth 1 -type f -follow -print -iname "*.patch" -print | grep "\.patch$" | sed "s|${dir%%:*}/||g" 2>&1)
-		fi
-	done
-
-	# merge static and linked
-	names=("${names[@]}" "${links[@]}")
-	# remove duplicates
-	local names_s=($(echo "${names[@]}" | tr ' ' '\n' | LC_ALL=C sort -u | tr '\n' ' '))
-	# apply patches
-	for name in "${names_s[@]}"; do
-		for dir in "${dirs[@]}"; do
-			if [[ -f ${dir%%:*}/$name ]]; then
-				if [[ -s ${dir%%:*}/$name ]]; then
-					process_patch_file "${dir%%:*}/$name" "${dir##*:}"
-				else
-					display_alert "* ${dir##*:} $name" "skipped"
-				fi
-				break # next name
-			fi
-		done
-	done
-}
 
 # process_patch_file <file> <description>
 #
@@ -84,64 +12,22 @@ process_patch_file() {
 	local -i patch_date
 	local relative_patch="${patch##"${SRC}"/}" # ${FOO##prefix} remove prefix from FOO
 
-	# report_fashtash_should_execute is report_fasthash returns true only if we're supposed to apply the patch on disk.
-	if report_fashtash_should_execute file "${patch}" "Apply patch ${relative_patch}"; then
+	# detect and remove files which patch will create
+	lsdiff -s --strip=1 "${patch}" | grep '^+' | awk '{print $2}' | xargs -I % sh -c 'rm -f %'
 
-		# get the modification date of the patch. make it not less than MIN_PATCH_AGE, if set.
-		patch_date=$(get_file_modification_time "${patch}")
-		# shellcheck disable=SC2154 # patch_minimum_target_mtime can be declared in outer scope
-		if [[ "${patch_minimum_target_mtime}" != "" ]]; then
-			if [[ ${patch_date} -lt ${patch_minimum_target_mtime} ]]; then
-				display_alert "Patch before minimum date" "${patch_date} -lt ${patch_minimum_target_mtime}" "timestamp"
-				patch_date=${patch_minimum_target_mtime}
-			fi
-		fi
-
-		# detect and remove files which patch will create
-		lsdiff -s --strip=1 "${patch}" | grep '^+' | awk '{print $2}' | xargs -I % sh -c 'rm -f %'
-
-		# store an array of the files that patch will add or modify, we'll set their modification times after the fact
-		declare -a patched_files
-		mapfile -t patched_files < <(lsdiff -s --strip=1 "${patch}" | grep -e '^+' -e '^!' | awk '{print $2}')
-
-		# @TODO: try patching with `git am` first, so git contains the patch commit info/msg. -- For future git-based hashing.
-		# shellcheck disable=SC2015 # noted, thanks. I need to handle exit code here.
-		patch --batch -p1 -N --input="${patch}" --quiet --reject-file=- && { # "-" discards rejects
-			# Fix the dates on the patched files
-			set_files_modification_time "${patch_date}" "${patched_files[@]}"
-			display_alert "* $status ${relative_patch}" "" "info"
-		} || {
-			display_alert "* $status ${relative_patch}" "failed" "wrn"
-			[[ $EXIT_PATCHING_ERROR == yes ]] && exit_with_error "Aborting due to" "EXIT_PATCHING_ERROR"
-		}
-		mark_fasthash_done # will do git commit, associate fasthash to real hash.
-	fi
+	# shellcheck disable=SC2015 # noted, thanks. I need to handle exit code here.
+	patch --batch -p1 -N --input="${patch}" --quiet --reject-file=- && { # "-" discards rejects
+		display_alert "* $status ${relative_patch}" "" "info"
+	} || {
+		display_alert "* $status ${relative_patch}" "failed" "wrn"
+		[[ $EXIT_PATCHING_ERROR == yes ]] && exit_with_error "Aborting due to" "EXIT_PATCHING_ERROR"
+	}
 
 	return 0 # short-circuit above, avoid exiting with error
 }
 
-# apply_patch_series <target dir> <full path to series_file_full_path file>
-apply_patch_series() {
-	local target_dir="${1}"
-	local series_file_full_path="${2}"
-	local included_list skip_list skip_count counter=1 base_dir
-	base_dir="$(dirname "${series_file_full_path}")"
-	included_list="$(awk '$0 !~ /^#.*|^-.*|^$/' "${series_file_full_path}")"
-	included_count=$(echo -n "${included_list}" | wc -w)
-	skip_list="$(awk '$0 ~ /^-.*/{print $NF}' "${series_file_full_path}")"
-	skip_count=$(echo -n "${skip_list}" | wc -w)
-	display_alert "apply a series of " "[$(echo -n "$included_list" | wc -w)] patches" "info"
-	[[ ${skip_count} -gt 0 ]] && display_alert "skipping" "[${skip_count}] patches" "warn"
-	cd "${target_dir}" || exit 1
-
-	for p in $included_list; do
-		process_patch_file "${base_dir}/${p}" "${counter}/${included_count}"
-		counter=$((counter + 1))
-	done
-	display_alert "done applying patch series " "[$(echo -n "$included_list" | wc -w)] patches" "info"
-}
-
 userpatch_create() {
+	display_alert "@TODO" "@TODO armbian-next" "warn"
 	# create commit to start from clean source
 	git add .
 	git -c user.name='Armbian User' -c user.email='user@example.org' commit -q -m "Cleaning working copy"
