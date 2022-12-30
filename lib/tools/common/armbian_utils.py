@@ -76,4 +76,4 @@ def parse_json(json_contents_str):
 
 def to_yaml(gha_workflow):
 	import yaml
-	return yaml.safe_dump(gha_workflow, default_flow_style=False)
+	return yaml.safe_dump(gha_workflow, default_flow_style=False, sort_keys=False)

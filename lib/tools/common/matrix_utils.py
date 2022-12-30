@@ -308,6 +308,8 @@ class MatrixKernel(BaseMatrixAggregate):
 	def gha_job_definition(self):
 		gha_job = {}
 		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
+		gha_job["needs"] = []
+		gha_job["needs"].append(self.aggregator.kernel_prepare_job.gha_job_id())
 		steps = []
 		fake_step = {"name": f"Build Kernel '{self.aggregate_id}'", "run": f'echo "fake kernel: {self.aggregate_id}"'}
 		steps.append(fake_step)
@@ -362,6 +364,32 @@ class MatrixRootFileSystemCLI(BaseMatrixAggregate):
 
 # </Class declarations>
 
+# <PreparationJobs>
+class KernelPrepareJob:
+	def __init__(self, k_aggr: "KernelAggregator"):
+		self.k_aggr: KernelAggregator = k_aggr
+
+	def gha_job_id(self) -> str:
+		return f"kernel-prepare-all"
+
+	def gha_job_definition(self):
+		gha_job = {}
+		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
+		steps = []
+		outputs = {}
+		
+		for one_kernel in self.k_aggr.kernels:
+			fake_step = {"name": f"Prepare Kernel '{one_kernel.aggregate_id}'", "run": f'echo "fake kernel prepare: {one_kernel.aggregate_id}"'}
+			steps.append(fake_step)
+			outputs[one_kernel.gha_job_id()] = f"fake output for {one_kernel.gha_job_id()}"
+		
+		gha_job["steps"] = steps
+		gha_job["outputs"] = outputs
+		return gha_job
+
+
+# </PreparationJobs>
+
 
 # <Aggregators>
 
@@ -380,7 +408,7 @@ class RootFileSystemCLIAggregator(BaseAggregator):
 		self.rootfs_clis: list[MatrixRootFileSystemCLI] = [
 			MatrixRootFileSystemCLI(rf_id, entries[0], entries) for rf_id, entries in grouped_by_rootfs_cli_id.items() if rf_id is not None]
 		self.rootfs_clis.sort(key=lambda k: len(k.all_items), reverse=True)
-		
+
 	def produce_gha_jobs(self, gha_jobs: dict[str, object]):
 		# @TODO: common prepare job for all rootfs?
 		# @TODO: common prepare per-arch?
@@ -399,8 +427,13 @@ class KernelAggregator(BaseAggregator):
 		# Sort kernels by the number of all_items
 		self.kernels.sort(key=lambda k: len(k.all_items), reverse=True)
 
+		# Now create the preparation job
+		self.kernel_prepare_job: KernelPrepareJob = KernelPrepareJob(self)
+
 	def produce_gha_jobs(self, gha_jobs: dict[str, object]):
-		# @TODO: common prepare job for all kernels?
+		# Prep job
+		gha_jobs[self.kernel_prepare_job.gha_job_id()] = self.kernel_prepare_job.gha_job_definition()
+		# Each kernel
 		for input in self.kernels:
 			gha_jobs[input.gha_job_id()] = input.gha_job_definition()
 
