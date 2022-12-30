@@ -3,7 +3,7 @@ import sys
 from collections import defaultdict
 
 from tools.common import armbian_utils
-from tools.common.matrix_utils import MatrixInput, MatrixKernel, MatrixUboot, MatrixRootFileSystemCLI
+from tools.common.matrix_utils import MatrixInput, MatrixKernel, MatrixUboot, MatrixRootFileSystemCLI, KernelAggregator
 
 # Prepare logging
 armbian_utils.setup_logging()
@@ -22,26 +22,21 @@ json_contents = armbian_utils.parse_json(json_contents_str)
 log.info(f"Loaded {len(json_contents)} entries from {json_file_name}")
 
 # Convert json_contents to a list of MatrixInput objects
-inputs = [MatrixInput(entry) for entry in json_contents]
+inputs: list[MatrixInput] = [MatrixInput(entry) for entry in json_contents]
 
 # Filter only 'edge' branch @TODO: fake for testing
 inputs = [input for input in inputs if input.BRANCH == "edge"]
 
 log.info(f"Loaded {len(inputs)} entries from {json_file_name}")
 
-# Group MatrixInput objects by kernel_id
-grouped_by_kernel_id = defaultdict(list)
-grouped_by_uboot_id = defaultdict(list)
-grouped_by_rootfs_cli_id = defaultdict(list)
+# Group MatrixInput objects by kernel, uboot, and cli rootfs; more later
+grouped_by_uboot_id: defaultdict[str, list[MatrixInput]] = defaultdict(list)
+grouped_by_rootfs_cli_id: defaultdict[str, list[MatrixInput]] = defaultdict(list)
 for entry in inputs:
-	grouped_by_kernel_id[entry.kernel_id()].append(entry)
 	grouped_by_uboot_id[entry.uboot_id()].append(entry)
 	grouped_by_rootfs_cli_id[entry.rootfs_cli_id()].append(entry)
 
-# Instantiate MatrixKernel objects and add them to the kernels list
-kernels = [MatrixKernel(kid, entries[0], entries) for kid, entries in grouped_by_kernel_id.items() if kid is not None]
-# Sort kernels by the number of all_items
-kernels.sort(key=lambda k: len(k.all_items), reverse=True)
+aggregator_kernel = KernelAggregator(inputs)
 
 # Instantiate MatrixUboot objects and add them to the u-boots list
 u_boots = [MatrixUboot(ub_id, entries[0], entries) for ub_id, entries in grouped_by_uboot_id.items() if ub_id is not None]
@@ -53,8 +48,8 @@ rootfs_clis = [MatrixRootFileSystemCLI(rf_id, entries[0], entries) for rf_id, en
 # Sort rootfs-clis by the number of all_items
 rootfs_clis.sort(key=lambda k: len(k.all_items), reverse=True)
 
-log.info(f"Parsed {len(kernels)} kernels")
-for kernel in kernels:
+log.info(f"Parsed {len(aggregator_kernel.kernels)} kernels")
+for kernel in aggregator_kernel.kernels:
 	log.info(f"{kernel}")
 
 log.info(f"Parsed {len(u_boots)} u-boots")
@@ -74,9 +69,8 @@ gha_jobs = {}
 for input in rootfs_clis:
 	gha_jobs[input.gha_job_id()] = input.gha_job_definition()
 
-for input in kernels:
-	gha_jobs[input.gha_job_id()] = input.gha_job_definition()
-	
+aggregator_kernel.produce_gha_jobs(gha_jobs)
+
 for input in inputs:
 	gha_jobs[input.gha_job_id()] = input.gha_job_definition()
 
@@ -89,5 +83,3 @@ log.info(f"YAML: \n{gha_workflow_yaml}")
 # Write the YAML to a file
 with open("/Users/rpardini/projects/armbian/armbian-release/.github/workflows/fake.yml", "w") as f:
 	f.write(gha_workflow_yaml)
-	
-	

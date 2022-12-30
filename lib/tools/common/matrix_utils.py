@@ -1,5 +1,5 @@
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 
 log: logging.Logger = logging.getLogger("matrix_utils")
 
@@ -241,7 +241,7 @@ class MatrixInput:
 		return f"{self.AGGREGATED_ROOTFS_HASH}"
 
 	def gha_job_id(self):
-		return f"image_cli_{self.board_id}-{self.BRANCH}" # @TODO fake
+		return f"image_cli_{self.board_id}-{self.BRANCH}"  # @TODO fake
 		pass
 
 	def gha_job_definition(self):
@@ -279,10 +279,11 @@ class BaseMatrixAggregate:
 
 class MatrixKernel(BaseMatrixAggregate):
 
-	def __init__(self, aggregate_id: str, item: MatrixInput, all_items: list[MatrixInput]):
+	def __init__(self, aggregate_id: str, item: MatrixInput, all_items: list[MatrixInput], aggregator: "KernelAggregator"):
 		"""Parse build matrix items into a kernel object; do sanity check so most attributes are the same across all items.
 		That should detect sneaky families that change source/branch without changing the LINUXFAMILY"""
 		super().__init__(aggregate_id, item, all_items)
+		self.aggregator: KernelAggregator = aggregator
 		self.name: str = self.sanity_check_same(lambda i: i.CHOSEN_KERNEL)
 		self.branch: str = self.sanity_check_same(lambda i: i.BRANCH)
 		self.arch: str = self.sanity_check_same(lambda i: i.ARCH)
@@ -356,4 +357,34 @@ class MatrixRootFileSystemCLI(BaseMatrixAggregate):
 		gha_job["steps"] = steps
 		return gha_job
 
+
 # </Class declarations>
+
+
+# <Aggregators>
+
+class BaseAggregator:
+	def __init__(self, inputs: list[MatrixInput]):
+		self.inputs: list[MatrixInput] = inputs
+		pass
+
+
+class KernelAggregator(BaseAggregator):
+	def __init__(self, inputs: list[MatrixInput]):
+		super().__init__(inputs)
+		grouped_by_kernel_id: defaultdict[str, list[MatrixInput]] = defaultdict(list)
+		for entry in inputs:
+			grouped_by_kernel_id[entry.kernel_id()].append(entry)
+		self.kernels: list[MatrixKernel] = [
+			MatrixKernel(k_id, entries[0], entries, self) for k_id, entries in grouped_by_kernel_id.items() if k_id is not None]
+		# Sort kernels by the number of all_items
+		self.kernels.sort(key=lambda k: len(k.all_items), reverse=True)
+
+	def produce_gha_jobs(self, gha_jobs: dict[str, object]):
+		# @TODO: common prepare job for all kernels?
+		for input in self.kernels:
+			gha_jobs[input.gha_job_id()] = input.gha_job_definition()
+		# @TODO: common publish-to-repo job for all kernels
+	pass
+
+# </Aggregators>
