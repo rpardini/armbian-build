@@ -196,6 +196,10 @@ log: logging.Logger = logging.getLogger("matrix_utils")
 # <Class declarations>
 class MatrixInput:
 	def __init__(self, json):
+		self.ref_kernel: MatrixKernel | None = None
+		self.ref_u_boot: MatrixUboot | None = None
+		self.ref_root_fs_cli: MatrixRootFileSystemCLI | None = None
+
 		self.inputs: dict[str, str | object] = json["in"]
 		self.outputs: dict[str, str | object] = json["out"]
 		self.board_description: str = json["BOARD_FILE_HARDWARE_DESC"]
@@ -218,6 +222,8 @@ class MatrixInput:
 		self.BOOTBRANCH: str = self.outputs["BOOTBRANCH"]
 		self.BOOTCONFIG: str = self.outputs["BOOTCONFIG"]
 
+		self.AGGREGATED_ROOTFS_HASH: str = self.outputs["AGGREGATED_ROOTFS_HASH"]
+
 	def kernel_id(self) -> "str | None":
 		if self.BRANCH == "ddk":
 			return None
@@ -230,6 +236,9 @@ class MatrixInput:
 
 	def __str__(self) -> str:
 		return f"{self.board_id}-{self.BRANCH}"
+
+	def rootfs_cli_id(self):
+		return f"{self.AGGREGATED_ROOTFS_HASH}"
 
 
 class BaseMatrixAggregate:
@@ -264,11 +273,14 @@ class MatrixKernel(BaseMatrixAggregate):
 		self.git_source: str = self.sanity_check_same(lambda i: i.KERNELSOURCE)
 		self.board_families: set[str] = self.unique(lambda i: i.BOARDFAMILY)
 		self.boards: set[str] = self.unique(lambda i: i.board_id)
+		if aggregate_id is not None:
+			for one_item in all_items:
+				one_item.ref_kernel = self
 
 	def __str__(self) -> str:
 		families_counter = " ".join(
 			f'family_{family}="{counter}"' for family, counter in dict(Counter(item.BOARDFAMILY for item in self.all_items)).items())
-		return f'<Kernel name="{self.name}" branch="{self.branch}" v="{self.major_minor}" b="{self.git_branch}" boards="{len(self.boards)}" {families_counter} />'
+		return f'<Kernel id="{self.aggregate_id}" name="{self.name}" branch="{self.branch}" v="{self.major_minor}" b="{self.git_branch}" boards="{len(self.boards)}" {families_counter} />'
 
 
 class MatrixUboot(BaseMatrixAggregate):
@@ -282,8 +294,24 @@ class MatrixUboot(BaseMatrixAggregate):
 		self.git_source: str = self.sanity_check_same(lambda i: i.BOOTSOURCE)
 		self.uboot_defconfig: str = self.sanity_check_same(lambda i: i.BOOTCONFIG)
 		self.boards: set[str] = self.unique(lambda i: i.board_id)
+		if aggregate_id is not None:
+			for one_item in all_items:
+				one_item.ref_u_boot = self
 
 	def __str__(self) -> str:
-		return f'<U-boot name="{self.aggregate_id}"  b="{self.git_branch}" defconfig="{self.uboot_defconfig}" boards="{len(self.boards)}" />'
+		return f'<U-boot id="{self.aggregate_id}" name="{self.name}" b="{self.git_branch}" defconfig="{self.uboot_defconfig}" boards="{len(self.boards)}" />'
+
+
+class MatrixRootFileSystemCLI(BaseMatrixAggregate):
+
+	def __init__(self, aggregate_id: str, item: MatrixInput, all_items: list[MatrixInput]):
+		super().__init__(aggregate_id, item, all_items)
+		self.boards: set[str] = self.unique(lambda i: i.board_id)
+		if aggregate_id is not None:
+			for one_item in all_items:
+				one_item.ref_root_fs_cli = self
+
+	def __str__(self) -> str:
+		return f'<RootFSCLI name="{self.aggregate_id}"  boards="{len(self.boards)}" />'
 
 # </Class declarations>
