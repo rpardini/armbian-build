@@ -240,6 +240,24 @@ class MatrixInput:
 	def rootfs_cli_id(self):
 		return f"{self.AGGREGATED_ROOTFS_HASH}"
 
+	def gha_job_id(self):
+		return f"image_cli_{self.board_id}-{self.BRANCH}" # @TODO fake
+		pass
+
+	def gha_job_definition(self):
+		gha_job = {}
+		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
+		steps = []
+		fake_step = {"name": f"Image CLI '{self.board_id}-{self.BRANCH}'", "run": f'echo "fake image: {self.board_id}-{self.BRANCH}"'}
+		steps.append(fake_step)
+		gha_job["steps"] = steps
+		gha_job["needs"] = []
+		if self.ref_kernel:
+			gha_job["needs"].append(self.ref_kernel.gha_job_id())
+		if self.ref_root_fs_cli:
+			gha_job["needs"].append(self.ref_root_fs_cli.gha_job_id())
+		return gha_job
+
 
 class BaseMatrixAggregate:
 	def __init__(self, aggregate_id: str, item: MatrixInput, all_items: list[MatrixInput]):
@@ -282,6 +300,18 @@ class MatrixKernel(BaseMatrixAggregate):
 			f'family_{family}="{counter}"' for family, counter in dict(Counter(item.BOARDFAMILY for item in self.all_items)).items())
 		return f'<Kernel id="{self.aggregate_id}" name="{self.name}" branch="{self.branch}" v="{self.major_minor}" b="{self.git_branch}" boards="{len(self.boards)}" {families_counter} />'
 
+	def gha_job_id(self) -> str:
+		return f"kernel-{self.aggregate_id}"
+
+	def gha_job_definition(self):
+		gha_job = {}
+		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
+		steps = []
+		fake_step = {"name": f"Build Kernel '{self.aggregate_id}'", "run": f'echo "fake kernel: {self.aggregate_id}"'}
+		steps.append(fake_step)
+		gha_job["steps"] = steps
+		return gha_job
+
 
 class MatrixUboot(BaseMatrixAggregate):
 
@@ -313,5 +343,17 @@ class MatrixRootFileSystemCLI(BaseMatrixAggregate):
 
 	def __str__(self) -> str:
 		return f'<RootFSCLI name="{self.aggregate_id}"  boards="{len(self.boards)}" />'
+
+	def gha_job_id(self) -> str:
+		return f"rootfs-cli-{self.aggregate_id}"
+
+	def gha_job_definition(self):
+		gha_job = {}
+		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
+		steps = []
+		fake_step = {"name": f"Build CLI RootFS '{self.aggregate_id}'", "run": f'echo "fake rootfs: {self.aggregate_id}"'}
+		steps.append(fake_step)
+		gha_job["steps"] = steps
+		return gha_job
 
 # </Class declarations>

@@ -24,6 +24,9 @@ log.info(f"Loaded {len(json_contents)} entries from {json_file_name}")
 # Convert json_contents to a list of MatrixInput objects
 inputs = [MatrixInput(entry) for entry in json_contents]
 
+# Filter only 'edge' branch @TODO: fake for testing
+inputs = [input for input in inputs if input.BRANCH == "edge"]
+
 log.info(f"Loaded {len(inputs)} entries from {json_file_name}")
 
 # Group MatrixInput objects by kernel_id
@@ -62,3 +65,29 @@ log.info(f"Parsed {len(rootfs_clis)} rootfs-cli")
 for root_fs_cli in rootfs_clis:
 	log.info(f"{root_fs_cli}")
 
+# Now create GHA Workflow to build all this.
+gha_workflow = dict()
+gha_workflow["name"] = "fake"
+gha_workflow["on"] = {"workflow_dispatch": {"inputs": {"name": {"description": "Name", "required": True, "default": "World"}}}}
+gha_jobs = {}
+
+for input in rootfs_clis:
+	gha_jobs[input.gha_job_id()] = input.gha_job_definition()
+
+for input in kernels:
+	gha_jobs[input.gha_job_id()] = input.gha_job_definition()
+	
+for input in inputs:
+	gha_jobs[input.gha_job_id()] = input.gha_job_definition()
+
+gha_workflow["jobs"] = gha_jobs
+
+# Convert gha_workflow to YAML
+gha_workflow_yaml = armbian_utils.to_yaml((gha_workflow))
+log.info(f"YAML: \n{gha_workflow_yaml}")
+
+# Write the YAML to a file
+with open("/Users/rpardini/projects/armbian/armbian-release/.github/workflows/fake.yml", "w") as f:
+	f.write(gha_workflow_yaml)
+	
+	
