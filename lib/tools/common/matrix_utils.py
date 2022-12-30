@@ -307,6 +307,10 @@ class MatrixKernel(BaseMatrixAggregate):
 
 	def gha_job_definition(self):
 		gha_job = {}
+
+		# Only build if not already up to date
+		gha_job["if"] = '${{ ' + f"needs.{self.aggregator.kernel_prepare_job.gha_job_id()}.outputs.uptodate_kernel-{self.aggregate_id}" + " == 'no' }}"
+
 		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
 		gha_job["needs"] = []
 		gha_job["needs"].append(self.aggregator.kernel_prepare_job.gha_job_id())
@@ -377,12 +381,15 @@ class KernelPrepareJob:
 		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
 		steps = []
 		outputs = {}
-		
+
 		for one_kernel in self.k_aggr.kernels:
-			fake_step = {"name": f"Prepare Kernel '{one_kernel.aggregate_id}'", "run": f'echo "fake kernel prepare: {one_kernel.aggregate_id}"'}
+			run = f'echo "fake kernel prepare: {one_kernel.aggregate_id}"\necho "uptodate=$((( RANDOM % 2 )) && echo -n "yes" || echo -n "no")" >> $GITHUB_OUTPUT'
+			step_id = f"prepare_{one_kernel.aggregate_id}"
+			fake_step = {"id": step_id, "name": f"Prepare Kernel '{one_kernel.aggregate_id}'", "run": run}
 			steps.append(fake_step)
-			outputs[one_kernel.gha_job_id()] = f"fake output for {one_kernel.gha_job_id()}"
-		
+			outputs[f"desc_{one_kernel.gha_job_id()}"] = f"fake output for {one_kernel.gha_job_id()}"
+			outputs[f"uptodate_{one_kernel.gha_job_id()}"] = f"${{{{ steps.{step_id}.outputs.uptodate }}}}"
+
 		gha_job["steps"] = steps
 		gha_job["outputs"] = outputs
 		return gha_job
@@ -392,7 +399,6 @@ class KernelPrepareJob:
 
 
 # <Aggregators>
-
 class BaseAggregator:
 	def __init__(self, inputs: list[MatrixInput]):
 		self.inputs: list[MatrixInput] = inputs
