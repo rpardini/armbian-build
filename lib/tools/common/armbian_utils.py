@@ -67,3 +67,8 @@ def setup_logging():
 		if get_from_env("LOG_DEBUG") == "yes":
 			level = logging.DEBUG
 		logging.basicConfig(level=level, stream=sys.stderr)
+
+
+def parse_json(json_contents_str):
+	import json
+	return json.loads(json_contents_str)
