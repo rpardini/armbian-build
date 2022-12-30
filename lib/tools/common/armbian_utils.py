@@ -67,3 +67,13 @@ def setup_logging():
 		if get_from_env("LOG_DEBUG") == "yes":
 			level = logging.DEBUG
 		logging.basicConfig(level=level, stream=sys.stderr)
+
+
+def parse_json(json_contents_str):
+	import json
+	return json.loads(json_contents_str)
+
+
+def to_yaml(gha_workflow):
+	import yaml
+	return yaml.safe_dump(gha_workflow, default_flow_style=False, sort_keys=False, allow_unicode=True, indent=2, width=1000)
