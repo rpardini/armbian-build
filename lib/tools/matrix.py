@@ -3,7 +3,8 @@ import sys
 from collections import defaultdict
 
 from tools.common import armbian_utils
-from tools.common.matrix_utils import MatrixInput, MatrixKernel, MatrixUboot, MatrixRootFileSystemCLI, KernelAggregator
+from tools.common.matrix_utils import MatrixInput, MatrixKernel, MatrixUboot, MatrixRootFileSystemCLI, KernelAggregator, UBootAggregator, \
+	RootFileSystemCLIAggregator
 
 # Prepare logging
 armbian_utils.setup_logging()
@@ -30,34 +31,22 @@ inputs = [input for input in inputs if input.BRANCH == "edge"]
 log.info(f"Loaded {len(inputs)} entries from {json_file_name}")
 
 # Group MatrixInput objects by kernel, uboot, and cli rootfs; more later
-grouped_by_uboot_id: defaultdict[str, list[MatrixInput]] = defaultdict(list)
-grouped_by_rootfs_cli_id: defaultdict[str, list[MatrixInput]] = defaultdict(list)
-for entry in inputs:
-	grouped_by_uboot_id[entry.uboot_id()].append(entry)
-	grouped_by_rootfs_cli_id[entry.rootfs_cli_id()].append(entry)
 
 aggregator_kernel = KernelAggregator(inputs)
+aggregator_u_boot = UBootAggregator(inputs)
+aggregator_rootfs_cli = RootFileSystemCLIAggregator(inputs)
 
-# Instantiate MatrixUboot objects and add them to the u-boots list
-u_boots = [MatrixUboot(ub_id, entries[0], entries) for ub_id, entries in grouped_by_uboot_id.items() if ub_id is not None]
-# Sort u-boots by the number of all_items
-u_boots.sort(key=lambda k: len(k.all_items), reverse=True)
-
-# Instantiate MatrixRootFileSystemCLI objects and add them to the rootfs-clis list
-rootfs_clis = [MatrixRootFileSystemCLI(rf_id, entries[0], entries) for rf_id, entries in grouped_by_rootfs_cli_id.items() if rf_id is not None]
-# Sort rootfs-clis by the number of all_items
-rootfs_clis.sort(key=lambda k: len(k.all_items), reverse=True)
 
 log.info(f"Parsed {len(aggregator_kernel.kernels)} kernels")
 for kernel in aggregator_kernel.kernels:
 	log.info(f"{kernel}")
 
-log.info(f"Parsed {len(u_boots)} u-boots")
-for u_boot in u_boots:
+log.info(f"Parsed {len(aggregator_u_boot.u_boots)} u-boots")
+for u_boot in aggregator_u_boot.u_boots:
 	log.info(f"{u_boot}")
 
-log.info(f"Parsed {len(rootfs_clis)} rootfs-cli")
-for root_fs_cli in rootfs_clis:
+log.info(f"Parsed {len(aggregator_rootfs_cli.rootfs_clis)} rootfs-cli")
+for root_fs_cli in aggregator_rootfs_cli.rootfs_clis:
 	log.info(f"{root_fs_cli}")
 
 # Now create GHA Workflow to build all this.
@@ -66,9 +55,7 @@ gha_workflow["name"] = "fake"
 gha_workflow["on"] = {"workflow_dispatch": {"inputs": {"name": {"description": "Name", "required": True, "default": "World"}}}}
 gha_jobs = {}
 
-for input in rootfs_clis:
-	gha_jobs[input.gha_job_id()] = input.gha_job_definition()
-
+aggregator_rootfs_cli.produce_gha_jobs(gha_jobs)
 aggregator_kernel.produce_gha_jobs(gha_jobs)
 
 for input in inputs:
