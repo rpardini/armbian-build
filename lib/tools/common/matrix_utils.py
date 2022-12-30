@@ -248,6 +248,8 @@ class MatrixInput:
 	def gha_job_definition(self):
 		gha_job = {}
 		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
+		expression = f"needs.{self.ref_kernel.gha_job_id()}.outputs.up-to-date"
+		gha_job["if"] = '${{ always() && ' + expression + " == 'no' }}"
 		steps = []
 		fake_step = {"name": f"Image CLI '{self.board_id}-{self.BRANCH}'", "run": f'echo "fake image: {self.board_id}-{self.BRANCH}"'}
 		steps.append(fake_step)
@@ -309,7 +311,11 @@ class MatrixKernel(BaseMatrixAggregate):
 		gha_job = {}
 
 		# Only build if not already up to date
-		gha_job["if"] = '${{ ' + f"needs.{self.aggregator.kernel_prepare_job.gha_job_id()}.outputs.uptodate_kernel-{self.aggregate_id}" + " == 'no' }}"
+		expression = f"needs.{self.aggregator.kernel_prepare_job.gha_job_id()}.outputs.uptodate_kernel-{self.aggregate_id}"
+		gha_job["if"] = '${{ ' + expression + " == 'no' }}"
+		outputs = {}
+		outputs["up-to-date"] = '${{ ' + expression + " }}"
+		gha_job["outputs"] = outputs
 
 		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
 		gha_job["needs"] = []
