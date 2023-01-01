@@ -34,6 +34,9 @@ class MatrixInput:
 		self.AGGREGATED_ROOTFS_HASH: str = self.outputs["AGGREGATED_ROOTFS_HASH"]
 		self.RELEASE: str = self.inputs["RELEASE"]
 
+	def image_id(self):
+		return f"{self.board_id}-{self.BRANCH}-{self.RELEASE}"  # @TODO desktop stuff, extensions, etc.
+
 	def kernel_id(self) -> "str | None":
 		if self.BRANCH == "ddk":
 			return None
@@ -44,28 +47,8 @@ class MatrixInput:
 			return None
 		return f"{self.CHOSEN_UBOOT}"
 
-	def __str__(self) -> str:
-		return f"{self.board_id}-{self.BRANCH}"
-
 	def rootfs_cli_id(self):
 		return f"{self.ARCH}_{self.RELEASE}_{self.AGGREGATED_ROOTFS_HASH}"
 
-	def gha_job_id(self):
-		return f"image_cli_{self.board_id}-{self.BRANCH}"  # @TODO fake
-		pass
-
-	def gha_job_definition(self):
-		gha_job = {}
-		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
-		expression = f"needs.{self.ref_kernel.gha_job_id()}.outputs.up-to-date"
-		gha_job["if"] = '${{ always() && ' + expression + " == 'no' }}"
-		steps = []
-		fake_step = {"name": f"Image CLI '{self.board_id}-{self.BRANCH}'", "run": f'echo "fake image: {self.board_id}-{self.BRANCH}"'}
-		steps.append(fake_step)
-		gha_job["steps"] = steps
-		gha_job["needs"] = []
-		if self.ref_kernel:
-			gha_job["needs"].append(self.ref_kernel.gha_job_id())
-		if self.ref_root_fs_cli:
-			gha_job["needs"].append(self.ref_root_fs_cli.gha_job_id())
-		return gha_job
+	def __str__(self) -> str:
+		return f"{self.board_id}-{self.BRANCH}"

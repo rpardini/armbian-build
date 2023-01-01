@@ -25,8 +25,8 @@ class KernelAggregator(BaseAggregator):
 		# Prep job
 		gha_jobs[self.kernel_prepare_job.gha_job_id()] = self.kernel_prepare_job.gha_job_definition()
 		# Each kernel
-		for input in self.kernels:
-			gha_jobs[input.gha_job_id()] = input.gha_job_definition()
+		for kinput in self.kernels:
+			gha_jobs[kinput.gha_job_id()] = kinput.gha_job_definition()
 
 
 # @TODO: common publish-to-repo job for all kernels
