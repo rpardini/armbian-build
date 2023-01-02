@@ -2,7 +2,7 @@ import logging
 from collections import Counter, defaultdict
 
 from matrixes.base import BaseAggregator, BaseMatrixAggregate
-from matrixes.gha import WorkflowFactory, BaseWorkflowJob, WorkflowJobStep, WorkflowJobOutput
+from matrixes.gha import WorkflowFactory, BaseWorkflowJob, WorkflowJobOutput
 from matrixes.input import MatrixInput
 
 log: logging.Logger = logging.getLogger("matrix_kernel")
@@ -12,12 +12,20 @@ class KernelAggregator(BaseAggregator):
 	def __init__(self, inputs: list[MatrixInput]):
 		super().__init__(inputs)
 		grouped_by_kernel_id: defaultdict[str, list[MatrixInput]] = defaultdict(list)
+		grouped_by_kernel_version_source: defaultdict[str, list[MatrixInput]] = defaultdict(list)
 		for entry in inputs:
 			grouped_by_kernel_id[entry.kernel_id()].append(entry)
+
 		self.kernels: list[MatrixKernel] = [
 			MatrixKernel(k_id, entries[0], entries, self) for k_id, entries in grouped_by_kernel_id.items() if k_id is not None]
 		# Sort kernels by the number of all_items
 		self.kernels.sort(key=lambda k: len(k.all_items), reverse=True)
+
+		for kernel in self.kernels:
+			grouped_by_kernel_version_source[self.produce_version_source(kernel)].append(kernel)
+		self.versions: list[MatrixKernelVersionSource] = [
+			MatrixKernelVersionSource(k_id, entries[0], entries, self) for k_id, entries in grouped_by_kernel_version_source.items() if
+			k_id is not None]
 
 		# Now create the preparation job; this is used by the build jobs
 		self.kernel_prepare_job: KernelPrepareJob = KernelPrepareJob(self)
@@ -33,9 +41,35 @@ class KernelAggregator(BaseAggregator):
 		log.info(f"Parsed {len(self.kernels)} kernels")
 		for kernel in self.kernels:
 			log.info(f"{kernel}")
+		log.info(f"Parsed {len(self.versions)} kernel version/source's")
+		for version in self.versions:
+			log.info(f"{version}")
+
+	def produce_version_source(self, entry: "MatrixKernel"):
+		compos = {}
+		compos["git_repo"] = entry.git_source
+		compos["git_target"] = entry.git_branch
+		# return key=val,key=val formatted string from compos dict
+		lines = []
+		for key, val in compos.items():
+			lines.append(f"{key}={val}")
+		return ",".join(lines)
 
 
 # @TODO: common publish-to-repo job for all kernels
+
+class MatrixKernelVersionSource(BaseMatrixAggregate):
+
+	def __init__(self, aggregate_id: str, item: "MatrixKernel", all_items: list["MatrixKernel"], aggregator: "KernelAggregator"):
+		super().__init__(aggregate_id, item, all_items)
+		self.aggregator: KernelAggregator = aggregator
+
+		self.repo = item.git_source
+		self.target = item.git_branch
+		self.kernel_names = set([item.aggregate_id for item in all_items])
+
+	def __str__(self) -> str:
+		return f'<KernelVersionSource num_kernels="{len(self.all_items)}" ks="{",".join(self.kernel_names)}" repo="{self.repo}" target="{self.target}" id="{self.aggregate_id}"  />'
 
 
 class MatrixKernel(BaseMatrixAggregate):
