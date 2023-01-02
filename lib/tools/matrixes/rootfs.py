@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 
 from matrixes.base import BaseAggregator, BaseMatrixAggregate
+from matrixes.gha import WorkflowFactory, BaseWorkflowJob
 from matrixes.input import MatrixInput
 
 log: logging.Logger = logging.getLogger("matrix_rootfs")
@@ -28,21 +29,20 @@ class RootFileSystemCLIAggregator(BaseAggregator):
 		for arch, entries in grouped_by_arch.items():
 			self.prepare_job_per_arch[arch] = RootfsArchPrepareJob(self, arch, entries)
 
-	def produce_gha_jobs(self, gha_jobs: dict[str, object]):
-		# @TODO: common prepare job for all rootfs?
-
-		# common prepare per-arch?
+	def produce_gha_jobs(self, wf: WorkflowFactory):
+		# Prep job
 		for arch, job in self.prepare_job_per_arch.items():
-			gha_jobs[job.gha_job_id()] = job.gha_job_definition()
+			wf.add_job(job)
 
-		for input in self.rootfs_clis:
-			gha_jobs[input.gha_job_id()] = input.gha_job_definition()
+		for rootfs in self.rootfs_clis:
+			rootfs.rootfs_job = wf.add_job(RootfsBuildJob(self, rootfs))
 
 
 class MatrixRootFileSystemCLI(BaseMatrixAggregate):
 
 	def __init__(self, aggregate_id: str, item: MatrixInput, all_items: list[MatrixInput]):
 		super().__init__(aggregate_id, item, all_items)
+		self.rootfs_job: "RootfsBuildJob | None" = None
 		self.boards: set[str] = self.unique(lambda i: i.board_id)
 		self.arch: str = self.sanity_check_same(lambda i: i.ARCH)
 		self.release: str = self.sanity_check_same(lambda i: i.RELEASE)
@@ -66,14 +66,17 @@ class MatrixRootFileSystemCLI(BaseMatrixAggregate):
 		return gha_job
 
 
-class RootfsArchPrepareJob:
-	def __init__(self, r_aggr: "RootFileSystemCLIAggregator", arch: str, rs_in_arch: list[MatrixRootFileSystemCLI]):
-		self.r_aggr: RootFileSystemCLIAggregator = r_aggr
-		self.arch: str = arch
-		self.rs_in_arch: list[MatrixRootFileSystemCLI] = rs_in_arch
+class RootfsBuildJob(BaseWorkflowJob):
+	def __init__(self, r_aggr: "RootFileSystemCLIAggregator", rootfs: MatrixRootFileSystemCLI):
+		super().__init__(f"rootfs-build-{rootfs.aggregate_id}", f"RootFS build job for {rootfs.aggregate_id}")
 
-	def gha_job_id(self):
-		return f"rootfs-prepare-{self.arch}"
+
+class RootfsArchPrepareJob(BaseWorkflowJob):
+	def __init__(self, r_aggr: "RootFileSystemCLIAggregator", arch: str, entries: list[MatrixRootFileSystemCLI]):
+		super().__init__(f"rootfs-arch-{arch}", f"Common jobs for all rootfs of arch {arch}")
+		self.arch = arch
+		self.entries = entries
+		self.r_aggr = r_aggr
 
 	def gha_job_definition(self):
 		gha_job = {}

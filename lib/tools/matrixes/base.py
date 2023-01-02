@@ -1,5 +1,6 @@
 import logging
 
+from matrixes.gha import WorkflowFactory
 from matrixes.input import MatrixInput
 
 log: logging.Logger = logging.getLogger("matrix_base")
@@ -28,4 +29,7 @@ class BaseAggregator:
 	def __init__(self, inputs: list[MatrixInput]):
 		self.inputs: list[MatrixInput] = inputs
 		pass
+
+	def produce_gha_jobs(self, wf: WorkflowFactory):
+		log.warning(f"produce_gha_jobs not implemented for {self.__class__.__name__}")
 # </Aggregators>

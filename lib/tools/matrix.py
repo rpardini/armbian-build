@@ -1,6 +1,8 @@
 import logging
 import sys
 
+from matrixes.base import BaseAggregator
+from matrixes.gha import WorkflowFactory
 from matrixes.image import ImageAggregator
 from matrixes.input import MatrixInput
 from matrixes.kernel import KernelAggregator
@@ -28,10 +30,12 @@ inputs = [m_input for m_input in inputs if m_input.BRANCH == "edge"]
 log.info(f"Loaded {len(inputs)} entries from {json_file_name}")
 
 # Group MatrixInput objects by kernel, uboot, and cli rootfs; more later
+# ordering is important; images require kernel, uboot, and rootfs's
 aggregator_kernel = KernelAggregator(inputs)
 aggregator_u_boot = UBootAggregator(inputs)
 aggregator_rootfs_cli = RootFileSystemCLIAggregator(inputs)
 aggregator_images = ImageAggregator(inputs)
+all_aggregators: list[BaseAggregator] = [aggregator_kernel, aggregator_u_boot, aggregator_rootfs_cli, aggregator_images]
 
 log.info(f"Parsed {len(aggregator_kernel.kernels)} kernels")
 for kernel in aggregator_kernel.kernels:
@@ -49,19 +53,12 @@ log.info(f"Parsed {len(aggregator_images.images)} images")
 for image in aggregator_images.images:
 	log.info(f"{image}")
 
-# Now create GHA Workflow to build all this.
-gha_jobs = {}
-aggregator_rootfs_cli.produce_gha_jobs(gha_jobs)
-aggregator_kernel.produce_gha_jobs(gha_jobs)
-aggregator_images.produce_gha_jobs(gha_jobs)
-
-gha_workflow = dict()
-gha_workflow["name"] = "fake"
-gha_workflow["on"] = {"workflow_dispatch": {"inputs": {"name": {"description": "Name", "required": True, "default": "World"}}}}
-gha_workflow["jobs"] = gha_jobs
+wf = WorkflowFactory()
+for aggregator in all_aggregators:  # ordering important
+	aggregator.produce_gha_jobs(wf)
 
 # Convert gha_workflow to YAML
-gha_workflow_yaml = armbian_utils.to_yaml(gha_workflow)
+gha_workflow_yaml = armbian_utils.to_yaml(wf.render_yaml())
 log.info(f"YAML: \n{gha_workflow_yaml}")
 
 # Write the YAML to a file
