@@ -33,7 +33,7 @@ all_aggregators: list[BaseAggregator] = \
 		(KernelAggregator(inputs)),
 		# (RootFileSystemCLIAggregator(inputs)), # disabled for now
 		# (UBootAggregator(inputs)), # disabled for now
-		(ImageAggregator(inputs))
+		#(ImageAggregator(inputs))
 	]
 
 for aggregator in all_aggregators:
@@ -45,7 +45,7 @@ for aggregator in all_aggregators:  # ordering important
 
 # Convert gha_workflow to YAML
 gha_workflow_yaml = armbian_utils.to_yaml(wf.render_yaml())
-log.info(f"YAML: \n{gha_workflow_yaml}")
+# log.info(f"YAML: \n{gha_workflow_yaml}")
 
 # Write the YAML to a file
 with open("/Users/rpardini/projects/armbian/armbian-release/.github/workflows/fake.yml", "w") as f:
