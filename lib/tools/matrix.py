@@ -6,8 +6,6 @@ from matrixes.gha import WorkflowFactory
 from matrixes.image import ImageAggregator
 from matrixes.input import MatrixInput
 from matrixes.kernel import KernelAggregator
-from matrixes.rootfs import RootFileSystemCLIAggregator
-from matrixes.uboot import UBootAggregator
 from tools.common import armbian_utils
 
 # Prepare logging
@@ -29,13 +27,14 @@ inputs = [m_input for m_input in inputs if m_input.BRANCH == "edge"]
 
 log.info(f"Loaded {len(inputs)} entries from {json_file_name}")
 
-# Group MatrixInput objects by kernel, uboot, and cli rootfs; more later
-# ordering is important; images require kernel, uboot, and rootfs's
-aggregator_kernel = KernelAggregator(inputs)
-aggregator_u_boot = UBootAggregator(inputs)
-aggregator_rootfs_cli = RootFileSystemCLIAggregator(inputs)
-aggregator_images = ImageAggregator(inputs)
-all_aggregators: list[BaseAggregator] = [aggregator_kernel, aggregator_rootfs_cli, aggregator_u_boot, aggregator_images]
+# Create aggregators in the order wanted.
+all_aggregators: list[BaseAggregator] = \
+	[
+		(KernelAggregator(inputs)),
+		# (RootFileSystemCLIAggregator(inputs)), # disabled for now
+		# (UBootAggregator(inputs)), # disabled for now
+		(ImageAggregator(inputs))
+	]
 
 for aggregator in all_aggregators:
 	aggregator.show_entries()
