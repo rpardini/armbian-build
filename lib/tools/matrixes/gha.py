@@ -80,6 +80,9 @@ class BaseWorkflowJob:
 
 	def render_yaml(self) -> dict[str, object]:
 		job: dict[str, object] = {}
+		job["name"] = self.job_name
+		if len(self.needs) > 0:
+			job["needs"] = [n.job_id for n in self.needs]
 
 		if len(self.conditions) > 0:
 			conds: list[str] = []
@@ -87,23 +90,18 @@ class BaseWorkflowJob:
 			for cond in self.conditions:
 				conds.append(cond.condition)
 			# @TODO: this is so naive it hurts
-			job["if"] = wrap_with_gha_expression(" && ".join([c.condition for c in self.conditions]))
+			job["if"] = wrap_with_gha_expression(" && ".join([c for c in conds]))
 
 		if len(self.outputs) > 0:
 			job["outputs"] = {o.name: o.render_yaml() for o in self.outputs.values()}
 
 		job["runs-on"] = ["self-hosted", "Linux", "armbian"]
 
-		if len(self.needs) > 0:
-			job["needs"] = [n.job_id for n in self.needs]
-
 		if len(self.steps) > 0:
 			job["steps"] = [s.render_yaml() for s in self.steps]
+		else:
+			raise Exception("No steps defined for job")
 
-		# else:
-		#	raise Exception("No steps defined for job")
-
-		job["name"] = self.job_name
 		return job
 
 

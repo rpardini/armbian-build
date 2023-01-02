@@ -73,10 +73,9 @@ class ImageBuildJob(BaseWorkflowJob):
 		self.i_aggr: ImageAggregator = i_aggr
 		self.image: MatrixImage = image
 
-		# Depends on the Kernel job, if any
-		if self.image.ref_kernel:
-			self.needs.add(self.image.ref_kernel.kernel_job)
+		build_step = self.add_step(f"build_image_{image.aggregate_id}", f"Build Image {image.aggregate_id}")
+		build_step.run = f'echo "fake image: {image.aggregate_id}"'
 
-		# Depends on the CLI rootfs job, if any
-		if self.image.ref_root_fs_cli:
-			self.needs.add(self.image.ref_root_fs_cli.rootfs_job)
+		if self.image.ref_kernel:
+			uptodate_input = self.add_job_input_from_needed_job_output(self.image.ref_kernel.kjo_uptodate)
+			self.add_condition_from_input(uptodate_input, "== 'no'")

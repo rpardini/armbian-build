@@ -46,8 +46,8 @@ class MatrixKernel(BaseMatrixAggregate):
 		super().__init__(aggregate_id, item, all_items)
 
 		self.kernel_job: "KernelBuildJob | None" = None
-		self.kernel_prepare_job_step: WorkflowJobStep | None = None
 		self.kpjo_uptodate: WorkflowJobOutput | None = None
+		self.kjo_uptodate: WorkflowJobOutput | None = None
 
 		self.aggregator: KernelAggregator = aggregator
 		self.name: str = self.sanity_check_same(lambda i: i.CHOSEN_KERNEL)
@@ -92,6 +92,6 @@ class KernelBuildJob(BaseWorkflowJob):
 		build_step.run = f'echo "fake kernel: {kernel.aggregate_id}"'
 
 		uptodate_input = self.add_job_input_from_needed_job_output(kernel.kpjo_uptodate)
-		self.add_job_output_from_input("up-to-date", uptodate_input)
+		self.kernel.kjo_uptodate = self.add_job_output_from_input("up-to-date", uptodate_input)
 
 		self.add_condition_from_input(uptodate_input, "== 'no'")
