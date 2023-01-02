@@ -2,6 +2,7 @@ import logging
 from collections import Counter, defaultdict
 
 from matrixes.base import BaseAggregator, BaseMatrixAggregate
+from matrixes.gha import WorkflowFactory, BaseWorkflowJob, WorkflowJobStep, WorkflowJobOutput
 from matrixes.input import MatrixInput
 
 log: logging.Logger = logging.getLogger("matrix_kernel")
@@ -18,15 +19,15 @@ class KernelAggregator(BaseAggregator):
 		# Sort kernels by the number of all_items
 		self.kernels.sort(key=lambda k: len(k.all_items), reverse=True)
 
-		# Now create the preparation job
+		# Now create the preparation job; this is used by the build jobs
 		self.kernel_prepare_job: KernelPrepareJob = KernelPrepareJob(self)
 
-	def produce_gha_jobs(self, gha_jobs: dict[str, object]):
+	def produce_gha_jobs(self, wf: WorkflowFactory):
 		# Prep job
-		gha_jobs[self.kernel_prepare_job.gha_job_id()] = self.kernel_prepare_job.gha_job_definition()
+		wf.add_job(self.kernel_prepare_job)
 		# Each kernel
-		for kinput in self.kernels:
-			gha_jobs[kinput.gha_job_id()] = kinput.gha_job_definition()
+		for kernel in self.kernels:
+			kernel.kernel_job = wf.add_job(KernelBuildJob(self, kernel))
 
 
 # @TODO: common publish-to-repo job for all kernels
@@ -38,6 +39,11 @@ class MatrixKernel(BaseMatrixAggregate):
 		"""Parse build matrix items into a kernel object; do sanity check so most attributes are the same across all items.
 		That should detect sneaky families that change source/branch without changing the LINUXFAMILY"""
 		super().__init__(aggregate_id, item, all_items)
+
+		self.kernel_job: "KernelBuildJob | None" = None
+		self.kernel_prepare_job_step: WorkflowJobStep | None = None
+		self.kpjo_uptodate: WorkflowJobOutput | None = None
+
 		self.aggregator: KernelAggregator = aggregator
 		self.name: str = self.sanity_check_same(lambda i: i.CHOSEN_KERNEL)
 		self.branch: str = self.sanity_check_same(lambda i: i.BRANCH)
@@ -56,50 +62,31 @@ class MatrixKernel(BaseMatrixAggregate):
 			f'family_{family}="{counter}"' for family, counter in dict(Counter(item.BOARDFAMILY for item in self.all_items)).items())
 		return f'<Kernel id="{self.aggregate_id}" name="{self.name}" branch="{self.branch}" v="{self.major_minor}" b="{self.git_branch}" boards="{len(self.boards)}" {families_counter} />'
 
-	def gha_job_id(self) -> str:
-		return f"kernel-{self.aggregate_id}"
 
-	def gha_job_definition(self):
-		gha_job = {}
-
-		# Only build if not already up to date
-		expression = f"needs.{self.aggregator.kernel_prepare_job.gha_job_id()}.outputs.uptodate_kernel-{self.aggregate_id}"
-		gha_job["if"] = '${{ ' + expression + " == 'no' }}"
-		outputs = {}
-		outputs["up-to-date"] = '${{ ' + expression + " }}"
-		gha_job["outputs"] = outputs
-
-		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
-		gha_job["needs"] = []
-		gha_job["needs"].append(self.aggregator.kernel_prepare_job.gha_job_id())
-		steps = []
-		fake_step = {"name": f"Build Kernel '{self.aggregate_id}'", "run": f'echo "fake kernel: {self.aggregate_id}"'}
-		steps.append(fake_step)
-		gha_job["steps"] = steps
-		return gha_job
-
-
-class KernelPrepareJob:
+class KernelPrepareJob(BaseWorkflowJob):
 	def __init__(self, k_aggr: "KernelAggregator"):
+		super().__init__("kernel-prepare-all", "Prepare all kernels; each step determines the version hash and if it is already available.")
 		self.k_aggr: KernelAggregator = k_aggr
 
-	def gha_job_id(self) -> str:
-		return f"kernel-prepare-all"
-
-	def gha_job_definition(self):
-		gha_job = {}
-		gha_job["runs-on"] = ["self-hosted", "Linux", "armbian"]  # Fake
-		steps = []
-		outputs = {}
-
+		# Create a step for each kernel in the aggregator. Each step has 2 outputs: the version and is-it-up-to-date
 		for one_kernel in self.k_aggr.kernels:
-			run = f'echo "fake kernel prepare: {one_kernel.aggregate_id}"\necho "uptodate=$((( RANDOM % 2 )) && echo -n "yes" || echo -n "no")" >> $GITHUB_OUTPUT'
-			step_id = f"prepare_{one_kernel.aggregate_id}"
-			fake_step = {"id": step_id, "name": f"Prepare Kernel '{one_kernel.aggregate_id}'", "run": run}
-			steps.append(fake_step)
-			outputs[f"desc_{one_kernel.gha_job_id()}"] = f"fake output for {one_kernel.gha_job_id()}"
-			outputs[f"uptodate_{one_kernel.gha_job_id()}"] = f"${{{{ steps.{step_id}.outputs.uptodate }}}}"
+			step = self.add_step(
+				f"prepare_{one_kernel.aggregate_id}", f"Calculate the version and up-to-date-ness for kernel {one_kernel.aggregate_id}")
+			one_kernel.kernel_prepare_job_step = step  # @TODO: undeeded?
+			step.run = f'echo "fake kernel prepare: {one_kernel.aggregate_id}"\necho "uptodate=$((( RANDOM % 2 )) && echo -n "yes" || echo -n "no")" >> $GITHUB_OUTPUT'
+			one_kernel.kpjo_uptodate = self.add_job_output_from_step(step, "uptodate")
 
-		gha_job["steps"] = steps
-		gha_job["outputs"] = outputs
-		return gha_job
+
+class KernelBuildJob(BaseWorkflowJob):
+	def __init__(self, k_aggr: "KernelAggregator", kernel: MatrixKernel):
+		super().__init__(f"kernel-{kernel.aggregate_id}", f"Some kernel {kernel.aggregate_id}")
+		self.kernel = kernel
+		self.k_aggr = k_aggr
+
+		build_step = self.add_step(f"build_kernel_{kernel.aggregate_id}", f"Build Kernel {kernel.aggregate_id}")
+		build_step.run = f'echo "fake kernel: {kernel.aggregate_id}"'
+
+		uptodate_input = self.add_job_input_from_needed_job_output(kernel.kpjo_uptodate)
+		self.add_job_output_from_input("up-to-date", uptodate_input)
+
+		self.add_condition_from_input(uptodate_input, "== 'no'")

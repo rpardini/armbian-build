@@ -1,6 +1,7 @@
 import logging
 
 from matrixes.base import BaseAggregator, BaseMatrixAggregate
+from matrixes.gha import BaseWorkflowJob, WorkflowFactory
 from matrixes.input import MatrixInput
 from matrixes.kernel import MatrixKernel
 from matrixes.rootfs import MatrixRootFileSystemCLI
@@ -16,9 +17,9 @@ class ImageAggregator(BaseAggregator):
 		super().__init__(inputs)
 		self.images: list[MatrixImage] = [MatrixImage(entry.image_id(), entry, [entry], self) for entry in inputs]
 
-	def produce_gha_jobs(self, gha_jobs: dict[str, object]):
+	def produce_gha_jobs(self, wf: WorkflowFactory):
 		for image in self.images:
-			gha_jobs[image.gha_job_id()] = image.gha_job_definition()
+			wf.add_job(ImageBuildJob(self, image))
 
 
 class MatrixImage(BaseMatrixAggregate):
@@ -43,10 +44,6 @@ class MatrixImage(BaseMatrixAggregate):
 	def __str__(self) -> str:
 		return f'<Image id="{self.aggregate_id}" branch="{self.branch}" />'
 
-	def gha_job_id(self):
-		return f"image_cli_{self.board_id}-{self.branch}-{self.release}"  # @TODO desktops extensions etc
-		pass
-
 	def gha_job_definition(self):
 		gha_job = {"runs-on": ["self-hosted", "Linux", "armbian"]}
 		expression = f"needs.{self.ref_kernel.gha_job_id()}.outputs.up-to-date"
@@ -61,3 +58,20 @@ class MatrixImage(BaseMatrixAggregate):
 		if self.ref_root_fs_cli:
 			gha_job["needs"].append(self.ref_root_fs_cli.gha_job_id())
 		return gha_job
+
+
+class ImageBuildJob(BaseWorkflowJob):
+	def __init__(self, i_aggr: ImageAggregator, image: MatrixImage):
+		super().__init__(
+			f"image_cli_{image.board_id}-{image.branch}-{image.release}",
+			f"Image build for {image.board_id}-{image.branch}-{image.release}")
+		self.i_aggr: ImageAggregator = i_aggr
+		self.image: MatrixImage = image
+
+		# Depends on the Kernel job, if any
+		if self.image.ref_kernel:
+			self.needs.add(self.image.ref_kernel.kernel_job)
+
+		# Depends on the CLI rootfs job, if any
+		if self.image.ref_root_fs_cli:
+			self.needs.add(self.image.ref_root_fs_cli.rootfs_job)
