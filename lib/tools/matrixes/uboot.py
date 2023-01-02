@@ -27,6 +27,11 @@ class UBootAggregator(BaseAggregator):
 		#	gha_jobs[input.gha_job_id()] = input.gha_job_definition()
 		pass
 
+	def show_entries(self):
+		log.info(f"Parsed {len(self.u_boots)} u-boots")
+		for u_boot in self.u_boots:
+			log.info(f"{u_boot}")
+
 
 class MatrixUboot(BaseMatrixAggregate):
 

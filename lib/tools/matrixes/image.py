@@ -21,6 +21,11 @@ class ImageAggregator(BaseAggregator):
 		for image in self.images:
 			wf.add_job(ImageBuildJob(self, image))
 
+	def show_entries(self):
+		log.info(f"Parsed {len(self.images)} images")
+		for image in self.images:
+			log.info(f"{image}")
+
 
 class MatrixImage(BaseMatrixAggregate):
 

@@ -37,6 +37,11 @@ class RootFileSystemCLIAggregator(BaseAggregator):
 		for rootfs in self.rootfs_clis:
 			rootfs.rootfs_job = wf.add_job(RootfsBuildJob(self, rootfs))
 
+	def show_entries(self):
+		log.info(f"Parsed {len(self.rootfs_clis)} rootfs-cli")
+		for root_fs_cli in self.rootfs_clis:
+			log.info(f"{root_fs_cli}")
+
 
 class MatrixRootFileSystemCLI(BaseMatrixAggregate):
 

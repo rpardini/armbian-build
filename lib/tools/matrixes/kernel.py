@@ -29,6 +29,11 @@ class KernelAggregator(BaseAggregator):
 		for kernel in self.kernels:
 			kernel.kernel_job = wf.add_job(KernelBuildJob(self, kernel))
 
+	def show_entries(self):
+		log.info(f"Parsed {len(self.kernels)} kernels")
+		for kernel in self.kernels:
+			log.info(f"{kernel}")
+
 
 # @TODO: common publish-to-repo job for all kernels
 
