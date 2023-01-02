@@ -35,23 +35,10 @@ aggregator_kernel = KernelAggregator(inputs)
 aggregator_u_boot = UBootAggregator(inputs)
 aggregator_rootfs_cli = RootFileSystemCLIAggregator(inputs)
 aggregator_images = ImageAggregator(inputs)
-all_aggregators: list[BaseAggregator] = [aggregator_kernel, aggregator_u_boot, aggregator_rootfs_cli, aggregator_images]
+all_aggregators: list[BaseAggregator] = [aggregator_kernel, aggregator_rootfs_cli, aggregator_u_boot, aggregator_images]
 
-log.info(f"Parsed {len(aggregator_kernel.kernels)} kernels")
-for kernel in aggregator_kernel.kernels:
-	log.info(f"{kernel}")
-
-log.info(f"Parsed {len(aggregator_u_boot.u_boots)} u-boots")
-for u_boot in aggregator_u_boot.u_boots:
-	log.info(f"{u_boot}")
-
-log.info(f"Parsed {len(aggregator_rootfs_cli.rootfs_clis)} rootfs-cli")
-for root_fs_cli in aggregator_rootfs_cli.rootfs_clis:
-	log.info(f"{root_fs_cli}")
-
-log.info(f"Parsed {len(aggregator_images.images)} images")
-for image in aggregator_images.images:
-	log.info(f"{image}")
+for aggregator in all_aggregators:
+	aggregator.show_entries()
 
 wf = WorkflowFactory()
 for aggregator in all_aggregators:  # ordering important

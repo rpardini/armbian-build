@@ -32,4 +32,7 @@ class BaseAggregator:
 
 	def produce_gha_jobs(self, wf: WorkflowFactory):
 		log.warning(f"produce_gha_jobs not implemented for {self.__class__.__name__}")
+
+	def show_entries(self):
+		raise Exception(f"show_entries not implemented for {self.__class__.__name__}")
 # </Aggregators>
