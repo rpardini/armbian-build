@@ -20,7 +20,7 @@ WiP: meson64's with SPIDEV and I2C EE M3 the hard way (c4,vim3,vim3l,zero,n2-plu
  7 files changed, 167 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/amlogic/Makefile b/arch/arm64/boot/dts/amlogic/Makefile
-index a3be04fd53d3..606063c3204f 100644
+index 82374835e1c3..21af8cd206c8 100644
 --- a/arch/arm64/boot/dts/amlogic/Makefile
 +++ b/arch/arm64/boot/dts/amlogic/Makefile
 @@ -1,5 +1,11 @@
