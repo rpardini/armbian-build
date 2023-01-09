@@ -56,9 +56,9 @@ create_image_from_sdcard_rootfs() {
 		update_initramfs "$MOUNT"
 	}
 
-	# DEBUG: print free space
+	# DEBUG: print free space @TODO this needs work, grepping might not be ideal here
 	local freespace
-	freespace=$(LC_ALL=C df -h)
+	freespace=$(LC_ALL=C df -h || true) # don't break on failures
 	display_alert "Free SD cache" "$(echo "$freespace" | grep "${SDCARD}" | awk '{print $5}')" "info"
 	display_alert "Mount point" "$(echo "$freespace" | grep "${MOUNT}" | head -1 | awk '{print $5}')" "info"
 
