@@ -150,7 +150,8 @@ function display_alert() {
 	if [[ -f "${CURRENT_LOGFILE}" ]]; then
 		# If not asked to skip, or debugging is enabled, log to file.
 		if [[ ${skip_logfile} -lt 1 || "${DEBUG}" == "yes" ]]; then
-			echo -e "--> (${SECONDS}) ${level^^}: ${1} [ ${2} ]" >> "${CURRENT_LOGFILE}" # bash ^^ is "to upper case"
+			#echo -e "--> (${SECONDS}) ${level^^}: ${1} [ ${2} ]" >> "${CURRENT_LOGFILE}" # bash ^^ is "to upper case"
+			echo -e "--> (${SECONDS}) ${inline_logs_color}${level^^}${normal_color}: ${1} [ ${2} ]" >> "${CURRENT_LOGFILE}" # bash ^^ is "to upper case"
 		fi
 	fi
 

@@ -75,16 +75,19 @@ function export_ansi_logs() {
 
 	# Find and sort the files there, store in array one per logfile
 	declare -a logfiles_array
-	mapfile -t logfiles_array < <(find "${LOGDIR}" -type f | LC_ALL=C sort -h)
+	mapfile -t logfiles_array < <(find "${LOGDIR}" -type f | LC_ALL=C sort -h) # "human" sorting
 
+	declare logfile_full
 	for logfile_full in "${logfiles_array[@]}"; do
-		local logfile_base="$(basename "${logfile_full}")"
-		# skip if logfile_base ends in ".md"; those are handled in the markdown version of logs
-		[[ "${logfile_base}" =~ \.md$ ]] && continue
+		[[ ! -s "${logfile_full}" ]] && continue # skip empty files
+		declare logfile_base
+		logfile_base="$(basename "${logfile_full}")"
+		[[ ! "${logfile_base}" =~ \.log$ ]] && continue # only .log files; others should be in Markdown logs
+
 		cat <<- ANSI_ONE_LOGFILE >> "${target_file}"
-			## ${logfile_base}
+			$(echo -e -n "\e[0;32m")## ${logfile_base}$(echo -e -n "${normal_color}")
 			$(cat "${logfile_full}")
-			------------------------------------------------------------------------------------------------------------
+			$(echo -e -n "${gray_color}")------------------------------------------------------------------------------------------------------------$(echo -e -n "${normal_color}")
 		ANSI_ONE_LOGFILE
 	done
 
