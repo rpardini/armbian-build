@@ -137,7 +137,8 @@ function create_new_rootfs_cache() {
 	deploy_qemu_binary_to_chroot "${SDCARD}" # this is cleaned-up later by post_debootstrap_tweaks()
 
 	mkdir -p "${SDCARD}/usr/share/keyrings/"
-	run_host_command_logged cp -pv /usr/share/keyrings/*-archive-keyring.gpg "${SDCARD}/usr/share/keyrings/"
+	display_alert "NOT copying host's keyrings to" "target keyrings" "warn" # @TODO: remove once proved working without
+	# run_host_command_logged cp -pv /usr/share/keyrings/*-archive-keyring.gpg "${SDCARD}/usr/share/keyrings/"
 
 	display_alert "Installing base system" "Stage 2/2" "info"
 	export if_error_detail_message="Debootstrap second stage failed ${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED} ${DESKTOP_ENVIRONMENT} ${BUILD_MINIMAL}"
