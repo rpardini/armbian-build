@@ -331,6 +331,11 @@ function do_extra_configuration() {
 		fi
 	fi
 
+	if [[ "${ARCH}" == "riscv64" ]] && [[ $DISTRIBUTION == Debian ]]; then
+		DEBIAN_MIRROR='deb.debian.org/debian-ports'
+		DEBOOTSTRAP_OPTION="--keyring /usr/share/keyrings/debian-ports-archive-keyring.gpg --include=debian-ports-archive-keyring"
+	fi
+
 	# Control aria2c's usage of ipv6.
 	[[ -z $DISABLE_IPV6 ]] && DISABLE_IPV6="true"
 
