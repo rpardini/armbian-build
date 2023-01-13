@@ -9,6 +9,9 @@ function early_prepare_pip3_dependencies_for_python_tools() {
 }
 
 function prepare_pip_packages_for_python_tools() {
+	# @TODO: when running with sudo:
+	# WARNING: The directory '/home/human/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+	
 	early_prepare_pip3_dependencies_for_python_tools
 
 	declare -g PYTHON_TOOLS_PIP_PACKAGES_DONE="${PYTHON_TOOLS_PIP_PACKAGES_DONE:-no}"
