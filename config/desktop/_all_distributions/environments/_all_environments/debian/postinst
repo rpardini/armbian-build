@@ -2,6 +2,9 @@
 # copy skel to all local users, fix permission and add sudoers for profile sync daemon
 #
 
+# this is grotesque and included in all desktops
+if ! true; then
+
 while IFS=':' read -r login pass uid gid uname homedir comment; do
 
 	if [ "$gid" -ge 1000 ] && [ "$gid" -lt "60000" ]; then
@@ -31,5 +34,7 @@ systemctl --user start psd.service || true >/dev/null 2>&1
 # gnome logo hack
 #
 
-cp /usr/share/pixmaps/armbian/armbian.png /usr/share/pixmaps/ubuntu-logo-icon.png
-cp /usr/share/pixmaps/armbian/armbian.png /usr/share/pixmaps/ubuntu-logo-dark.png
+cp -v /usr/share/pixmaps/armbian/armbian.png /usr/share/pixmaps/ubuntu-logo-icon.png
+cp -v /usr/share/pixmaps/armbian/armbian.png /usr/share/pixmaps/ubuntu-logo-dark.png
+
+fi
