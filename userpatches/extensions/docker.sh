@@ -15,7 +15,7 @@ function pre_customize_image__add_docker_to_image() {
 	run_host_command_logged echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu ${RELEASE} stable" "|" tee "${SDCARD}"/etc/apt/sources.list.d/docker.list
 
 	display_alert "Updating package lists with Docker Inc. repos" "${EXTENSION}" "info"
-	chroot_sdcard_apt_get update
+	do_with_retries 3 chroot_sdcard_apt_get_update
 
 	display_alert "Installing Docker Inc. packages" "${EXTENSION}: 'docker-ce' et al" "info"
 	chroot_sdcard_apt_get_install docker-ce docker-ce-cli containerd.io docker-compose-plugin
