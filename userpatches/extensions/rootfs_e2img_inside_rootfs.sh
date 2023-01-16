@@ -81,7 +81,7 @@ config_post_umount_final_image__800_rootfs_e2img_inside_rootfs() {
 post_build_image__800_export_e2img_rootfs() {
 	if [[ "${ROOTFS_IN_ROOTFS_EXPORT_ONLY}" == "yes" ]]; then
 		display_alert "Exporting e2img" "${DESTIMG}/${version}.e2img" "info"
-		mv "${SRC}"/.tmp/rootfs.ext4.e2img "${DESTIMG}/${version}.e2img"
+		mv "${SRC}"/.tmp/rootfs.ext4.e2img "${DESTIMG}/${version}.e2img" # @TODO: don't use .tmp directly
 		sync
 	fi
 }
