@@ -1,0 +1,631 @@
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH v3 1/9] dt-bindings: usb: Add device id for Genesys Logic hub controller
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Sat, 21 Jan 2023 17:56:29 +0000
+Message-Id: <20230121175639.12818-2-linux.amoon@gmail.com>
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rob Herring <robh+dt@kernel.org>, Krzysztof Kozlowski <krzysztof.kozlowski+dt@linaro.org>, Icenowy Zheng <uwu@icenowy.me>
+Cc: linux-amlogic@lists.infradead.org, Matthias Kaehlcke <mka@chromium.org>, Alexander Stein <alexander.stein@ew.tq-group.com>, Johan Hovold <johan@kernel.org>, Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>, linux-usb@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20230121175639.12818-1-linux.amoon@gmail.com>
+References: <20230121175639.12818-1-linux.amoon@gmail.com>
+List-Id: <linux-usb.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Add usb hub device id for Genesys Logic, Inc. GL852G Hub USB 2.0
+root hub.
+
+Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+---
+v3: - add Ack of Krzysztof
+v2: - drop the vendor name from compatible string.
+    - drop the -OTG and -QFN76 suffix from commit message.
+    - drop the GL3523 USB 3.1 root hub device id.
+---
+ Documentation/devicetree/bindings/usb/genesys,gl850g.yaml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/usb/genesys,gl850g.yaml b/Documentation/devicetree/bindings/usb/genesys,gl850g.yaml
+index a9f831448cca..cc4cf92b70d1 100644
+--- a/Documentation/devicetree/bindings/usb/genesys,gl850g.yaml
++++ b/Documentation/devicetree/bindings/usb/genesys,gl850g.yaml
+@@ -16,6 +16,7 @@ properties:
+   compatible:
+     enum:
+       - usb5e3,608
++      - usb5e3,610
+ 
+   reg: true
+ 
+-- 
+2.38.1
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH v3 2/9] ARM: dts: amlogic: Used onboard usb hub reset on odroid c1
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Sat, 21 Jan 2023 17:56:30 +0000
+Message-Id: <20230121175639.12818-3-linux.amoon@gmail.com>
+To: Rob Herring <robh+dt@kernel.org>, Krzysztof Kozlowski <krzysztof.kozlowski+dt@linaro.org>, Neil Armstrong <neil.armstrong@linaro.org>, Kevin Hilman <khilman@baylibre.com>, Jerome Brunet <jbrunet@baylibre.com>, Martin Blumenstingl <martin.blumenstingl@googlemail.com>
+Cc: linux-amlogic@lists.infradead.org, Matthias Kaehlcke <mka@chromium.org>, Alexander Stein <alexander.stein@ew.tq-group.com>, Johan Hovold <johan@kernel.org>, devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20230121175639.12818-1-linux.amoon@gmail.com>
+References: <20230121175639.12818-1-linux.amoon@gmail.com>
+List-Id: <linux-kernel.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+On Odroid c1 previously use gpio-hog to reset the usb hub,
+switch to used on board usb hub reset to enable the usb hub
+and enable power to usb hub.
+
+Add usb hub regulator as per the schematic.
+
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+---
+v3 - Add Rev by Neil.
+     update the subject with odroid C1
+     dropped dr_mode
+v2 - drop the vendor name from compatible string.
+   - move the hub node to USB controller node.
+   - drop the usb_otg_pwr since it only liked to OTG port
+     and link p5v0 to the vdd-supply.
+---
+ arch/arm/boot/dts/meson8b-odroidc1.dts | 23 ++++++++++-------------
+ 1 file changed, 10 insertions(+), 13 deletions(-)
+
+diff --git a/arch/arm/boot/dts/meson8b-odroidc1.dts b/arch/arm/boot/dts/meson8b-odroidc1.dts
+index 04356bc639fa..04c4bdca0b85 100644
+--- a/arch/arm/boot/dts/meson8b-odroidc1.dts
++++ b/arch/arm/boot/dts/meson8b-odroidc1.dts
+@@ -281,19 +281,6 @@ &gpio_ao {
+ 			  "J7 Header Pin 6", "J7 Header Pin 5",
+ 			  "J7 Header Pin 7", "HDMI_CEC",
+ 			  "SYS_LED", "", "";
+-
+-	/*
+-	 * WARNING: The USB Hub on the Odroid-C1/C1+ needs a reset signal
+-	 * to be turned high in order to be detected by the USB Controller.
+-	 * This signal should be handled by a USB specific power sequence
+-	 * in order to reset the Hub when USB bus is powered down.
+-	 */
+-	usb-hub {
+-		gpio-hog;
+-		gpios = <GPIOAO_4 GPIO_ACTIVE_HIGH>;
+-		output-high;
+-		line-name = "usb-hub-reset";
+-	};
+ };
+ 
+ &ir_receiver {
+@@ -381,5 +368,15 @@ &usb1_phy {
+ };
+ 
+ &usb1 {
++	#address-cells = <1>;
++	#size-cells = <0>;
+ 	status = "okay";
++
++	hub@1 {
++		/* Genesys Logic GL852G usb hub */
++		compatible = "usb5e3,610";
++		reg = <1>;
++		vdd-supply = <&p5v0>;
++		reset-gpio = <&gpio_ao GPIOAO_4 GPIO_ACTIVE_LOW>;
++	};
+ };
+-- 
+2.38.1
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH v3 3/9] arm64: dts: amlogic: Used onboard usb hub reset on odroid c2
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Sat, 21 Jan 2023 17:56:31 +0000
+Message-Id: <20230121175639.12818-4-linux.amoon@gmail.com>
+To: Rob Herring <robh+dt@kernel.org>, Krzysztof Kozlowski <krzysztof.kozlowski+dt@linaro.org>, Neil Armstrong <neil.armstrong@linaro.org>, Kevin Hilman <khilman@baylibre.com>, Jerome Brunet <jbrunet@baylibre.com>, Martin Blumenstingl <martin.blumenstingl@googlemail.com>
+Cc: linux-amlogic@lists.infradead.org, Matthias Kaehlcke <mka@chromium.org>, Alexander Stein <alexander.stein@ew.tq-group.com>, Johan Hovold <johan@kernel.org>, devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20230121175639.12818-1-linux.amoon@gmail.com>
+References: <20230121175639.12818-1-linux.amoon@gmail.com>
+List-Id: <linux-kernel.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+On Odroid c2 previously use gpio-hog to reset the usb hub,
+switch to used on-board usb hub reset to enable the usb hub
+and enable power to hub.
+
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+---
+v3 - Add rev by Neil.
+     droped dr_mode
+v2 - drop the vendor name from compatible string.
+   - move the hub node to USB controller node.
+   - drop the usb_otg_pwr since it only liked to OTG port
+         and link p5v0 to the vdd-supply.
+---
+ .../boot/dts/amlogic/meson-gxbb-odroidc2.dts  | 25 ++++++++-----------
+ 1 file changed, 10 insertions(+), 15 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts
+index 201596247fd9..70b10934a811 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-gxbb-odroidc2.dts
+@@ -250,21 +250,6 @@ eth_phy0: ethernet-phy@0 {
+ 	};
+ };
+ 
+-&gpio_ao {
+-	/*
+-	 * WARNING: The USB Hub on the Odroid-C2 needs a reset signal
+-	 * to be turned high in order to be detected by the USB Controller
+-	 * This signal should be handled by a USB specific power sequence
+-	 * in order to reset the Hub when USB bus is powered down.
+-	 */
+-	hog-0 {
+-		gpio-hog;
+-		gpios = <GPIOAO_4 GPIO_ACTIVE_HIGH>;
+-		output-high;
+-		line-name = "usb-hub-reset";
+-	};
+-};
+-
+ &hdmi_tx {
+ 	status = "okay";
+ 	pinctrl-0 = <&hdmi_hpd_pins>, <&hdmi_i2c_pins>;
+@@ -414,5 +399,15 @@ &usb0 {
+ };
+ 
+ &usb1 {
++	#address-cells = <1>;
++	#size-cells = <0>;
+ 	status = "okay";
++
++	hub@1 {
++		/* Genesys Logic GL852G USB 2.0 hub */
++		compatible = "usb5e3,610";
++		reg = <1>;
++		vdd-supply = <&p5v0>;
++		reset-gpio = <&gpio_ao GPIOAO_4 GPIO_ACTIVE_LOW>;
++	};
+ };
+-- 
+2.38.1
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH v3 4/9] usb: misc: onboard_usb_hub: add Genesys Logic GL852G hub support
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Sat, 21 Jan 2023 17:56:32 +0000
+Message-Id: <20230121175639.12818-5-linux.amoon@gmail.com>
+To: Matthias Kaehlcke <mka@chromium.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: linux-amlogic@lists.infradead.org, Alexander Stein <alexander.stein@ew.tq-group.com>, Johan Hovold <johan@kernel.org>, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20230121175639.12818-1-linux.amoon@gmail.com>
+References: <20230121175639.12818-1-linux.amoon@gmail.com>
+List-Id: <linux-usb.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Genesys Logic GL852G is a 4-port USB 2.0 STT hub that has a reset pin to
+toggle and a 5.0V core supply exported though an integrated LDO is
+available for powering it.
+
+Add the support for this hub, for controlling the reset pin and the core
+power supply.
+
+Acked-by: Matthias Kaehlcke <mka@chromium.org>
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+---
+v3: - Add Ack Matthias
+v2: - fix the compatible string
+    - drop the -OHG suffix from commit message.
+    - Add reset delay.
+---
+ drivers/usb/misc/onboard_usb_hub.c | 1 +
+ drivers/usb/misc/onboard_usb_hub.h | 5 +++++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/drivers/usb/misc/onboard_usb_hub.c b/drivers/usb/misc/onboard_usb_hub.c
+index 94e7966e199d..9bf59792fb94 100644
+--- a/drivers/usb/misc/onboard_usb_hub.c
++++ b/drivers/usb/misc/onboard_usb_hub.c
+@@ -409,6 +409,7 @@ static void onboard_hub_usbdev_disconnect(struct usb_device *udev)
+ 
+ static const struct usb_device_id onboard_hub_id_table[] = {
+ 	{ USB_DEVICE(VENDOR_ID_GENESYS, 0x0608) }, /* Genesys Logic GL850G USB 2.0 */
++	{ USB_DEVICE(VENDOR_ID_GENESYS, 0x0610) }, /* Genesys Logic GL852G USB 2.0 */
+ 	{ USB_DEVICE(VENDOR_ID_MICROCHIP, 0x2514) }, /* USB2514B USB 2.0 */
+ 	{ USB_DEVICE(VENDOR_ID_REALTEK, 0x0411) }, /* RTS5411 USB 3.1 */
+ 	{ USB_DEVICE(VENDOR_ID_REALTEK, 0x5411) }, /* RTS5411 USB 2.1 */
+diff --git a/drivers/usb/misc/onboard_usb_hub.h b/drivers/usb/misc/onboard_usb_hub.h
+index 62129a6a1ba5..163fc07abf25 100644
+--- a/drivers/usb/misc/onboard_usb_hub.h
++++ b/drivers/usb/misc/onboard_usb_hub.h
+@@ -26,11 +26,16 @@ static const struct onboard_hub_pdata genesys_gl850g_data = {
+ 	.reset_us = 3,
+ };
+ 
++static const struct onboard_hub_pdata genesys_gl852g_data = {
++	.reset_us = 50,
++};
++
+ static const struct of_device_id onboard_hub_match[] = {
+ 	{ .compatible = "usb424,2514", .data = &microchip_usb424_data, },
+ 	{ .compatible = "usb451,8140", .data = &ti_tusb8041_data, },
+ 	{ .compatible = "usb451,8142", .data = &ti_tusb8041_data, },
+ 	{ .compatible = "usb5e3,608", .data = &genesys_gl850g_data, },
++	{ .compatible = "usb5e3,610", .data = &genesys_gl852g_data, },
+ 	{ .compatible = "usbbda,411", .data = &realtek_rts5411_data, },
+ 	{ .compatible = "usbbda,5411", .data = &realtek_rts5411_data, },
+ 	{ .compatible = "usbbda,414", .data = &realtek_rts5411_data, },
+-- 
+2.38.1
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH v3 5/9] vendor-prefixes: Add VIA Labs, Inc.
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Sat, 21 Jan 2023 17:56:33 +0000
+Message-Id: <20230121175639.12818-6-linux.amoon@gmail.com>
+To: Rob Herring <robh+dt@kernel.org>, Krzysztof Kozlowski <krzysztof.kozlowski+dt@linaro.org>
+Cc: linux-amlogic@lists.infradead.org, Matthias Kaehlcke <mka@chromium.org>, Alexander Stein <alexander.stein@ew.tq-group.com>, Johan Hovold <johan@kernel.org>, Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>, Rob Herring <robh@kernel.org>, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20230121175639.12818-1-linux.amoon@gmail.com>
+References: <20230121175639.12818-1-linux.amoon@gmail.com>
+List-Id: <linux-kernel.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Add the vendor prefix for VIA Labs, Inc. (VLI) is a supplier
+of USB and USB Power Delivery controllers for multi-functional devices
+and platforms.
+
+Website: https://www.via-labs.com/
+
+Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+---
+v3: - None
+V2: - drop Drop marketing, so without "leading".
+    - add Ack of Krzysztof
+---
+ Documentation/devicetree/bindings/vendor-prefixes.yaml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/vendor-prefixes.yaml b/Documentation/devicetree/bindings/vendor-prefixes.yaml
+index 70ffb3780621..d19b7f9cef4c 100644
+--- a/Documentation/devicetree/bindings/vendor-prefixes.yaml
++++ b/Documentation/devicetree/bindings/vendor-prefixes.yaml
+@@ -1398,6 +1398,8 @@ patternProperties:
+     description: Vertexcom Technologies, Inc.
+   "^via,.*":
+     description: VIA Technologies, Inc.
++  "^vialab,.*":
++    description: VIA Labs, Inc.
+   "^vicor,.*":
+     description: Vicor Corporation
+   "^videostrong,.*":
+-- 
+2.38.1
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH v3 6/9] dt-bindings: usb: Add Via lab VL817 hub
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Sat, 21 Jan 2023 17:56:34 +0000
+Message-Id: <20230121175639.12818-7-linux.amoon@gmail.com>
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rob Herring <robh+dt@kernel.org>, Krzysztof Kozlowski <krzysztof.kozlowski+dt@linaro.org>
+Cc: linux-amlogic@lists.infradead.org, Matthias Kaehlcke <mka@chromium.org>, Alexander Stein <alexander.stein@ew.tq-group.com>, Johan Hovold <johan@kernel.org>, linux-usb@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20230121175639.12818-1-linux.amoon@gmail.com>
+References: <20230121175639.12818-1-linux.amoon@gmail.com>
+List-Id: <linux-usb.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+The VIA Lab VL817 is a USB 3.1 Gen 1 hub and USB 2.0 hub
+controller that features 4 downstream ports and 1 otg, with
+an internal 5V regulator and has external reset pin.
+
+Add a device tree binding for its USB protocol part.
+The internal LDO is not covered by this and can just be modelled
+as a fixed regulator.
+
+Add combo of USB 2.0 and USB 3.0 root hub using peer-hub.
+
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+Reviewed-by: Krzysztof Kozlowski <krzysztof.kozlowski@linaro.org>
+---
+v3 - address review coments - Krzysztof
+     dropped dr_mode
+v2 - fix the compatible string and fix the $id
+   - update the commit message.
+   - update the example for use peer-hub node because it
+     combo of USB 2.0 and USB 3.0 hub.
+   - rename the yaml file from vialab,vl817q7.yaml to vialab,vl817.yaml
+     as q7 suffix is ued for USB 3.1 and q5 suffix is used for USB 2.0.
+---
+ .../devicetree/bindings/usb/vialab,vl817.yaml | 71 +++++++++++++++++++
+ 1 file changed, 71 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/usb/vialab,vl817.yaml
+
+diff --git a/Documentation/devicetree/bindings/usb/vialab,vl817.yaml b/Documentation/devicetree/bindings/usb/vialab,vl817.yaml
+new file mode 100644
+index 000000000000..23a13e1d5c7a
+--- /dev/null
++++ b/Documentation/devicetree/bindings/usb/vialab,vl817.yaml
+@@ -0,0 +1,71 @@
++# SPDX-License-Identifier: GPL-2.0-only or BSD-2-Clause
++%YAML 1.2
++---
++$id: http://devicetree.org/schemas/usb/vialab,vl817.yaml#
++$schema: http://devicetree.org/meta-schemas/core.yaml#
++
++title: Via labs VL817 USB 3.1 hub controller
++
++maintainers:
++  - Anand Moon <linux.amoon@gmail.com>
++
++allOf:
++  - $ref: usb-device.yaml#
++
++properties:
++  compatible:
++    enum:
++      - usb2109,2817
++      - usb2109,817
++
++  reg: true
++
++  reset-gpios:
++    maxItems: 1
++    description:
++      GPIO controlling the RESET# pin.
++
++  vdd-supply:
++    description:
++      phandle to the regulator that provides power to the hub.
++
++  peer-hub:
++    $ref: /schemas/types.yaml#/definitions/phandle
++    description:
++      phandle to the peer hub on the controller.
++
++required:
++  - compatible
++  - reg
++  - reset-gpios
++  - vdd-supply
++  - peer-hub
++
++additionalProperties: false
++
++examples:
++  - |
++    #include <dt-bindings/gpio/gpio.h>
++
++    usb {
++        #address-cells = <1>;
++        #size-cells = <0>;
++
++        /* 2.0 hub on port 1 */
++        hub_2_0: hub@1 {
++            compatible = "usb2109,2817";
++            reg = <1>;
++            vdd-supply = <&vcc_5v>;
++            peer-hub = <&hub_3_0>;
++            reset-gpios = <&gpio 20 GPIO_ACTIVE_LOW>;
++        };
++
++        /* 3.1 hub on port 4 */
++        hub_3_0: hub@2 {
++            compatible = "usb2109,817";
++            reg = <2>;
++            vdd-supply = <&vcc_5v>;
++            peer-hub = <&hub_2_0>;
++            reset-gpios = <&gpio 20 GPIO_ACTIVE_LOW>;
++        };
++    };
+-- 
+2.38.1
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH v3 7/9] arm64: dts: amlogic: Used onboard usb hub reset on odroid c4
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Sat, 21 Jan 2023 17:56:35 +0000
+Message-Id: <20230121175639.12818-8-linux.amoon@gmail.com>
+To: Rob Herring <robh+dt@kernel.org>, Krzysztof Kozlowski <krzysztof.kozlowski+dt@linaro.org>, Neil Armstrong <neil.armstrong@linaro.org>, Kevin Hilman <khilman@baylibre.com>, Jerome Brunet <jbrunet@baylibre.com>, Martin Blumenstingl <martin.blumenstingl@googlemail.com>
+Cc: linux-amlogic@lists.infradead.org, Matthias Kaehlcke <mka@chromium.org>, Alexander Stein <alexander.stein@ew.tq-group.com>, Johan Hovold <johan@kernel.org>, devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20230121175639.12818-1-linux.amoon@gmail.com>
+References: <20230121175639.12818-1-linux.amoon@gmail.com>
+List-Id: <linux-kernel.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+On Odroid c4 previously use gpio-hog to reset the usb hub,
+switch to used on-board usb hub reset to enable the usb hub
+and enable power to hub.
+
+USB hub is combination of USB 2.0 and USB 3.0 root hub so
+use peer-hub node to link then.
+
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+---
+v3: - move the usb hub under dwc3 node.
+      dropped dr_mode
+v2: - fix the compatible string.
+    - Fix the hub node to use peer-hub to link the usb 2.0 and usb 3.0.
+---
+ .../boot/dts/amlogic/meson-sm1-odroid-c4.dts  | 33 ++++++++++++-------
+ 1 file changed, 21 insertions(+), 12 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-sm1-odroid-c4.dts b/arch/arm64/boot/dts/amlogic/meson-sm1-odroid-c4.dts
+index 8c30ce63686e..a988015dd2d5 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-sm1-odroid-c4.dts
++++ b/arch/arm64/boot/dts/amlogic/meson-sm1-odroid-c4.dts
+@@ -28,18 +28,27 @@ sound {
+ 	};
+ };
+ 
+-&gpio {
+-	/*
+-	 * WARNING: The USB Hub on the Odroid-C4 needs a reset signal
+-	 * to be turned high in order to be detected by the USB Controller
+-	 * This signal should be handled by a USB specific power sequence
+-	 * in order to reset the Hub when USB bus is powered down.
+-	 */
+-	hog-0 {
+-		gpio-hog;
+-		gpios = <GPIOH_4 GPIO_ACTIVE_HIGH>;
+-		output-high;
+-		line-name = "usb-hub-reset";
++&dwc3 {
++	/* USB hub supports both USB 2.0 and USB 3.0 root hub */
++	#address-cells = <1>;
++	#size-cells = <0>;
++
++	/* 2.0 hub on port 1 */
++	hub_2_0: hub@1 {
++		compatible = "usb2109,2817";
++		reg = <1>;
++		peer-hub = <&hub_3_0>;
++		reset-gpios = <&gpio GPIOH_4 GPIO_ACTIVE_LOW>;
++		vdd-supply = <&vcc_5v>;
++	};
++
++	/* 3.1 hub on port 4 */
++	hub_3_0: hub@2 {
++		compatible = "usb2109,817";
++		reg = <2>;
++		peer-hub = <&hub_2_0>;
++		reset-gpios = <&gpio GPIOH_4 GPIO_ACTIVE_LOW>;
++		vdd-supply = <&vcc_5v>;
+ 	};
+ };
+ 
+-- 
+2.38.1
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH v3 8/9] usb: misc: onboard_usb_hub: add VIA LAB VL817 hub support
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Sat, 21 Jan 2023 17:56:36 +0000
+Message-Id: <20230121175639.12818-9-linux.amoon@gmail.com>
+To: Matthias Kaehlcke <mka@chromium.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: linux-amlogic@lists.infradead.org, Alexander Stein <alexander.stein@ew.tq-group.com>, Johan Hovold <johan@kernel.org>, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20230121175639.12818-1-linux.amoon@gmail.com>
+References: <20230121175639.12818-1-linux.amoon@gmail.com>
+List-Id: <linux-usb.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+VIA LAB VL817 is a 4-port USB 3.1 hub and USB 2.0 root hub
+that has a reset pin to toggle and a 5.0V core supply exported
+though an integrated LDO is available for powering it.
+
+Add the support for this hub, for controlling the reset pin and
+the core power supply.
+
+Add USB device id's for USB 2.0 and USB 3.0 root hub.
+
+Acked-by: Matthias Kaehlcke <mka@chromium.org>
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+---
+v3 - Add ack Matthias
+v2 - fix the compatible string and update the commit message
+   - update the USB device id for USB 3.0 and USB 2.0 root hub.
+---
+ drivers/usb/misc/onboard_usb_hub.c | 3 +++
+ drivers/usb/misc/onboard_usb_hub.h | 6 ++++++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/drivers/usb/misc/onboard_usb_hub.c b/drivers/usb/misc/onboard_usb_hub.c
+index 9bf59792fb94..945d4e7125ea 100644
+--- a/drivers/usb/misc/onboard_usb_hub.c
++++ b/drivers/usb/misc/onboard_usb_hub.c
+@@ -335,6 +335,7 @@ static struct platform_driver onboard_hub_driver = {
+ #define VENDOR_ID_MICROCHIP	0x0424
+ #define VENDOR_ID_REALTEK	0x0bda
+ #define VENDOR_ID_TI		0x0451
++#define VENDOR_ID_VIA		0x2109
+ 
+ /*
+  * Returns the onboard_hub platform device that is associated with the USB
+@@ -417,6 +418,8 @@ static const struct usb_device_id onboard_hub_id_table[] = {
+ 	{ USB_DEVICE(VENDOR_ID_REALTEK, 0x5414) }, /* RTS5414 USB 2.1 */
+ 	{ USB_DEVICE(VENDOR_ID_TI, 0x8140) }, /* TI USB8041 3.0 */
+ 	{ USB_DEVICE(VENDOR_ID_TI, 0x8142) }, /* TI USB8041 2.0 */
++	{ USB_DEVICE(VENDOR_ID_VIA, 0x0817) }, /* VIA VL817 3.1 */
++	{ USB_DEVICE(VENDOR_ID_VIA, 0x2817) }, /* VIA VL817 2.0 */
+ 	{}
+ };
+ MODULE_DEVICE_TABLE(usb, onboard_hub_id_table);
+diff --git a/drivers/usb/misc/onboard_usb_hub.h b/drivers/usb/misc/onboard_usb_hub.h
+index 163fc07abf25..0a943a154649 100644
+--- a/drivers/usb/misc/onboard_usb_hub.h
++++ b/drivers/usb/misc/onboard_usb_hub.h
+@@ -30,6 +30,10 @@ static const struct onboard_hub_pdata genesys_gl852g_data = {
+ 	.reset_us = 50,
+ };
+ 
++static const struct onboard_hub_pdata vialab_vl817_data = {
++	.reset_us = 10,
++};
++
+ static const struct of_device_id onboard_hub_match[] = {
+ 	{ .compatible = "usb424,2514", .data = &microchip_usb424_data, },
+ 	{ .compatible = "usb451,8140", .data = &ti_tusb8041_data, },
+@@ -40,6 +44,8 @@ static const struct of_device_id onboard_hub_match[] = {
+ 	{ .compatible = "usbbda,5411", .data = &realtek_rts5411_data, },
+ 	{ .compatible = "usbbda,414", .data = &realtek_rts5411_data, },
+ 	{ .compatible = "usbbda,5414", .data = &realtek_rts5411_data, },
++	{ .compatible = "usb2109,817", .data = &vialab_vl817_data, },
++	{ .compatible = "usb2109,2817", .data = &vialab_vl817_data, },
+ 	{}
+ };
+ 
+-- 
+2.38.1
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH v3 9/9] arm64: defconfig: Enable USB onboard HUB driver
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Sat, 21 Jan 2023 17:56:37 +0000
+Message-Id: <20230121175639.12818-10-linux.amoon@gmail.com>
+To: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will@kernel.org>
+Cc: linux-amlogic@lists.infradead.org, Matthias Kaehlcke <mka@chromium.org>, Alexander Stein <alexander.stein@ew.tq-group.com>, Johan Hovold <johan@kernel.org>, Neil Armstrong <neil.armstrong@linaro.org>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20230121175639.12818-1-linux.amoon@gmail.com>
+References: <20230121175639.12818-1-linux.amoon@gmail.com>
+List-Id: <linux-kernel.vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Enable the USB onboard HUB driver, used on Amlogic boards.
+
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+---
+v3: add rev Neil
+v2: none
+---
+ arch/arm64/configs/defconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/configs/defconfig b/arch/arm64/configs/defconfig
+index 851e8f9be06d..42c3528a2473 100644
+--- a/arch/arm64/configs/defconfig
++++ b/arch/arm64/configs/defconfig
+@@ -923,6 +923,7 @@ CONFIG_USB_SERIAL_CP210X=m
+ CONFIG_USB_SERIAL_FTDI_SIO=m
+ CONFIG_USB_SERIAL_OPTION=m
+ CONFIG_USB_HSIC_USB3503=y
++CONFIG_USB_ONBOARD_HUB=m
+ CONFIG_NOP_USB_XCEIV=y
+ CONFIG_USB_GADGET=y
+ CONFIG_USB_RENESAS_USBHS_UDC=m
+-- 
+2.38.1
+
