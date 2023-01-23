@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-compile_atf() {
+
+function compile_atf() {
 	if [[ -n "${ATFSOURCE}" && "${ATFSOURCE}" != "none" ]]; then
 		display_alert "Downloading sources" "atf" "git"
 		fetch_from_repo "$ATFSOURCE" "$ATFDIR" "$ATFBRANCH" "yes"
@@ -72,8 +73,12 @@ compile_atf() {
 	# @TODO: severely missing logging
 	[[ $(type -t atf_custom_postprocess) == function ]] && atf_custom_postprocess 2>&1
 
-	atftempdir=$(mktemp -d) # subject to TMPDIR/WORKDIR, so is protected by single/common error trapmanager to clean-up.
-	chmod 700 ${atftempdir}
+	# @TODO: gotcha... this is not a tempdir like the others, it's used by u-boot!
+	atftempdir="$(mktemp -d)" # subject to TMPDIR/WORKDIR, so is protected by single/common error trapmanager to clean-up.
+	chmod 700 "${atftempdir}"
+
+	#declare cleanup_id="" atftempdir=""
+	#prepare_temp_dir_in_workdir_and_schedule_cleanup "deb-firmware${FULL}" cleanup_id atftempdir # namerefs
 
 	# copy files to temp directory
 	for f in $target_files; do
