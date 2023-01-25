@@ -1,5 +1,6 @@
 function cli_patch_kernel_pre_run() {
 	declare -g ARMBIAN_COMMAND_REQUIRE_BASIC_DEPS="yes" # Require prepare_host_basic to run before the command.
+	declare -g DOCKER_PASS_SSH_AGENT="yes"              # Pass SSH agent to docker
 
 	# "gimme root on a Linux machine"
 	cli_standard_relaunch_docker_or_sudo
@@ -34,7 +35,7 @@ function cli_patch_kernel_run() {
 		"kernel-${LINUXFAMILY}-${KERNEL_MAJOR_MINOR}:${target_branch}")
 
 	# Prepare the host and build kernel; without using standard build
-	prepare_host # This handles its own logging sections, and is possibly interactive.
+	prepare_host   # This handles its own logging sections, and is possibly interactive.
 	compile_kernel # This handles its own logging sections.
 
 	display_alert "Done patching kernel" "${BRANCH} - ${LINUXFAMILY} - ${KERNEL_MAJOR_MINOR}" "cachehit"
