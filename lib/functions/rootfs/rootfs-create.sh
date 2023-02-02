@@ -118,12 +118,13 @@ function create_new_rootfs_cache_via_debootstrap() {
 	chroot_sdcard LC_ALL=C LANG=C locale-gen "${DEST_LANG}"
 	chroot_sdcard LC_ALL=C LANG=C update-locale "LANG=${DEST_LANG}" "LANGUAGE=${DEST_LANG}" "LC_MESSAGES=${DEST_LANG}"
 
-	if [[ -f $SDCARD/etc/default/console-setup ]]; then
-		# @TODO: Should be configurable.
-		sed -e 's/CHARMAP=.*/CHARMAP="UTF-8"/' -e 's/FONTSIZE=.*/FONTSIZE="8x16"/' \
-			-e 's/CODESET=.*/CODESET="guess"/' -i "$SDCARD/etc/default/console-setup"
-		chroot_sdcard LC_ALL=C LANG=C setupcon --save --force
-	fi
+	# if [[ -f $SDCARD/etc/default/console-setup ]]; then
+	# 	# @TODO: Should be configurable.
+	# 	sed -e 's/CHARMAP=.*/CHARMAP="UTF-8"/' -e 's/FONTSIZE=.*/FONTSIZE="8x16"/' \
+	# 		-e 's/CODESET=.*/CODESET="guess"/' -i "$SDCARD/etc/default/console-setup"
+	# 	# note: if we run "chroot_sdcard LC_ALL=C LANG=C setupcon --save --force" here, job is half done and fails on first boot.
+	# 	# just configure it, and let the systemd service do its job.
+	# fi
 
 	# stage: create apt-get sources list (basic Debian/Ubuntu apt sources, no external nor PPAS)
 	create_sources_list "$RELEASE" "$SDCARD/"
