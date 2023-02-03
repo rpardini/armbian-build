@@ -100,6 +100,8 @@ function oras_push_artifact_file() {
 		extra_params+=("--plain-http")
 	fi
 
+	extra_params+=("--annotation" "org.opencontainers.image.description=some description")
+
 	# make sure file exists
 	if [[ ! -f "${upload_file}" ]]; then
 		display_alert "File not found: ${upload_file}" "ORAS upload" "err"
