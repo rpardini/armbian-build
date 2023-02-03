@@ -50,6 +50,7 @@ function initialize_artifact() {
 }
 
 function obtain_complete_artifact() {
+	declare -g artifact_name="undetermined"
 	declare -g artifact_version="undetermined"
 	declare -g artifact_version_reason="undetermined"
 	declare -g artifact_final_file="undetermined"
@@ -60,6 +61,7 @@ function obtain_complete_artifact() {
 	[[ "x${REVISION}x" == "xx" ]] && exit_with_error "REVISION is not set"
 
 	artifact_prepare_version
+	debug_var artifact_name
 	debug_var artifact_version
 	debug_var artifact_version_reason
 	debug_var artifact_final_file
@@ -67,11 +69,13 @@ function obtain_complete_artifact() {
 	debug_dict artifact_map_versions
 
 	# sanity checks. artifact_version/artifact_version_reason/artifact_final_file *must* be set
+	[[ "x${artifact_name}x" == "xx" || "${artifact_name}" == "undetermined" ]] && exit_with_error "artifact_name is not set after artifact_prepare_version"
 	[[ "x${artifact_version}x" == "xx" || "${artifact_version}" == "undetermined" ]] && exit_with_error "artifact_version is not set after artifact_prepare_version"
 	[[ "x${artifact_version_reason}x" == "xx" || "${artifact_version_reason}" == "undetermined" ]] && exit_with_error "artifact_version_reason is not set after artifact_prepare_version"
-	[[ "x${artifact_final_file}x" == "xx" || "${artifact_final_file}" == "undetermined" ]] && display_alert "artifact_final_file is not set after artifact_prepare_version" "@TODO" "error" # @TODO: raise to error
+	[[ "x${artifact_final_file}x" == "xx" || "${artifact_final_file}" == "undetermined" ]] && exit_with_error "artifact_final_file is not set after artifact_prepare_version"
 
 	# set those as outputs for GHA
+	github_actions_add_output artifact_name "${artifact_name}"
 	github_actions_add_output artifact_version "${artifact_version}"
 	github_actions_add_output artifact_version_reason "${artifact_version_reason}"
 	github_actions_add_output artifact_final_file "${artifact_final_file}"
@@ -88,7 +92,8 @@ function obtain_complete_artifact() {
 	artifact_is_available_in_remote_cache
 	artifact_obtain_from_remote_cache
 
-	artifact_build_from_sources
+	# @TODO: hack... but works
+	DEB_COMPRESS="xz" artifact_build_from_sources
 
 	artifact_deploy_to_remote_cache
 }
@@ -131,7 +136,7 @@ function capture_rename_legacy_debs_into_artifacts_logged() {
 function upload_artifact_to_oci() {
 	if [[ -n "${OCI_TARGET_BASE}" ]]; then
 		display_alert "Pushing to OCI" "OCI_TARGET_BASE: '${OCI_TARGET_BASE}'" "warn"
-		declare full_oci_target="${OCI_TARGET_BASE}:${artifact_version}"
+		declare full_oci_target="${OCI_TARGET_BASE}${artifact_name}:${artifact_version}"
 		display_alert "Pushing to OCI" "full_oci_target: '${full_oci_target}'" "warn"
 		display_alert "Pushing to OCI" "Uploading '${artifact_final_file}'" "warn"
 		oras_push_artifact_file "${full_oci_target}" "${artifact_final_file}"

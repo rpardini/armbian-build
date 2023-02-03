@@ -1,6 +1,7 @@
 function run_tool_oras() {
 	# Default version
 	ORAS_VERSION=${ORAS_VERSION:-0.16.0} # https://github.com/oras-project/oras/releases
+	#ORAS_VERSION=${ORAS_VERSION:-"1.0.0-rc.1"} # https://github.com/oras-project/oras/releases
 
 	declare non_cache_dir="/armbian-tools/oras" # To deploy/reuse cached ORAS in a Docker image.
 
@@ -100,7 +101,7 @@ function oras_push_artifact_file() {
 		extra_params+=("--plain-http")
 	fi
 
-	extra_params+=("--annotation" "org.opencontainers.image.description=some description")
+	extra_params+=("--annotation" "org.opencontainers.image.description=some description") # @TODO: I want 'labels', not annotations
 
 	# make sure file exists
 	if [[ ! -f "${upload_file}" ]]; then
@@ -114,9 +115,9 @@ function oras_push_artifact_file() {
 	display_alert "upload_file_base_path: ${upload_file_base_path}" "ORAS upload" "debug"
 	display_alert "upload_file_name: ${upload_file_name}" "ORAS upload" "debug"
 
-	pushd "${upload_file_base_path}" || exit_with_error "Failed to pushd to ${upload_file_base_path} - ORAS upload"
+	pushd "${upload_file_base_path}" &> /dev/null || exit_with_error "Failed to pushd to ${upload_file_base_path} - ORAS upload"
 	run_tool_oras push "${extra_params[@]}" "${image_full_oci}" "${upload_file_name}:application/vnd.unknown.layer.v1+tar"
-	popd || exit_with_error "Failed to popd" "ORAS upload"
+	popd &> /dev/null || exit_with_error "Failed to popd" "ORAS upload"
 	return 0
 }
 
