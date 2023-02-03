@@ -93,6 +93,13 @@ function oras_push_artifact_file() {
 	declare upload_file_base_path upload_file_name
 	display_alert "Pushing ${upload_file}" "ORAS to ${image_full_oci}" "info"
 
+	declare extra_params=("--verbose")
+	# if image_full_oci contains ":5000/", add --plain-http; to make easy to run self-hosted registry
+	if [[ "${image_full_oci}" == *":5000/"* ]]; then
+		display_alert "Adding --plain-http to ORAS" "ORAS to insecure registry" "warn"
+		extra_params+=("--plain-http")
+	fi
+
 	# make sure file exists
 	if [[ ! -f "${upload_file}" ]]; then
 		display_alert "File not found: ${upload_file}" "ORAS upload" "err"
@@ -106,7 +113,7 @@ function oras_push_artifact_file() {
 	display_alert "upload_file_name: ${upload_file_name}" "ORAS upload" "debug"
 
 	pushd "${upload_file_base_path}" || exit_with_error "Failed to pushd to ${upload_file_base_path} - ORAS upload"
-	run_tool_oras push --verbose "${image_full_oci}" "${upload_file_name}:application/vnd.unknown.layer.v1+tar"
+	run_tool_oras push "${extra_params[@]}" "${image_full_oci}" "${upload_file_name}:application/vnd.unknown.layer.v1+tar"
 	popd || exit_with_error "Failed to popd" "ORAS upload"
 	return 0
 }

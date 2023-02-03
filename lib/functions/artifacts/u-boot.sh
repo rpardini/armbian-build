@@ -11,7 +11,6 @@ function artifact_uboot_cli_adapter_config_prep() {
 }
 
 function artifact_uboot_prepare_version() {
-	display_alert "artifact_uboot_XXXXXX" "artifact_uboot_XXXXXX" "warn"
 	artifact_version="undetermined"        # outer scope
 	artifact_version_reason="undetermined" # outer scope
 
@@ -75,41 +74,42 @@ function artifact_uboot_prepare_version() {
 
 	# map what "compile_uboot()" will produce - legacy deb names and versions
 	artifact_map_versions_legacy=(
-		["linux-u-boot-${BRANCH}-${BOARD}"]="${REVISION}"
+		["linux-u-boot-${BRANCH}-${BOARD}"]="${REVISION}_${ARCH}"
 	)
 
 	# now, one for each file in the artifact... single package, so just one entry
 	artifact_map_versions=(
-		["linux-u-boot-${BRANCH}-${BOARD}"]="${artifact_version}"
+		["linux-u-boot-${BRANCH}-${BOARD}"]="${artifact_version}_${ARCH}"
 	)
+
+	artifact_final_file="${DEST}/debs/linux-u-boot-${BRANCH}-${BOARD}_${artifact_version}_${ARCH}.deb"
 
 	return 0
 }
 
 function artifact_uboot_is_available_in_local_cache() {
-	display_alert "artifact_uboot_XXXXXX" "artifact_uboot_XXXXXX" "warn"
 	# Check if the exact DEB exists on disk (output/debs), nothing else.
 	# This is more about composing the .deb filename than checking if it exists.
+	:
 }
 
 function artifact_uboot_is_available_in_remote_cache() {
-	display_alert "artifact_uboot_XXXXXX" "artifact_uboot_XXXXXX" "warn"
 	# Check if the DEB can be obtained remotely, eg:
 	# - in ghcr.io (via ORAS)
 	# - in an apt repo (via apt-get), eg, Armbian's repo.
 	# this is only about availability, not download. use HEAD requests / metadata-only pulls
 	# what about multiple possible OCI endpoints / URLs? try them all?
+	:
 }
 
 function artifact_uboot_obtain_from_remote_cache() {
-	display_alert "artifact_uboot_XXXXXX" "artifact_uboot_XXXXXX" "warn"
 	# Having confirmed it is available remotely, go download it into the local cache.
 	# is_available_in_local_cache() must return =yes after this.
 	# could be a good idea to transfer some SHA256 id from "is_available" to "obtain" to avoid overhead? or just do it together?
+	:
 }
 
 function artifact_uboot_build_from_sources() {
-	display_alert "artifact_uboot_XXXXXX" "artifact_uboot_XXXXXX" "warn"
 	# having failed all the cache obtaining, build it from sources.
 
 	if [[ -n "${ATFSOURCE}" && "${ATFSOURCE}" != "none" ]]; then
@@ -124,7 +124,7 @@ function artifact_uboot_build_from_sources() {
 }
 
 function artifact_uboot_deploy_to_remote_cache() {
-	display_alert "artifact_uboot_XXXXXX" "artifact_uboot_XXXXXX" "warn"
 	# having built a new artifact, deploy it to the remote cache.
 	# consider multiple targets, retries, etc.
+	upload_artifact_to_oci
 }

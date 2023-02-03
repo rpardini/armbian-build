@@ -5,8 +5,8 @@ function cli_artifact_pre_run() {
 }
 
 function cli_artifact_run() {
-	display_alert "artifact" "${chosen_artifact}" "warn"
-	display_alert "artifact" "${chosen_artifact} :: ${chosen_artifact_impl}()" "warn"
+	display_alert "artifact" "${chosen_artifact}" "debug"
+	display_alert "artifact" "${chosen_artifact} :: ${chosen_artifact_impl}()" "debug"
 	artifact_cli_adapter_config_prep # only if in cli.
 
 	# only if in cli, if not just run it bare, since we'd be already inside do_with_default_build
@@ -28,7 +28,7 @@ function create_artifact_functions() {
 			cmd="$(
 				cat <<- ARTIFACT_DEFINITION
 					function artifact_${func}() {
-						display_alert "Calling artifact function" "${impl_func}() \$*" "warn"
+						display_alert "Calling artifact function" "${impl_func}() \$*" "debug"
 						${impl_func} "\$@"
 					}
 				ARTIFACT_DEFINITION
@@ -52,6 +52,7 @@ function initialize_artifact() {
 function obtain_complete_artifact() {
 	declare -g artifact_version="undetermined"
 	declare -g artifact_version_reason="undetermined"
+	declare -g artifact_final_file="undetermined"
 	declare -A -g artifact_map_versions=()
 	declare -A -g artifact_map_versions_legacy=()
 
@@ -61,8 +62,26 @@ function obtain_complete_artifact() {
 	artifact_prepare_version
 	debug_var artifact_version
 	debug_var artifact_version_reason
+	debug_var artifact_final_file
 	debug_dict artifact_map_versions_legacy
 	debug_dict artifact_map_versions
+
+	# sanity checks. artifact_version/artifact_version_reason/artifact_final_file *must* be set
+	[[ "x${artifact_version}x" == "xx" || "${artifact_version}" == "undetermined" ]] && exit_with_error "artifact_version is not set after artifact_prepare_version"
+	[[ "x${artifact_version_reason}x" == "xx" || "${artifact_version_reason}" == "undetermined" ]] && exit_with_error "artifact_version_reason is not set after artifact_prepare_version"
+	[[ "x${artifact_final_file}x" == "xx" || "${artifact_final_file}" == "undetermined" ]] && display_alert "artifact_final_file is not set after artifact_prepare_version" "@TODO" "error" # @TODO: raise to error
+
+	# set those as outputs for GHA
+	github_actions_add_output artifact_version "${artifact_version}"
+	github_actions_add_output artifact_version_reason "${artifact_version_reason}"
+	github_actions_add_output artifact_final_file "${artifact_final_file}"
+
+	declare artifact_file_relative
+	# compute artifact_final_file relative to ${SRC} using realpath
+	artifact_file_relative="$(realpath --relative-to="${SRC}" "${artifact_final_file}")"
+	github_actions_add_output artifact_file_relative "${artifact_file_relative}"
+
+	# @TODO: possibly stop here if only for up-to-date-checking
 
 	# @TODO the whole artifact upload/download dance
 	artifact_is_available_in_local_cache
@@ -91,19 +110,34 @@ function capture_rename_legacy_debs_into_artifacts_logged() {
 	debug_dict artifact_map_versions_legacy
 	debug_dict artifact_map_versions
 
-	declare deb_name_base deb_name_full new_name_full legacy_version legacy_base_version
+	declare deb_name_base deb_name_full new_name_full legacy_version legacy_base_version new_base_version
 	for deb_name_base in "${!artifact_map_versions[@]}"; do
 		legacy_base_version="${artifact_map_versions_legacy[${deb_name_base}]}"
+		new_base_version="${artifact_map_versions[${deb_name_base}]}"
 		if [[ -z "${legacy_base_version}" ]]; then
 			exit_with_error "Legacy base version not found for artifact '${deb_name_base}'"
 		fi
 
 		display_alert "Legacy base version" "${legacy_base_version}" "info"
-		legacy_version="${legacy_base_version}_${ARCH}" # Arch-specific package; has ARCH at the end.
+		legacy_version="${legacy_base_version}" # Arch-specific package
 		deb_name_full="${DEST}/debs/${deb_name_base}_${legacy_version}.deb"
-		new_name_full="${DEST}/debs/${deb_name_base}_${artifact_map_versions[${deb_name_base}]}_${ARCH}.deb"
+		new_name_full="${DEST}/debs/${deb_name_base}_${new_base_version}.deb"
 		display_alert "Full legacy deb name" "${deb_name_full}" "info"
 		display_alert "New artifact deb name" "${new_name_full}" "info"
 		run_host_command_logged mv -v "${deb_name_full}" "${new_name_full}"
 	done
+}
+
+function upload_artifact_to_oci() {
+	if [[ -n "${OCI_TARGET_BASE}" ]]; then
+		display_alert "Pushing to OCI" "OCI_TARGET_BASE: '${OCI_TARGET_BASE}'" "warn"
+		declare full_oci_target="${OCI_TARGET_BASE}:${artifact_version}"
+		display_alert "Pushing to OCI" "full_oci_target: '${full_oci_target}'" "warn"
+		display_alert "Pushing to OCI" "Uploading '${artifact_final_file}'" "warn"
+		oras_push_artifact_file "${full_oci_target}" "${artifact_final_file}"
+	else
+
+		display_alert "No OCI_TARGET_BASE defined, not pushing to OCI" "" "wrn"
+	fi
+
 }
