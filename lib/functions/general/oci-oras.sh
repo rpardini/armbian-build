@@ -91,6 +91,7 @@ function try_download_oras_tooling() {
 function oras_push_artifact_file() {
 	declare image_full_oci="${1}" # Something like "ghcr.io/rpardini/armbian-git-shallow/kernel-git:latest"
 	declare upload_file="${2}"    # Absolute path to the file to upload including the path and name
+	declare description="${3:-"missing description"}"
 	declare upload_file_base_path upload_file_name
 	display_alert "Pushing ${upload_file}" "ORAS to ${image_full_oci}" "info"
 
@@ -101,7 +102,7 @@ function oras_push_artifact_file() {
 		extra_params+=("--plain-http")
 	fi
 
-	extra_params+=("--annotation" "org.opencontainers.image.description=some description") # @TODO: I want 'labels', not annotations
+	extra_params+=("--annotation" "org.opencontainers.image.description=${description}")
 
 	# make sure file exists
 	if [[ ! -f "${upload_file}" ]]; then

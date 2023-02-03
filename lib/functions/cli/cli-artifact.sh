@@ -139,7 +139,7 @@ function upload_artifact_to_oci() {
 		declare full_oci_target="${OCI_TARGET_BASE}${artifact_name}:${artifact_version}"
 		display_alert "Pushing to OCI" "full_oci_target: '${full_oci_target}'" "warn"
 		display_alert "Pushing to OCI" "Uploading '${artifact_final_file}'" "warn"
-		oras_push_artifact_file "${full_oci_target}" "${artifact_final_file}"
+		oras_push_artifact_file "${full_oci_target}" "${artifact_final_file}" "${artifact_name} - ${artifact_version} - ${artifact_version_reason} - this NOT a Docker image"
 	else
 
 		display_alert "No OCI_TARGET_BASE defined, not pushing to OCI" "" "wrn"
