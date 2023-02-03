@@ -97,17 +97,22 @@ function artifact_kernel_prepare_version() {
 
 	# map what "compile_kernel()" will produce - legacy deb names and versions
 	artifact_map_versions_legacy=(
-		["linux-image-${BRANCH}-${LINUXFAMILY}"]="${REVISION}"
-		["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${REVISION}"
-		["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${REVISION}"
+		["linux-image-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}"
+		["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}"
+		["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}"
 	)
 
 	# now, one for each file in the artifact... we've 3 packages produced, all the same version
 	artifact_map_versions=(
-		["linux-image-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}"
-		["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}"
-		["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}"
+		["linux-image-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}"
+		["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}"
+		["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}"
 	)
+
+	artifact_name="kernel-${LINUXFAMILY}-${BRANCH}"
+
+	# @TODO: fake, need to tar up the stuff, etc...
+	artifact_final_file="${DEST}/debs/linux-image-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb"
 
 	return 0
 }
@@ -144,5 +149,5 @@ function artifact_kernel_build_from_sources() {
 function artifact_kernel_deploy_to_remote_cache() {
 	# having built a new artifact, deploy it to the remote cache.
 	# consider multiple targets, retries, etc.
-	:
+	upload_artifact_to_oci
 }
