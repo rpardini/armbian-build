@@ -46,7 +46,7 @@ function install_distribution_agnostic() {
 			# /usr/share/initramfs-tools/hooks/dropbear will automatically add 'id_ecdsa.pub' to authorized_keys file
 			# during mkinitramfs of update-initramfs
 			#cat "${SDCARD}"/etc/dropbear-initramfs/id_ecdsa.pub > "${SDCARD}"/etc/dropbear-initramfs/authorized_keys
-			CRYPTROOT_SSH_UNLOCK_KEY_NAME="${VENDOR}_${REVISION}_${BOARD^}_${RELEASE}_${BRANCH}_${VER/-$LINUXFAMILY/}_${DESKTOP_ENVIRONMENT}".key
+			CRYPTROOT_SSH_UNLOCK_KEY_NAME="${VENDOR}_${REVISION}_${BOARD^}_${RELEASE}_${BRANCH}_${DESKTOP_ENVIRONMENT}".key
 			# copy dropbear ssh key to image output dir for convenience
 			cp "${SDCARD}"/etc/dropbear-initramfs/id_ecdsa "${DEST}/images/${CRYPTROOT_SSH_UNLOCK_KEY_NAME}"
 			display_alert "SSH private key for dropbear (initramfs) has been copied to:" \
@@ -299,50 +299,34 @@ function install_distribution_agnostic() {
 
 	# install u-boot
 	# @TODO: add install_bootloader() extension method, refactor into u-boot extension
-	[[ "${BOOTCONFIG}" != "none" ]] && {
-		if [[ "${REPOSITORY_INSTALL}" != *u-boot* ]]; then
-			UBOOT_VER=$(dpkg --info "${DEB_STORAGE}/${CHOSEN_UBOOT}_${REVISION}_${ARCH}.deb" | grep Descr | awk '{print $(NF)}')
-			install_deb_chroot "${DEB_STORAGE}/${CHOSEN_UBOOT}_${REVISION}_${ARCH}.deb"
-		else
-			install_deb_chroot "linux-u-boot-${BOARD}-${BRANCH}" "remote" "yes" # @TODO: rpardini: this is completely different! "remote" "yes"
-			UBOOT_REPO_VERSION=$(dpkg-deb -f "${SDCARD}/var/cache/apt/archives/linux-u-boot-${BOARD}-${BRANCH}*_${ARCH}.deb" Version)
-		fi
-	}
+	declare -g image_artifacts_packages image_artifacts_debs
+	debug_dict image_artifacts_packages
+	debug_dict image_artifacts_debs
+	if [[ "${BOOTCONFIG}" != "none" ]]; then
+		install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["uboot"]}"
+	fi
 
 	call_extension_method "pre_install_kernel_debs" <<- 'PRE_INSTALL_KERNEL_DEBS'
 		*called before installing the Armbian-built kernel deb packages*
 		It is not too late to `unset KERNELSOURCE` here and avoid kernel install.
 	PRE_INSTALL_KERNEL_DEBS
 
-	# default VER, will be parsed from Kernel version in the installed deb package.
-	VER="linux"
+	# default IMAGE_INSTALLED_KERNEL_VERSION, will be parsed from Kernel version in the installed deb package.
+	IMAGE_INSTALLED_KERNEL_VERSION="linux"
 
-	# install kernel
-	[[ -n $KERNELSOURCE ]] && {
-		if [[ "${REPOSITORY_INSTALL}" != *kernel* ]]; then
-			VER=$(dpkg --info "${DEB_STORAGE}/${CHOSEN_KERNEL}_${REVISION}_${ARCH}.deb" | grep "^ Source:" | sed -e 's/ Source: linux-//')
-			display_alert "Parsed kernel version from local package" "${VER}" "debug"
-
-			install_deb_chroot "${DEB_STORAGE}/${CHOSEN_KERNEL}_${REVISION}_${ARCH}.deb"
-			if [[ -f ${DEB_STORAGE}/${CHOSEN_KERNEL/image/dtb}_${REVISION}_${ARCH}.deb ]]; then
-				install_deb_chroot "${DEB_STORAGE}/${CHOSEN_KERNEL/image/dtb}_${REVISION}_${ARCH}.deb"
-			fi
-			if [[ $INSTALL_HEADERS == yes ]]; then
-				install_deb_chroot "${DEB_STORAGE}/${CHOSEN_KERNEL/image/headers}_${REVISION}_${ARCH}.deb"
-			fi
-		else
-			install_deb_chroot "linux-image-${BRANCH}-${LINUXFAMILY}" "remote" # @TODO: rpardini: again a different one, without "yes" this time
-			VER=$(dpkg-deb -f "${SDCARD}"/var/cache/apt/archives/linux-image-${BRANCH}-${LINUXFAMILY}*_${ARCH}.deb Source)
-			VER="${VER/-$LINUXFAMILY/}"
-			VER="${VER/linux-/}"
-			display_alert "Parsed kernel version from remote package" "${VER}" "debug"
-			if [[ "${ARCH}" != "amd64" && "${LINUXFAMILY}" != "media" ]]; then # amd64 does not have dtb package, see packages/armbian/builddeb:355
-				install_deb_chroot "linux-dtb-${BRANCH}-${LINUXFAMILY}" "remote"  # @TODO: rpardini: again a different one, without "yes" this time
-			fi
-			[[ $INSTALL_HEADERS == yes ]] && install_deb_chroot "linux-headers-${BRANCH}-${LINUXFAMILY}" "remote" # @TODO: rpardini: again a different one, without "yes" this time
+	# install kernel: image/dtb/headers
+	if [[ -n $KERNELSOURCE ]]; then
+		install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["linux-image"]}"
+		install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["linux-dtb"]}"
+		if [[ $INSTALL_HEADERS == yes ]]; then # @TODO remove? might be a good idea to always install headers.
+			install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["linux-headers"]}"
 		fi
-		# Eh, short circuit above. Beware.
-	}
+		
+		# Determine "IMAGE_INSTALLED_KERNEL_VERSION" for compatiblity with legacy update-initramfs code. @TODO get rid of this one day
+		IMAGE_INSTALLED_KERNEL_VERSION=$(dpkg --info "${DEB_STORAGE}/${image_artifacts_debs["linux-image"]}" | grep "^ Source:" | sed -e 's/ Source: linux-//')
+		display_alert "Parsed kernel version from local package" "${IMAGE_INSTALLED_KERNEL_VERSION}" "warn"
+
+	fi
 
 	call_extension_method "post_install_kernel_debs" <<- 'POST_INSTALL_KERNEL_DEBS'
 		*allow config to do more with the installed kernel/headers*

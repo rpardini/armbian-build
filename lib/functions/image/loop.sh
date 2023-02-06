@@ -61,12 +61,7 @@ function write_uboot_to_loop_image() {
 	declare cleanup_id="" TEMP_DIR=""
 	prepare_temp_dir_in_workdir_and_schedule_cleanup "uboot-write" cleanup_id TEMP_DIR # namerefs
 
-	if [[ -n $UBOOT_REPO_VERSION ]]; then
-		revision=${UBOOT_REPO_VERSION}
-		run_host_command_logged dpkg -x "${DEB_STORAGE}/linux-u-boot-${BOARD}-${BRANCH}_${revision}_${ARCH}.deb" "${TEMP_DIR}"/
-	else
-		run_host_command_logged dpkg -x "${DEB_STORAGE}/${CHOSEN_UBOOT}_${revision}_${ARCH}.deb" "${TEMP_DIR}"/
-	fi
+	run_host_command_logged dpkg -x "${DEB_STORAGE}/${CHOSEN_UBOOT}_${revision}_${ARCH}.deb" "${TEMP_DIR}"/
 
 	if [[ ! -f "${TEMP_DIR}/usr/lib/u-boot/platform_install.sh" ]]; then
 		exit_with_error "Missing ${TEMP_DIR}/usr/lib/u-boot/platform_install.sh"

@@ -70,6 +70,8 @@ function obtain_complete_artifact() {
 	declare -g artifact_full_oci_target="undetermined"
 	declare -A -g artifact_map_versions=()
 	declare -A -g artifact_map_versions_legacy=()
+	declare -A -g artifact_map_packages=()
+	declare -A -g artifact_map_debs=()
 
 	# Check if REVISION is set, otherwise exit_with_error
 	[[ "x${REVISION}x" == "xx" ]] && exit_with_error "REVISION is not set"
@@ -83,6 +85,8 @@ function obtain_complete_artifact() {
 	debug_var artifact_final_file
 	debug_dict artifact_map_versions_legacy
 	debug_dict artifact_map_versions
+	debug_dict artifact_map_packages
+	debug_dict artifact_map_debs
 
 	# sanity checks. artifact_version/artifact_version_reason/artifact_final_file *must* be set
 	[[ "x${artifact_name}x" == "xx" || "${artifact_name}" == "undetermined" ]] && exit_with_error "artifact_name is not set after artifact_prepare_version"

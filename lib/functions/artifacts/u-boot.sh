@@ -81,6 +81,14 @@ function artifact_uboot_prepare_version() {
 	artifact_map_versions=(
 		["linux-u-boot-${BRANCH}-${BOARD}"]="${artifact_version}_${ARCH}"
 	)
+		
+	artifact_map_packages=(
+		["uboot"]="linux-u-boot-${BRANCH}-${BOARD}"
+	)
+
+	artifact_map_debs=(
+		["uboot"]="linux-u-boot-${BRANCH}-${BOARD}_${artifact_version}_${ARCH}.deb"
+	)
 
 	artifact_name="uboot-${BOARD}-${BRANCH}"
 	artifact_type="deb"
@@ -102,6 +110,8 @@ function artifact_uboot_obtain_from_remote_cache() {
 }
 
 function artifact_uboot_build_from_sources() {
+	LOG_SECTION="fetch_and_build_host_tools" do_with_logging fetch_and_build_host_tools
+	
 	if [[ -n "${ATFSOURCE}" && "${ATFSOURCE}" != "none" ]]; then
 		LOG_SECTION="compile_atf" do_with_logging compile_atf
 	fi

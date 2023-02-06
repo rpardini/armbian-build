@@ -110,6 +110,18 @@ function artifact_kernel_prepare_version() {
 		["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}"
 	)
 
+	artifact_map_packages=(
+		["linux-image"]="linux-image-${BRANCH}-${LINUXFAMILY}"
+		["linux-dtb"]="linux-dtb-${BRANCH}-${LINUXFAMILY}"
+		["linux-headers"]="linux-headers-${BRANCH}-${LINUXFAMILY}"
+	)
+
+	artifact_map_debs=(
+		["linux-image"]="linux-image-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb"
+		["linux-dtb"]="linux-dtb-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb"
+		["linux-headers"]="linux-headers-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb"
+	)
+
 	artifact_name="kernel-${LINUXFAMILY}-${BRANCH}"
 	artifact_type="deb-tar" # this triggers processing of .deb files in the maps to produce a tarball
 	artifact_final_file="${DEST}/debs/${artifact_name}_${artifact_version}.tar"
