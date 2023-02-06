@@ -18,9 +18,17 @@ function cli_artifact_run() {
 		default_update_remote_only="yes"
 	fi
 
-	# only if in cli, if not just run it bare, since we'd be already inside do_with_default_build
 	declare skip_unpack_if_found_in_caches="${skip_unpack_if_found_in_caches:-"${default_update_remote_only}"}"
 	declare ignore_local_cache="${ignore_local_cache:-"${default_update_remote_only}"}"
+	declare deploy_to_remote="${deploy_to_remote:-"${default_update_remote_only}"}"
+
+	# If OCI_TARGET_BASE is explicitly set, ignore local, skip if found in remote, and deploy to remote after build.
+	if [[ -n "${OCI_TARGET_BASE}" ]]; then
+		skip_unpack_if_found_in_caches="yes"
+		ignore_local_cache="yes"
+		deploy_to_remote="yes"
+	fi
+
 	do_with_default_build obtain_complete_artifact < /dev/null
 }
 
@@ -28,6 +36,7 @@ function create_artifact_functions() {
 	declare -a funcs=(
 		"cli_adapter_pre_run" "cli_adapter_config_prep"
 		"prepare_version"
+		"get_default_oci_target"
 		"is_available_in_local_cache" "is_available_in_remote_cache" "obtain_from_remote_cache"
 		"deploy_to_remote_cache"
 		"build_from_sources"
@@ -125,13 +134,6 @@ function obtain_complete_artifact() {
 	debug_var artifact_final_file_basename
 	debug_var artifact_file_relative
 
-	if [[ -n "${OCI_TARGET_BASE}" ]]; then
-		declare -g artifact_full_oci_target="${OCI_TARGET_BASE}${artifact_name}:${artifact_version}"
-	else
-		display_alert "No OCI_TARGET_BASE defined, can't use OCI" "OCI_TARGET_BASE not set" "wrn"
-		return 1
-	fi
-
 	# @TODO: possibly stop here if only for up-to-date-checking
 
 	declare -g artifact_exists_in_local_cache="undetermined"
@@ -156,6 +158,18 @@ function obtain_complete_artifact() {
 		fi
 	fi
 
+	# Determine OCI coordinates. OCI_TARGET_BASE overrides the default proposed by the artifact.
+	declare artifact_oci_target_base="undetermined"
+	if [[ -n "${OCI_TARGET_BASE}" ]]; then
+		artifact_oci_target_base="${OCI_TARGET_BASE}"
+	else
+		artifact_get_default_oci_target
+	fi
+
+	[[ -z "${artifact_oci_target_base}" ]] && exit_with_error "No artifact_oci_target_base defined."
+
+	declare -g artifact_full_oci_target="${artifact_oci_target_base}${artifact_name}:${artifact_version}"
+
 	declare -g artifact_exists_in_remote_cache="undetermined"
 
 	LOG_SECTION="artifact_is_available_in_remote_cache" do_with_logging artifact_is_available_in_remote_cache
@@ -176,15 +190,17 @@ function obtain_complete_artifact() {
 
 	if [[ "${artifact_exists_in_local_cache}" != "yes" && "${artifact_exists_in_remote_cache}" != "yes" ]]; then
 		# Not found in any cache, so we need to build it.
-		# Build from sources. Force high .deb compression.
+		# @TODO: only do this if building from CLI: Force high .deb compression.
 		DEB_COMPRESS="xz" artifact_build_from_sources
 	fi
 
-	LOG_SECTION="artifact_deploy_to_remote_cache" do_with_logging artifact_deploy_to_remote_cache
+	if [[ "${deploy_to_remote:-"no"}" == "yes" ]]; then
+		LOG_SECTION="artifact_deploy_to_remote_cache" do_with_logging artifact_deploy_to_remote_cache
+	fi
 }
 
 # This is meant to be run after config, inside default build.
-function build_artifact() {
+function build_artifact_for_image() {
 	initialize_artifact "${WHAT:-"kernel"}"
 	obtain_complete_artifact
 }
@@ -253,15 +269,13 @@ function unpack_artifact_from_local_cache() {
 }
 
 function upload_artifact_to_oci() {
-	if [[ -n "${OCI_TARGET_BASE}" ]]; then
-		display_alert "Pushing to OCI" "OCI_TARGET_BASE: '${OCI_TARGET_BASE}'" "warn"
-		declare full_oci_target="${OCI_TARGET_BASE}${artifact_name}:${artifact_version}"
-		display_alert "Pushing to OCI" "full_oci_target: '${full_oci_target}'" "warn"
-		display_alert "Pushing to OCI" "Uploading '${artifact_final_file}'" "warn"
-		oras_push_artifact_file "${full_oci_target}" "${artifact_final_file}" "${artifact_name} - ${artifact_version} - ${artifact_version_reason} - type: ${artifact_type}: this NOT a Docker image"
-	else
-		display_alert "No OCI_TARGET_BASE defined, not pushing to OCI" "" "wrn"
+	# check artifact_full_oci_target is set
+	if [[ -z "${artifact_full_oci_target}" ]]; then
+		exit_with_error "artifact_full_oci_target is not set"
 	fi
+
+	display_alert "Pushing to OCI" "'${artifact_final_file}' -> '${artifact_full_oci_target}'" "warn"
+	oras_push_artifact_file "${artifact_full_oci_target}" "${artifact_final_file}" "${artifact_name} - ${artifact_version} - ${artifact_version_reason} - type: ${artifact_type}: this NOT a Docker image"
 }
 
 function is_artifact_available_in_local_cache() {
@@ -275,8 +289,7 @@ function is_artifact_available_in_local_cache() {
 function is_artifact_available_in_remote_cache() {
 	# check artifact_full_oci_target is set
 	if [[ -z "${artifact_full_oci_target}" ]]; then
-		error "artifact_full_oci_target is not set"
-		return 1
+		exit_with_error "artifact_full_oci_target is not set"
 	fi
 
 	declare oras_has_manifest="undetermined"

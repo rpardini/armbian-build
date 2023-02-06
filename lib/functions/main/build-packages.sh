@@ -37,7 +37,7 @@ function main_default_build_packages() {
 		declare -A artifact_map_packages=()
 		declare -A artifact_map_debs=()
 
-		WHAT="${one_artifact}" build_artifact
+		WHAT="${one_artifact}" build_artifact_for_image
 
 		# store info about this artifact's debs and packages
 		for one_artifact_package in "${!artifact_map_packages[@]}"; do

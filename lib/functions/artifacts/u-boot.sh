@@ -10,6 +10,10 @@ function artifact_uboot_cli_adapter_config_prep() {
 	use_board="yes" prep_conf_main_minimal_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
 }
 
+function artifact_uboot_get_default_oci_target() {
+	artifact_oci_target_base="ghcr.io/rpardini/armbian-release/"
+}
+
 function artifact_uboot_prepare_version() {
 	artifact_version="undetermined"        # outer scope
 	artifact_version_reason="undetermined" # outer scope
@@ -81,7 +85,7 @@ function artifact_uboot_prepare_version() {
 	artifact_map_versions=(
 		["linux-u-boot-${BRANCH}-${BOARD}"]="${artifact_version}_${ARCH}"
 	)
-		
+
 	artifact_map_packages=(
 		["uboot"]="linux-u-boot-${BRANCH}-${BOARD}"
 	)
@@ -111,7 +115,7 @@ function artifact_uboot_obtain_from_remote_cache() {
 
 function artifact_uboot_build_from_sources() {
 	LOG_SECTION="fetch_and_build_host_tools" do_with_logging fetch_and_build_host_tools
-	
+
 	if [[ -n "${ATFSOURCE}" && "${ATFSOURCE}" != "none" ]]; then
 		LOG_SECTION="compile_atf" do_with_logging compile_atf
 	fi
