@@ -83,7 +83,7 @@ function artifact_uboot_prepare_version() {
 	)
 
 	artifact_name="uboot-${BOARD}-${BRANCH}"
-
+	artifact_type="deb" 
 	artifact_final_file="${DEST}/debs/linux-u-boot-${BRANCH}-${BOARD}_${artifact_version}_${ARCH}.deb"
 
 	return 0

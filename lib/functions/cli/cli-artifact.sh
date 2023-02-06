@@ -51,6 +51,7 @@ function initialize_artifact() {
 
 function obtain_complete_artifact() {
 	declare -g artifact_name="undetermined"
+	declare -g artifact_type="undetermined"
 	declare -g artifact_version="undetermined"
 	declare -g artifact_version_reason="undetermined"
 	declare -g artifact_final_file="undetermined"
@@ -62,6 +63,7 @@ function obtain_complete_artifact() {
 
 	artifact_prepare_version
 	debug_var artifact_name
+	debug_var artifact_type
 	debug_var artifact_version
 	debug_var artifact_version_reason
 	debug_var artifact_final_file
@@ -70,12 +72,24 @@ function obtain_complete_artifact() {
 
 	# sanity checks. artifact_version/artifact_version_reason/artifact_final_file *must* be set
 	[[ "x${artifact_name}x" == "xx" || "${artifact_name}" == "undetermined" ]] && exit_with_error "artifact_name is not set after artifact_prepare_version"
+	[[ "x${artifact_type}x" == "xx" || "${artifact_type}" == "undetermined" ]] && exit_with_error "artifact_type is not set after artifact_prepare_version"
 	[[ "x${artifact_version}x" == "xx" || "${artifact_version}" == "undetermined" ]] && exit_with_error "artifact_version is not set after artifact_prepare_version"
 	[[ "x${artifact_version_reason}x" == "xx" || "${artifact_version_reason}" == "undetermined" ]] && exit_with_error "artifact_version_reason is not set after artifact_prepare_version"
 	[[ "x${artifact_final_file}x" == "xx" || "${artifact_final_file}" == "undetermined" ]] && exit_with_error "artifact_final_file is not set after artifact_prepare_version"
 
+	# validate artifact_type... it must be one of the supported types
+	case "${artifact_type}" in
+		deb | deb-tar)
+			: # valid
+			;;
+		*)
+			exit_with_error "artifact_type '${artifact_type}' for '${artifact_name}' is not supported"
+			;;
+	esac
+
 	# set those as outputs for GHA
 	github_actions_add_output artifact_name "${artifact_name}"
+	github_actions_add_output artifact_type "${artifact_type}"
 	github_actions_add_output artifact_version "${artifact_version}"
 	github_actions_add_output artifact_version_reason "${artifact_version_reason}"
 	github_actions_add_output artifact_final_file "${artifact_final_file}"
@@ -115,7 +129,9 @@ function capture_rename_legacy_debs_into_artifacts_logged() {
 	debug_dict artifact_map_versions_legacy
 	debug_dict artifact_map_versions
 
-	declare deb_name_base deb_name_full new_name_full legacy_version legacy_base_version new_base_version
+	declare -a files_to_tar=()
+
+	declare deb_name_base deb_name_full new_name_full legacy_version legacy_base_version new_base_version new_name_fn
 	for deb_name_base in "${!artifact_map_versions[@]}"; do
 		legacy_base_version="${artifact_map_versions_legacy[${deb_name_base}]}"
 		new_base_version="${artifact_map_versions[${deb_name_base}]}"
@@ -126,11 +142,19 @@ function capture_rename_legacy_debs_into_artifacts_logged() {
 		display_alert "Legacy base version" "${legacy_base_version}" "info"
 		legacy_version="${legacy_base_version}" # Arch-specific package
 		deb_name_full="${DEST}/debs/${deb_name_base}_${legacy_version}.deb"
-		new_name_full="${DEST}/debs/${deb_name_base}_${new_base_version}.deb"
+		new_name_fn="${deb_name_base}_${new_base_version}.deb"
+		new_name_full="${DEST}/debs/${new_name_fn}"
 		display_alert "Full legacy deb name" "${deb_name_full}" "info"
 		display_alert "New artifact deb name" "${new_name_full}" "info"
 		run_host_command_logged mv -v "${deb_name_full}" "${new_name_full}"
+		files_to_tar+=("${new_name_fn}")
 	done
+
+	if [[ "${artifact_type}" == "deb-tar" ]]; then
+		# tar up the files_to_tar array in directory ${DEST}/debs into artifact_final_file
+		run_host_command_logged tar -C "${DEST}/debs" -cvf "${artifact_final_file}" "${files_to_tar[@]}"
+		display_alert "Created deb-tar artifact" "deb-tar: ${artifact_final_file}" "info"
+	fi
 }
 
 function upload_artifact_to_oci() {
@@ -139,10 +163,8 @@ function upload_artifact_to_oci() {
 		declare full_oci_target="${OCI_TARGET_BASE}${artifact_name}:${artifact_version}"
 		display_alert "Pushing to OCI" "full_oci_target: '${full_oci_target}'" "warn"
 		display_alert "Pushing to OCI" "Uploading '${artifact_final_file}'" "warn"
-		oras_push_artifact_file "${full_oci_target}" "${artifact_final_file}" "${artifact_name} - ${artifact_version} - ${artifact_version_reason} - this NOT a Docker image"
+		oras_push_artifact_file "${full_oci_target}" "${artifact_final_file}" "${artifact_name} - ${artifact_version} - ${artifact_version_reason} - type: ${artifact_type}: this NOT a Docker image"
 	else
-
 		display_alert "No OCI_TARGET_BASE defined, not pushing to OCI" "" "wrn"
 	fi
-
 }

@@ -110,9 +110,8 @@ function artifact_kernel_prepare_version() {
 	)
 
 	artifact_name="kernel-${LINUXFAMILY}-${BRANCH}"
-
-	# @TODO: fake, need to tar up the stuff, etc...
-	artifact_final_file="${DEST}/debs/linux-image-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb"
+	artifact_type="deb-tar" # this triggers processing of .deb files in the maps to produce a tarball
+	artifact_final_file="${DEST}/debs/${artifact_name}_${artifact_version}.tar"
 
 	return 0
 }
