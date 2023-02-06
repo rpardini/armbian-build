@@ -10,6 +10,10 @@ function artifact_kernel_cli_adapter_config_prep() {
 	use_board="yes" prep_conf_main_minimal_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
 }
 
+function artifact_kernel_get_default_oci_target() {
+	artifact_oci_target_base="ghcr.io/rpardini/armbian-release/"
+}
+
 # This is run in a logging section.
 function artifact_kernel_prepare_version() {
 	artifact_version="undetermined"        # outer scope
