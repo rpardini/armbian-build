@@ -65,7 +65,7 @@ function artifact_uboot_prepare_version() {
 		"framework bash hash \"${bash_hash}\""
 	)
 
-	artifact_version_reason="${reasons[*]}" # outer scope # @TODO better
+	artifact_version_reason="${reasons[*]}" # outer scope
 
 	# now, one for each file in the artifact...
 	artifact_map_versions=(
@@ -83,37 +83,25 @@ function artifact_uboot_prepare_version() {
 	)
 
 	artifact_name="uboot-${BOARD}-${BRANCH}"
-	artifact_type="deb" 
+	artifact_type="deb"
 	artifact_final_file="${DEST}/debs/linux-u-boot-${BRANCH}-${BOARD}_${artifact_version}_${ARCH}.deb"
 
 	return 0
 }
 
 function artifact_uboot_is_available_in_local_cache() {
-	# Check if the exact DEB exists on disk (output/debs), nothing else.
-	# This is more about composing the .deb filename than checking if it exists.
-	:
+	is_artifact_available_in_local_cache
 }
 
 function artifact_uboot_is_available_in_remote_cache() {
-	# Check if the DEB can be obtained remotely, eg:
-	# - in ghcr.io (via ORAS)
-	# - in an apt repo (via apt-get), eg, Armbian's repo.
-	# this is only about availability, not download. use HEAD requests / metadata-only pulls
-	# what about multiple possible OCI endpoints / URLs? try them all?
-	:
+	is_artifact_available_in_remote_cache
 }
 
 function artifact_uboot_obtain_from_remote_cache() {
-	# Having confirmed it is available remotely, go download it into the local cache.
-	# is_available_in_local_cache() must return =yes after this.
-	# could be a good idea to transfer some SHA256 id from "is_available" to "obtain" to avoid overhead? or just do it together?
-	:
+	obtain_artifact_from_remote_cache
 }
 
 function artifact_uboot_build_from_sources() {
-	# having failed all the cache obtaining, build it from sources.
-
 	if [[ -n "${ATFSOURCE}" && "${ATFSOURCE}" != "none" ]]; then
 		LOG_SECTION="compile_atf" do_with_logging compile_atf
 	fi

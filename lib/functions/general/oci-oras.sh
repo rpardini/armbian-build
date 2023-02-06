@@ -45,9 +45,9 @@ function run_tool_oras() {
 	esac
 
 	# Check if we have a cached version in a Docker image, and copy it over before possibly updating it.
-	if [[ "${deploy_to_non_cache_dir:-"no"}" != "yes" && -d "${non_cache_dir}" ]]; then
+	if [[ "${deploy_to_non_cache_dir:-"no"}" != "yes" && -d "${non_cache_dir}" && ! -f "${ORAS_BIN}" ]]; then
 		display_alert "Using cached ORAS from Docker image" "ORAS" "debug"
-		run_host_command_logged cp -v "${non_cache_dir}/"* "${DIR_ORAS}/"
+		run_host_command_logged cp "${non_cache_dir}/"* "${DIR_ORAS}/"
 	fi
 
 	declare ORAS_FN="oras_${ORAS_VERSION}_${ORAS_OS}_${ORAS_ARCH}"
@@ -96,12 +96,7 @@ function oras_push_artifact_file() {
 	display_alert "Pushing ${upload_file}" "ORAS to ${image_full_oci}" "info"
 
 	declare extra_params=("--verbose")
-	# if image_full_oci contains ":5000/", add --plain-http; to make easy to run self-hosted registry
-	if [[ "${image_full_oci}" == *":5000/"* ]]; then
-		display_alert "Adding --plain-http to ORAS" "ORAS to insecure registry" "warn"
-		extra_params+=("--plain-http")
-	fi
-
+	oras_add_param_plain_http
 	extra_params+=("--annotation" "org.opencontainers.image.description=${description}")
 
 	# make sure file exists
@@ -122,11 +117,35 @@ function oras_push_artifact_file() {
 	return 0
 }
 
+# Outer scope: oras_has_manifest (yes/no) and oras_manifest_json (json)
+function oras_get_artifact_manifest() {
+	declare image_full_oci="${1}" # Something like "ghcr.io/rpardini/armbian-git-shallow/kernel-git:latest"
+	display_alert "Getting ORAS manifest" "ORAS manifest from ${image_full_oci}" "info"
+
+	declare extra_params=("--verbose")
+	oras_add_param_plain_http
+
+	# Gotta capture the output & if it failed...
+	oras_manifest_json="$(run_tool_oras manifest fetch "${extra_params[@]}" "${image_full_oci}" 2>&1)" && oras_has_manifest="yes" || oras_has_manifest="no"
+	display_alert "oras_manifest_json: ${oras_manifest_json}" "ORAS manifest" "debug"
+
+	# if it worked, parse some basic info using jq
+	if [[ "${oras_has_manifest}" == "yes" ]]; then
+		oras_manifest_description="$(echo "${oras_manifest_json}" | jq -r '.annotations."org.opencontainers.image.description"')"
+		display_alert "oras_manifest_description: ${oras_manifest_description}" "ORAS oras_manifest_description" "debug"
+	fi
+
+	return 0
+}
+
 # oras pull is very hard to work with, since we don't determine the filename until after the download.
 function oras_pull_artifact_file() {
 	declare image_full_oci="${1}" # Something like "ghcr.io/rpardini/armbian-git-shallow/kernel-git:latest"
 	declare target_dir="${2}"     # temporary directory we'll use for the download to workaround oras being maniac
 	declare target_fn="${3}"
+
+	declare extra_params=("--verbose")
+	oras_add_param_plain_http
 
 	declare full_temp_dir="${target_dir}/${target_fn}.oras.pull.tmp"
 	declare full_tmp_file_path="${full_temp_dir}/${target_fn}"
@@ -134,7 +153,7 @@ function oras_pull_artifact_file() {
 
 	# @TODO: this needs retries...
 	pushd "${full_temp_dir}" &> /dev/null || exit_with_error "Failed to pushd to ${full_temp_dir} - ORAS download"
-	run_tool_oras pull --verbose "${image_full_oci}"
+	run_tool_oras pull "${extra_params[@]}" "${image_full_oci}"
 	popd &> /dev/null || exit_with_error "Failed to popd - ORAS download"
 
 	# sanity check; did we get the file we expected?
@@ -148,4 +167,12 @@ function oras_pull_artifact_file() {
 
 	# remove the temp directory
 	run_host_command_logged rm -rf "${full_temp_dir}"
+}
+
+function oras_add_param_plain_http() {
+	# if image_full_oci contains ":5000/", add --plain-http; to make easy to run self-hosted registry
+	if [[ "${image_full_oci}" == *":5000/"* ]]; then
+		display_alert "Adding --plain-http to ORAS" "ORAS to insecure registry" "warn"
+		extra_params+=("--plain-http")
+	fi
 }
