@@ -9,7 +9,18 @@ function cli_artifact_run() {
 	display_alert "artifact" "${chosen_artifact} :: ${chosen_artifact_impl}()" "debug"
 	artifact_cli_adapter_config_prep # only if in cli.
 
+	# When run in GHA, assume we're checking/updating the remote cache only.
+	# Local cache is ignored, and if found, it's not unpacked, either from local or remote.
+	# If remote cache is found, does nothing.
+	declare default_update_remote_only="no"
+	if [[ "${CI}" == "true" ]] && [[ "${GITHUB_ACTIONS}" == "true" ]]; then
+		display_alert "Running in GitHub Actions, assuming we're updating remote cache only" "GHA remote-only" "info"
+		default_update_remote_only="yes"
+	fi
+
 	# only if in cli, if not just run it bare, since we'd be already inside do_with_default_build
+	declare skip_unpack_if_found_in_caches="${skip_unpack_if_found_in_caches:-"${default_update_remote_only}"}"
+	declare ignore_local_cache="${ignore_local_cache:-"${default_update_remote_only}"}"
 	do_with_default_build obtain_complete_artifact < /dev/null
 }
 
@@ -55,6 +66,8 @@ function obtain_complete_artifact() {
 	declare -g artifact_version="undetermined"
 	declare -g artifact_version_reason="undetermined"
 	declare -g artifact_final_file="undetermined"
+	declare -g artifact_final_file_basename="undetermined"
+	declare -g artifact_full_oci_target="undetermined"
 	declare -A -g artifact_map_versions=()
 	declare -A -g artifact_map_versions_legacy=()
 
@@ -94,20 +107,73 @@ function obtain_complete_artifact() {
 	github_actions_add_output artifact_version_reason "${artifact_version_reason}"
 	github_actions_add_output artifact_final_file "${artifact_final_file}"
 
-	declare artifact_file_relative
 	# compute artifact_final_file relative to ${SRC} using realpath
+	declare -g artifact_file_relative="undetermined"
 	artifact_file_relative="$(realpath --relative-to="${SRC}" "${artifact_final_file}")"
 	github_actions_add_output artifact_file_relative "${artifact_file_relative}"
 
+	# just the file name, sans any path
+	declare -g artifact_final_file_basename="undetermined"
+	artifact_final_file_basename="$(basename "${artifact_final_file}")"
+	github_actions_add_output artifact_final_file_basename "${artifact_final_file_basename}"
+
+	debug_var artifact_final_file_basename
+	debug_var artifact_file_relative
+
+	if [[ -n "${OCI_TARGET_BASE}" ]]; then
+		declare -g artifact_full_oci_target="${OCI_TARGET_BASE}${artifact_name}:${artifact_version}"
+	else
+		display_alert "No OCI_TARGET_BASE defined, can't use OCI" "OCI_TARGET_BASE not set" "wrn"
+		return 1
+	fi
+
 	# @TODO: possibly stop here if only for up-to-date-checking
 
-	# @TODO the whole artifact upload/download dance
+	declare -g artifact_exists_in_local_cache="undetermined"
 	artifact_is_available_in_local_cache
-	artifact_is_available_in_remote_cache
-	artifact_obtain_from_remote_cache
 
-	# @TODO: hack... but works
-	DEB_COMPRESS="xz" artifact_build_from_sources
+	debug_var artifact_exists_in_local_cache
+
+	# If available in local cache, we're done (except for deb-tar which needs unpacking...)
+	if [[ "${artifact_exists_in_local_cache}" == "yes" ]]; then
+		display_alert "artifact" "exists in local cache: ${artifact_name} ${artifact_version}" "info"
+		if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
+			display_alert "artifact" "skipping unpacking as requested" "info"
+		else
+			unpack_artifact_from_local_cache
+		fi
+
+		if [[ "${ignore_local_cache:-"no"}" == "yes" ]]; then
+			display_alert "artifact" "ignoring local cache as requested" "info"
+		else
+			display_alert "artifact" "obtained from local cache: ${artifact_name} ${artifact_version}" "info"
+			return 0
+		fi
+	fi
+
+	declare -g artifact_exists_in_remote_cache="undetermined"
+
+	artifact_is_available_in_remote_cache
+
+	debug_var artifact_exists_in_remote_cache
+
+	if [[ "${artifact_exists_in_remote_cache}" == "yes" ]]; then
+		display_alert "artifact" "exists in remote cache: ${artifact_name} ${artifact_version}" "info"
+		if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
+			display_alert "artifact" "skipping obtain from remote & unpacking as requested" "info"
+			return 0
+		fi
+		artifact_obtain_from_remote_cache
+		unpack_artifact_from_local_cache
+		display_alert "artifact" "obtained from remote cache: ${artifact_name} ${artifact_version}" "info"
+		return 0
+	fi
+
+	if [[ "${artifact_exists_in_local_cache}" != "yes" && "${artifact_exists_in_remote_cache}" != "yes" ]]; then
+		# Not found in any cache, so we need to build it.
+		# Build from sources. Force high .deb compression.
+		DEB_COMPRESS="xz" artifact_build_from_sources
+	fi
 
 	artifact_deploy_to_remote_cache
 }
@@ -157,6 +223,16 @@ function capture_rename_legacy_debs_into_artifacts_logged() {
 	fi
 }
 
+function unpack_artifact_from_local_cache() {
+	if [[ "${artifact_type}" == "deb-tar" ]]; then
+		# @TODO: might be the thing is already unpacked, if so, skip this
+		display_alert "Unpacking artifact" "deb-tar: ${artifact_final_file_basename}" "info"
+		run_host_command_logged tar -C "${DEST}/debs" -xvf "${artifact_final_file}"
+		# @TODO: sanity check?
+	fi
+	return 0
+}
+
 function upload_artifact_to_oci() {
 	if [[ -n "${OCI_TARGET_BASE}" ]]; then
 		display_alert "Pushing to OCI" "OCI_TARGET_BASE: '${OCI_TARGET_BASE}'" "warn"
@@ -167,4 +243,45 @@ function upload_artifact_to_oci() {
 	else
 		display_alert "No OCI_TARGET_BASE defined, not pushing to OCI" "" "wrn"
 	fi
+}
+
+function is_artifact_available_in_local_cache() {
+	artifact_exists_in_local_cache="no" # outer scope
+	if [[ -f "${artifact_final_file}" ]]; then
+		artifact_exists_in_local_cache="yes" # outer scope
+	fi
+	return 0
+}
+
+function is_artifact_available_in_remote_cache() {
+	# check artifact_full_oci_target is set
+	if [[ -z "${artifact_full_oci_target}" ]]; then
+		error "artifact_full_oci_target is not set"
+		return 1
+	fi
+
+	declare oras_has_manifest="undetermined"
+	declare oras_manifest_json="undetermined"
+	declare oras_manifest_description="undetermined"
+	oras_get_artifact_manifest "${artifact_full_oci_target}"
+
+	display_alert "oras_has_manifest" "${oras_has_manifest}" "debug"
+	display_alert "oras_manifest_description" "${oras_manifest_description}" "debug"
+	display_alert "oras_manifest_json" "${oras_manifest_json}" "debug"
+
+	if [[ "${oras_has_manifest}" == "yes" ]]; then
+		display_alert "Artifact is available in remote cache" "${artifact_full_oci_target} - '${oras_manifest_description}'" "info"
+		artifact_exists_in_remote_cache="yes"
+	else
+		display_alert "Artifact is not available in remote cache" "${artifact_full_oci_target}" "info"
+		artifact_exists_in_remote_cache="no"
+	fi
+
+	return 0
+}
+
+function obtain_artifact_from_remote_cache() {
+	display_alert "Obtaining artifact from remote cache" "${artifact_full_oci_target} into ${artifact_final_file_basename}" "warn"
+	oras_pull_artifact_file "${artifact_full_oci_target}" "${DEST}/debs" "${artifact_final_file_basename}"
+	return 0
 }
