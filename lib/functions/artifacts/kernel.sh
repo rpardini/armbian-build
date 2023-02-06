@@ -10,6 +10,7 @@ function artifact_kernel_cli_adapter_config_prep() {
 	use_board="yes" prep_conf_main_minimal_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
 }
 
+# This is run in a logging section.
 function artifact_kernel_prepare_version() {
 	artifact_version="undetermined"        # outer scope
 	artifact_version_reason="undetermined" # outer scope
@@ -51,7 +52,7 @@ function artifact_kernel_prepare_version() {
 
 	# get the drivers hash...
 	declare kernel_drivers_patch_hash
-	LOG_SECTION="kernel_drivers_create_patches_hash_only" do_with_logging do_with_hooks kernel_drivers_create_patches_hash_only
+	do_with_hooks kernel_drivers_create_patches_hash_only
 	declare kernel_drivers_hash_short="${kernel_drivers_patch_hash:0:${short_hash_size}}"
 
 	# get the kernel patches hash...

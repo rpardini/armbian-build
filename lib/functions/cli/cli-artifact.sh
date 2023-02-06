@@ -74,7 +74,8 @@ function obtain_complete_artifact() {
 	# Check if REVISION is set, otherwise exit_with_error
 	[[ "x${REVISION}x" == "xx" ]] && exit_with_error "REVISION is not set"
 
-	artifact_prepare_version
+	LOG_SECTION="artifact_prepare_version" do_with_logging artifact_prepare_version
+
 	debug_var artifact_name
 	debug_var artifact_type
 	debug_var artifact_version
@@ -130,7 +131,7 @@ function obtain_complete_artifact() {
 	# @TODO: possibly stop here if only for up-to-date-checking
 
 	declare -g artifact_exists_in_local_cache="undetermined"
-	artifact_is_available_in_local_cache
+	LOG_SECTION="artifact_is_available_in_local_cache" do_with_logging artifact_is_available_in_local_cache
 
 	debug_var artifact_exists_in_local_cache
 
@@ -140,7 +141,7 @@ function obtain_complete_artifact() {
 		if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
 			display_alert "artifact" "skipping unpacking as requested" "info"
 		else
-			unpack_artifact_from_local_cache
+			LOG_SECTION="unpack_artifact_from_local_cache" do_with_logging unpack_artifact_from_local_cache
 		fi
 
 		if [[ "${ignore_local_cache:-"no"}" == "yes" ]]; then
@@ -153,7 +154,7 @@ function obtain_complete_artifact() {
 
 	declare -g artifact_exists_in_remote_cache="undetermined"
 
-	artifact_is_available_in_remote_cache
+	LOG_SECTION="artifact_is_available_in_remote_cache" do_with_logging artifact_is_available_in_remote_cache
 
 	debug_var artifact_exists_in_remote_cache
 
@@ -163,8 +164,8 @@ function obtain_complete_artifact() {
 			display_alert "artifact" "skipping obtain from remote & unpacking as requested" "info"
 			return 0
 		fi
-		artifact_obtain_from_remote_cache
-		unpack_artifact_from_local_cache
+		LOG_SECTION="artifact_obtain_from_remote_cache" do_with_logging artifact_obtain_from_remote_cache
+		LOG_SECTION="unpack_artifact_from_local_cache" do_with_logging unpack_artifact_from_local_cache
 		display_alert "artifact" "obtained from remote cache: ${artifact_name} ${artifact_version}" "info"
 		return 0
 	fi
@@ -175,7 +176,7 @@ function obtain_complete_artifact() {
 		DEB_COMPRESS="xz" artifact_build_from_sources
 	fi
 
-	artifact_deploy_to_remote_cache
+	LOG_SECTION="artifact_deploy_to_remote_cache" do_with_logging artifact_deploy_to_remote_cache
 }
 
 # This is meant to be run after config, inside default build.
@@ -225,10 +226,24 @@ function capture_rename_legacy_debs_into_artifacts_logged() {
 
 function unpack_artifact_from_local_cache() {
 	if [[ "${artifact_type}" == "deb-tar" ]]; then
-		# @TODO: might be the thing is already unpacked, if so, skip this
-		display_alert "Unpacking artifact" "deb-tar: ${artifact_final_file_basename}" "info"
-		run_host_command_logged tar -C "${DEST}/debs" -xvf "${artifact_final_file}"
-		# @TODO: sanity check?
+
+		# loop over the artifact_map_versions, and check if the new .debs are already unpacked.
+		declare any_missing="no"
+		for deb_name_base in "${!artifact_map_versions[@]}"; do
+			new_base_version="${artifact_map_versions[${deb_name_base}]}"
+			new_name_fn="${deb_name_base}_${new_base_version}.deb"
+			new_name_full="${DEST}/debs/${new_name_fn}"
+			if [[ ! -f "${new_name_full}" ]]; then
+				any_missing="yes"
+			fi
+		done
+
+		if [[ "${any_missing}" == "yes" ]]; then
+			display_alert "Unpacking artifact" "deb-tar: ${artifact_final_file_basename}" "info"
+			run_host_command_logged tar -C "${DEST}/debs" -xvf "${artifact_final_file}"
+		fi
+
+		# @TODO: sanity check? did unpacking produce the expected files?
 	fi
 	return 0
 }
