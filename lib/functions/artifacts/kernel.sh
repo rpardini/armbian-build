@@ -75,7 +75,14 @@ function artifact_kernel_prepare_version() {
 	config_hash="${hash_files}"
 	declare config_hash_short="${config_hash:0:${short_hash_size}}"
 
-	# @TODO: get the extensions' .config modyfing hashes...
+	# run the extensions. they _must_ behave, and not try to modify the .config, instead just fill kernel_config_modifying_hashes
+	declare kernel_config_modifying_hashes_hash="undetermined"
+	declare -a kernel_config_modifying_hashes=()
+	call_extensions_kernel_config
+	kernel_config_modification_hash="$(echo "${kernel_config_modifying_hashes[@]}" | sha256sum | cut -d' ' -f1)"
+	kernel_config_modification_hash="${kernel_config_modification_hash:0:16}" # "long hash"
+	declare kernel_config_modification_hash_short="${kernel_config_modification_hash:0:${short_hash_size}}"
+
 	# @TODO: include the compiler version? host release?
 
 	# get the hashes of the lib/ bash sources involved...
@@ -85,7 +92,7 @@ function artifact_kernel_prepare_version() {
 	declare bash_hash_short="${bash_hash:0:${short_hash_size}}"
 
 	# outer scope
-	artifact_version="${GIT_INFO[MAKEFILE_VERSION]}-S${short_sha1}-D${kernel_drivers_hash_short}-P${kernel_patches_hash_short}-C${config_hash_short}-B${bash_hash_short}"
+	artifact_version="${GIT_INFO[MAKEFILE_VERSION]}-S${short_sha1}-D${kernel_drivers_hash_short}-P${kernel_patches_hash_short}-C${config_hash_short}H${kernel_config_modification_hash_short}-B${bash_hash_short}"
 	# @TODO: validate it begins with a digit, and is at max X chars long.
 
 	declare -a reasons=(
@@ -95,6 +102,7 @@ function artifact_kernel_prepare_version() {
 		"drivers hash \"${kernel_drivers_patch_hash}\""
 		"patches hash \"${patches_hash}\""
 		".config hash \"${config_hash}\""
+		".config hook hash \"${kernel_config_modification_hash}\""
 		"framework bash hash \"${bash_hash}\""
 	)
 
