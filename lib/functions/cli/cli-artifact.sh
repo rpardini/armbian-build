@@ -29,7 +29,7 @@ function cli_artifact_run() {
 		deploy_to_remote="yes"
 	fi
 
-	do_with_default_build obtain_complete_artifact < /dev/null
+	do_with_default_build obtain_complete_artifact # @TODO: < /dev/null -- but what about kernel configure?
 }
 
 function create_artifact_functions() {
@@ -274,7 +274,7 @@ function upload_artifact_to_oci() {
 		exit_with_error "artifact_full_oci_target is not set"
 	fi
 
-	display_alert "Pushing to OCI" "'${artifact_final_file}' -> '${artifact_full_oci_target}'" "warn"
+	display_alert "Pushing to OCI" "'${artifact_final_file}' -> '${artifact_full_oci_target}'" "info"
 	oras_push_artifact_file "${artifact_full_oci_target}" "${artifact_final_file}" "${artifact_name} - ${artifact_version} - ${artifact_version_reason} - type: ${artifact_type}: this NOT a Docker image"
 }
 
@@ -313,7 +313,7 @@ function is_artifact_available_in_remote_cache() {
 }
 
 function obtain_artifact_from_remote_cache() {
-	display_alert "Obtaining artifact from remote cache" "${artifact_full_oci_target} into ${artifact_final_file_basename}" "warn"
+	display_alert "Obtaining artifact from remote cache" "${artifact_full_oci_target} into ${artifact_final_file_basename}" "info"
 	oras_pull_artifact_file "${artifact_full_oci_target}" "${DEST}/debs" "${artifact_final_file_basename}"
 	return 0
 }

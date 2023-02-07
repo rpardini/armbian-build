@@ -60,10 +60,10 @@ function create_image_from_sdcard_rootfs() {
 	display_alert "Free SD cache" "$(echo -e "$freespace" | awk -v mp="${SDCARD}" '$6==mp {print $5}')" "info"
 	display_alert "Mount point" "$(echo -e "$freespace" | awk -v mp="${MOUNT}" '$6==mp {print $5}')" "info"
 
-	# stage: write u-boot, unless the deb is not there, which would happen if BOOTCONFIG=none
-	# exception: if we use the one from repository, install version which was downloaded from repo
-	if [[ -f "${DEB_STORAGE}"/${CHOSEN_UBOOT}_${REVISION}_${ARCH}.deb ]] || [[ -n $UBOOT_REPO_VERSION ]]; then
-		write_uboot_to_loop_image "${LOOP}"
+	# stage: write u-boot, unless BOOTCONFIG=none
+	declare -g -A image_artifacts_debs
+	if [[ "${BOOTCONFIG}" != "none" ]]; then
+		write_uboot_to_loop_image "${LOOP}" "${DEB_STORAGE}/${image_artifacts_debs["uboot"]}"
 	fi
 
 	# fix wrong / permissions
