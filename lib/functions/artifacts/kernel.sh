@@ -109,30 +109,28 @@ function artifact_kernel_prepare_version() {
 	artifact_version_reason="${reasons[*]}" # outer scope
 
 	# map what "compile_kernel()" will produce - legacy deb names and versions
-	artifact_map_versions_legacy=(
-		["linux-image-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}"
-		["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}"
-		["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}"
-	)
 
-	# now, one for each file in the artifact... we've 3 packages produced, all the same version
-	artifact_map_versions=(
-		["linux-image-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}"
-		["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}"
-		["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}"
-	)
+	# linux-image is always produced...
+	artifact_map_versions_legacy=(["linux-image-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}")
+	artifact_map_versions=(["linux-image-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}")
+	artifact_map_packages=(["linux-image"]="linux-image-${BRANCH}-${LINUXFAMILY}")
+	artifact_map_debs=(["linux-image"]="linux-image-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb")
 
-	artifact_map_packages=(
-		["linux-image"]="linux-image-${BRANCH}-${LINUXFAMILY}"
-		["linux-dtb"]="linux-dtb-${BRANCH}-${LINUXFAMILY}"
-		["linux-headers"]="linux-headers-${BRANCH}-${LINUXFAMILY}"
-	)
+	# some/most kernels have also working headers...
+	if [[ "${KERNEL_HAS_WORKING_HEADERS:-"no"}" == "yes" ]]; then
+		artifact_map_versions_legacy+=(["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}")
+		artifact_map_versions+=(["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}")
+		artifact_map_packages+=(["linux-headers"]="linux-headers-${BRANCH}-${LINUXFAMILY}")
+		artifact_map_debs+=(["linux-headers"]="linux-headers-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb")
+	fi
 
-	artifact_map_debs=(
-		["linux-image"]="linux-image-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb"
-		["linux-dtb"]="linux-dtb-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb"
-		["linux-headers"]="linux-headers-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb"
-	)
+	# x86, specially, does not have working dtbs...
+	if [[ "${KERNEL_BUILD_DTBS:-"yes"}" == "yes" ]]; then
+		artifact_map_versions_legacy+=(["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}")
+		artifact_map_versions+=(["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}")
+		artifact_map_packages+=(["linux-dtb"]="linux-dtb-${BRANCH}-${LINUXFAMILY}")
+		artifact_map_debs+=(["linux-dtb"]="linux-dtb-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb")
+	fi
 
 	artifact_name="kernel-${LINUXFAMILY}-${BRANCH}"
 	artifact_type="deb-tar" # this triggers processing of .deb files in the maps to produce a tarball

@@ -66,7 +66,7 @@ function kernel_config_initialize() {
 
 	# Call the extensions. This is _also_ done during the kernel artifact's prepare_version, for consistent caching.
 	call_extensions_kernel_config
-	
+
 	display_alert "Kernel configuration" "${LINUXCONFIG}" "info"
 }
 
@@ -77,6 +77,7 @@ function call_extensions_kernel_config() {
 		NOT for user consumption. Do NOT use this hook, this is internal to Armbian.
 		Instead, use `custom_kernel_config` which runs later and can undo anything done by this step.
 		Important: this hook might be run multiple times, and one of them might not have a .config in place.
+		Either way, the hook _must_ add representative changes to the `kernel_config_modifying_hashes` array, for kernel config hashing.
 	ARMBIAN_KERNEL_CONFIG
 
 	# Custom hooks receive a clean / updated config; depending on their modifications, they may need to run olddefconfig again.
@@ -86,6 +87,7 @@ function call_extensions_kernel_config() {
 		A good place to customize the .config directly.
 		Armbian default Kconfig modifications have already been applied and can be overriden.
 		Important: this hook might be run multiple times, and one of them might not have a .config in place.
+		Either way, the hook _must_ add representative changes to the `kernel_config_modifying_hashes` array, for kernel config hashing.
 	CUSTOM_KERNEL_CONFIG
 }
 
