@@ -121,9 +121,9 @@ function obtain_complete_artifact() {
 	github_actions_add_output artifact_version_reason "${artifact_version_reason}"
 	github_actions_add_output artifact_final_file "${artifact_final_file}"
 
-	# compute artifact_final_file relative to ${SRC} using realpath
+	# compute artifact_final_file relative to ${SRC} but don't use realpath
 	declare -g artifact_file_relative="undetermined"
-	artifact_file_relative="$(realpath --relative-to="${SRC}" "${artifact_final_file}")"
+	artifact_file_relative="${artifact_final_file#${SRC}/}"
 	github_actions_add_output artifact_file_relative "${artifact_file_relative}"
 
 	# just the file name, sans any path

@@ -317,11 +317,17 @@ function install_distribution_agnostic() {
 	# install kernel: image/dtb/headers
 	if [[ -n $KERNELSOURCE ]]; then
 		install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["linux-image"]}"
-		install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["linux-dtb"]}"
-		if [[ $INSTALL_HEADERS == yes ]]; then # @TODO remove? might be a good idea to always install headers.
-			install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["linux-headers"]}"
+
+		if [[ "${KERNEL_BUILD_DTBS:-"yes"}" == "yes" ]]; then
+			install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["linux-dtb"]}"
 		fi
-		
+
+		if [[ "${KERNEL_HAS_WORKING_HEADERS:-"no"}" == "yes" ]]; then
+			if [[ $INSTALL_HEADERS == yes ]]; then # @TODO remove? might be a good idea to always install headers.
+				install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["linux-headers"]}"
+			fi
+		fi
+
 		# Determine "IMAGE_INSTALLED_KERNEL_VERSION" for compatiblity with legacy update-initramfs code. @TODO get rid of this one day
 		IMAGE_INSTALLED_KERNEL_VERSION=$(dpkg --info "${DEB_STORAGE}/${image_artifacts_debs["linux-image"]}" | grep "^ Source:" | sed -e 's/ Source: linux-//')
 		display_alert "Parsed kernel version from local package" "${IMAGE_INSTALLED_KERNEL_VERSION}" "warn"
