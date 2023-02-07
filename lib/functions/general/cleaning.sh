@@ -17,6 +17,7 @@
 function general_cleaning() {
 	case $1 in
 		debs) # delete ${DEB_STORAGE} for current branch and family
+			# @TODO: this is completely obsolete with artifacts?
 			if [[ -d "${DEB_STORAGE}" ]]; then
 				display_alert "Cleaning ${DEB_STORAGE} for" "$BOARD $BRANCH" "info"
 				# easier than dealing with variable expansion and escaping dashes in file names

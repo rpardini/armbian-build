@@ -29,7 +29,7 @@ function cli_artifact_run() {
 		deploy_to_remote="yes"
 	fi
 
-	do_with_default_build obtain_complete_artifact < /dev/null
+	do_with_default_build obtain_complete_artifact # @TODO: < /dev/null -- but what about kernel configure?
 }
 
 function create_artifact_functions() {
