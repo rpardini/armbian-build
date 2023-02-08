@@ -6,11 +6,13 @@ export COPY_HEADERS_DEB=yes # do copy the headers .deb to rootfs for easy later 
 post_install_kernel_debs__copy_headers_deb_to_rootfs() {
 	[[ "${COPY_HEADERS_DEB}" != "yes" ]] && return 0
 
-	declare headers_deb="${CHOSEN_KERNEL/image/headers}_${REVISION}_${ARCH}.deb"
-	if [[ -f "${DEB_STORAGE}/${headers_deb}" ]]; then
-		display_alert "Including headers package in image" "/usr/src/${headers_deb}" "info"
-		run_host_command_logged ls -lah "${DEB_STORAGE}/${headers_deb}"
-		run_host_command_logged cp -vp "${DEB_STORAGE}/${headers_deb}" "${SDCARD}"/usr/src
+	declare -g -A image_artifacts_debs
+
+	declare headers_deb="${DEB_STORAGE}/${image_artifacts_debs["linux-headers"]}"
+	if [[ -f "${headers_deb}" ]]; then
+		display_alert "Including linux-headers package in image" "/usr/src/" "info"
+		run_host_command_logged ls -lah "${headers_deb}"
+		run_host_command_logged cp -vp "${headers_deb}" "${SDCARD}"/usr/src/
 	else
 		if [[ "${BRANCH}" != "ddk" ]]; then
 			display_alert "Headers package not found, will not be included in image" "${headers_deb}" "warn"
