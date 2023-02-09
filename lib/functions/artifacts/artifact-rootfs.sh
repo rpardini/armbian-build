@@ -25,9 +25,9 @@ function artifact_rootfs_prepare_version() {
 	# @TODO: gotta include the extensions rootfs-modifying id to cache_type...
 
 	# outer scope
-	artifact_version="${rootfs_cache_id}" # @TODO: validate it begins with a digit, and is at max X chars long.
+	artifact_version="${rootfs_cache_id}"
 	artifact_version_reason="${reasons[*]}"
-	artifact_name="rootfs-${ARCH}-${RELEASE}"
+	artifact_name="rootfs/rootfs-${ARCH}/rootfs-${ARCH}-${RELEASE}-${cache_type}"
 	artifact_type="tar.zst"
 	artifact_final_file="${SRC}/cache/rootfs/${ARCH}-${RELEASE}-${rootfs_cache_id}-${ROOT_FS_CREATE_VERSION}.tar.zst"
 
