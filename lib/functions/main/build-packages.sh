@@ -27,10 +27,10 @@ function main_default_build_packages() {
 	fi
 
 	if [[ "${INSTALL_ARMBIAN_FIRMWARE:-yes}" == "yes" ]]; then
-		artifacts_to_build+=("firmware")
-
 		if [[ ${BOARD_FIRMWARE_INSTALL:-""} == "-full" ]]; then
 			artifacts_to_build+=("full_firmware")
+		else
+			artifacts_to_build+=("firmware")
 		fi
 	fi
 
@@ -81,7 +81,6 @@ function main_default_build_packages() {
 			LOG_SECTION="compile_plymouth_theme_armbian" do_with_logging compile_plymouth_theme_armbian
 		fi
 	fi
-
 
 	overlayfs_wrapper "cleanup"
 	reset_uid_owner "${DEB_STORAGE}"
