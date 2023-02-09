@@ -58,8 +58,25 @@ function create_artifact_functions() {
 			exit_with_error "Missing artifact implementation function '${impl_func}'"
 		fi
 	done
+
+	# If ${chosen_artifact} is in ${DONT_BUILD_ARTIFACTS}, override the build function with an error.
+	if [[ "${DONT_BUILD_ARTIFACTS}" = *"${chosen_artifact}"* ]]; then
+		display_alert "Artifact '${chosen_artifact}' is in DONT_BUILD_ARTIFACTS, overriding build function with error" "DONT_BUILD_ARTIFACTS=${chosen_artifact}" "debug"
+		declare cmd
+		cmd="$(
+			cat <<- ARTIFACT_DEFINITION
+				function artifact_build_from_sources() {
+					exit_with_error "Artifact '${chosen_artifact}' is in DONT_BUILD_ARTIFACTS."
+				}
+			ARTIFACT_DEFINITION
+		)"
+		eval "${cmd}"
+	else
+		display_alert "Artifact '${chosen_artifact}' is not in DONT_BUILD_ARTIFACTS, using default build function" "DONT_BUILD_ARTIFACTS!=${chosen_artifact}" "debug"
+	fi
 }
 
+# @TODO: DONT_BUILD_ARTIFACTS=kernel
 function initialize_artifact() {
 	declare -g chosen_artifact="${1}"
 	armbian_register_artifacts
