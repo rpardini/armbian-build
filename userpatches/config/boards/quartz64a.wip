@@ -1,0 +1,40 @@
+# https://gitlab.com/pgwipeout/u-boot-rockchip.git
+#declare -g BOOT_SOC="rk3566" # Yes, the quartz64a is rk3566, not rk3568. but rk3566 mkimage: imagename (rk3566) is not supported
+
+#declare -g BOOT_SCENARIO="only-blobs"
+
+# Hijack this back to rk u-boot and mainline kernel
+function post_family_config_branch_edge__use_vendor_uboot_and_mainline_kernel() {
+	display_alert "Userpatched quartz64a" "rk u-boot and mainline kernel for quartz64a (or not)" "warn"
+
+	declare -g SRC_CMDLINE="console=ttyS2,1500000 systemd.log_level=info systemd.log_target=console systemd.journald.forward_to_console=1"
+
+	#declare -g BOOTPATCHDIR="legacy/u-boot-quartz64a"
+
+	## rk ## declare -g BOOTSOURCE="https://gitlab.com/pgwipeout/u-boot-rockchip.git"
+	## rk ## declare -g BOOTBRANCH="branch:quartz64"
+	## rk ## declare -g BOOTCONFIG="rk3566-quartz64_defconfig"
+
+	## pine64 ## declare -g BOOTSOURCE="https://github.com/CounterPillow/u-boot-quartz64.git"
+	## pine64 ## declare -g BOOTBRANCH="branch:mainline-ish"
+	## pine64 ## declare -g BOOTCONFIG="quartz64-a-rk3566_defconfig"
+
+	## mainline k ## declare -g LINUXFAMILY="rk3568-odroid" # a separate family for this (separate kernel deb)
+	## mainline k ## declare -g LINUXCONFIG='linux-rk3568-odroid-'$BRANCH
+	## mainline k ## declare -g KERNEL_MAJOR_MINOR="6.2"              # Major and minor versions of this kernel (for armbian-next)
+	## mainline k ## declare -g KERNELBRANCH='tag:v6.2-rc6'           # @TODO: soon-to-be 'branch:linux-6.2.y' when it is released
+	## mainline k ## declare -g KERNELPATCHDIR='archive/odroidm1-6.2' # Empty! Look ma, pure mainline!
+
+}
+
+function pre_config_uboot_target__doesnt_do_anything() {
+	display_alert "Userpatched quartz64a" "pre-uboot" "warn"
+	: "${BL31_BLOB:?BL31_BLOB must be set}"
+	: "${RKBIN_DIR:?RKBIN_DIR must be set}"
+	: "${uboot_work_dir:?uboot_work_dir must be set}"
+
+	# run_host_command_logged wget -O "${RKBIN_DIR}/${MINILOADER_BLOB}" "https://github.com/rockchip-linux/rkbin/raw/master/bin/rk35/rk356x_usbplug_v1.14.bin"
+
+	# Copy bl31 to u-boot
+	#run_host_command_logged cp -pv "$RKBIN_DIR/$BL31_BLOB" "${uboot_work_dir}/bl31.elf"
+}
