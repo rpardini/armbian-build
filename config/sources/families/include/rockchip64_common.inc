@@ -90,6 +90,7 @@ elif [[ $BOOT_SOC == rk3566 ]]; then
 	BOOT_SCENARIO="${BOOT_SCENARIO:=spl-blobs}"
 	DDR_BLOB="${DDR_BLOB:=rk35/rk3566_ddr_1056MHz_v1.10.bin}"
 	BL31_BLOB='rk35/rk3568_bl31_v1.29.elf'
+	BOOT_SOC_MKIMAGE="rk3568" # mkimage doesn't know about rk3566, but does know about rk3568
 
 elif [[ $BOOT_SOC == rk3568 ]]; then
 
@@ -198,13 +199,13 @@ uboot_custom_postprocess() {
 		[[ ! -f "${SPL_BIN_PATH}" ]] && exit_with_error "DDR_BLOB ${SPL_BIN_PATH} does not exist for scenario ${BOOT_SCENARIO}"
 
 		display_alert "mkimage for '${BOOT_SOC}' for scenario ${BOOT_SCENARIO}" "SPL_BIN_PATH: ${SPL_BIN_PATH}" "debug"
-		run_host_command_logged tools/mkimage -n "${BOOT_SOC}" -T rksd -d "${SPL_BIN_PATH}:spl/u-boot-spl.bin" idbloader.img
+		run_host_command_logged tools/mkimage -n "${BOOT_SOC_MKIMAGE:-"${BOOT_SOC}"}" -T rksd -d "${SPL_BIN_PATH}:spl/u-boot-spl.bin" idbloader.img
 
 	elif [[ $BOOT_SCENARIO == "only-blobs" ]]; then
 
 		local tempfile=$(mktemp)
-		run_host_command_logged tools/mkimage -n $BOOT_SOC -T rksd -d $RKBIN_DIR/$DDR_BLOB idbloader.bin
-		cat $RKBIN_DIR/$MINILOADER_BLOB >> idbloader.bin
+		run_host_command_logged tools/mkimage -n "${BOOT_SOC_MKIMAGE:-"${BOOT_SOC}"}" -T rksd -d $RKBIN_DIR/$DDR_BLOB idbloader.bin
+		run_host_command_logged cat "$RKBIN_DIR/$MINILOADER_BLOB" ">>" idbloader.bin
 		run_host_x86_binary_logged $RKBIN_DIR/tools/loaderimage --pack --uboot ./u-boot-dtb.bin uboot.img 0x200000
 		run_host_x86_binary_logged $RKBIN_DIR/tools/trust_merger --replace bl31.elf $RKBIN_DIR/$BL31_BLOB trust.ini
 
