@@ -197,7 +197,6 @@ function config_post_main() {
 	declare -g CHOSEN_KERNEL=linux-image-${BRANCH}-${LINUXFAMILY}
 	declare -g CHOSEN_ROOTFS=${BSP_CLI_PACKAGE_NAME}
 	declare -g CHOSEN_DESKTOP=armbian-${RELEASE}-desktop-${DESKTOP_ENVIRONMENT}
-	declare -g CHOSEN_KSRC=linux-source-${BRANCH}-${LINUXFAMILY}
 	declare -g CHOSEN_KERNEL_WITH_ARCH=${CHOSEN_KERNEL}-${ARCH} # Only for reporting purposes.
 
 	# So for kernel full cached rebuilds.

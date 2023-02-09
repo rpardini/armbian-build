@@ -411,11 +411,6 @@ function install_distribution_agnostic() {
 		fi
 	fi
 
-	# install kernel sources
-	if [[ -f ${DEB_STORAGE}/${CHOSEN_KSRC}_${REVISION}_all.deb && $INSTALL_KSRC == yes ]]; then
-		install_deb_chroot "${DEB_STORAGE}/${CHOSEN_KSRC}_${REVISION}_all.deb"
-	fi
-
 	# install wireguard tools
 	if [[ $WIREGUARD == yes ]]; then
 		install_deb_chroot "wireguard-tools" "remote"
