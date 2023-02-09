@@ -33,7 +33,6 @@ function main_default_build_packages() {
 	declare -g -A image_artifacts_debs=()
 	declare one_artifact one_artifact_package
 	for one_artifact in "${artifacts_to_build[@]}"; do
-		declare -A artifact_map_versions=()
 		declare -A artifact_map_packages=()
 		declare -A artifact_map_debs=()
 

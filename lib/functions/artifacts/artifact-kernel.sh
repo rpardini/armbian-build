@@ -111,23 +111,17 @@ function artifact_kernel_prepare_version() {
 	# map what "compile_kernel()" will produce - legacy deb names and versions
 
 	# linux-image is always produced...
-	artifact_map_versions_legacy=(["linux-image-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}")
-	artifact_map_versions=(["linux-image-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}")
 	artifact_map_packages=(["linux-image"]="linux-image-${BRANCH}-${LINUXFAMILY}")
 	artifact_map_debs=(["linux-image"]="linux-image-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb")
 
 	# some/most kernels have also working headers...
 	if [[ "${KERNEL_HAS_WORKING_HEADERS:-"no"}" == "yes" ]]; then
-		artifact_map_versions_legacy+=(["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}")
-		artifact_map_versions+=(["linux-headers-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}")
 		artifact_map_packages+=(["linux-headers"]="linux-headers-${BRANCH}-${LINUXFAMILY}")
 		artifact_map_debs+=(["linux-headers"]="linux-headers-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb")
 	fi
 
 	# x86, specially, does not have working dtbs...
 	if [[ "${KERNEL_BUILD_DTBS:-"yes"}" == "yes" ]]; then
-		artifact_map_versions_legacy+=(["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${REVISION}_${ARCH}")
-		artifact_map_versions+=(["linux-dtb-${BRANCH}-${LINUXFAMILY}"]="${artifact_version}_${ARCH}")
 		artifact_map_packages+=(["linux-dtb"]="linux-dtb-${BRANCH}-${LINUXFAMILY}")
 		artifact_map_debs+=(["linux-dtb"]="linux-dtb-${BRANCH}-${LINUXFAMILY}_${artifact_version}_${ARCH}.deb")
 	fi
@@ -141,7 +135,7 @@ function artifact_kernel_prepare_version() {
 
 function artifact_kernel_build_from_sources() {
 	compile_kernel
-	capture_rename_legacy_debs_into_artifacts
+	display_alert "Kernel build finished" "${artifact_version_reason}" "info"
 }
 
 function artifact_kernel_cli_adapter_pre_run() {

@@ -81,8 +81,6 @@ function artifact_uboot_build_from_sources() {
 	declare uboot_git_revision="not_determined_yet"
 	LOG_SECTION="uboot_prepare_git" do_with_logging_unless_user_terminal uboot_prepare_git
 	LOG_SECTION="compile_uboot" do_with_logging compile_uboot
-
-	capture_rename_legacy_debs_into_artifacts # has its own logging section
 }
 
 function artifact_uboot_cli_adapter_pre_run() {

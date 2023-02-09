@@ -30,6 +30,19 @@ function cli_artifact_run() {
 		skip_unpack_if_found_in_caches="yes"
 		ignore_local_cache="yes"
 		deploy_to_remote="yes"
+
+		# Pass ARTIFACT_USE_CACHE=yes to actually use the cache versions, but don't deploy to remote.
+		# @TODO this is confusing. each op should be individually controlled...
+		# what we want is:
+		# 1: - check remote, if not found, check local, if not found, build, then deploy to remote
+		#      - if remote found, do nothing.
+		#      - if local found, deploy it to remote (for switching targets)
+		# 2: - get from remote -> get local -> build, then DON'T deploy to remote
+		if [[ "${ARTIFACT_USE_CACHE}" == "yes" ]]; then
+			skip_unpack_if_found_in_caches="no"
+			ignore_local_cache="no"
+			deploy_to_remote="no"
+		fi
 	fi
 
 	do_with_default_build obtain_complete_artifact # @TODO: < /dev/null -- but what about kernel configure?

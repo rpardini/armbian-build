@@ -1,4 +1,3 @@
-
 function create_artifact_functions() {
 	declare -a funcs=(
 		"cli_adapter_pre_run" "cli_adapter_config_prep"
@@ -61,8 +60,6 @@ function obtain_complete_artifact() {
 	declare -g artifact_final_file="undetermined"
 	declare -g artifact_final_file_basename="undetermined"
 	declare -g artifact_full_oci_target="undetermined"
-	declare -A -g artifact_map_versions=()
-	declare -A -g artifact_map_versions_legacy=()
 	declare -A -g artifact_map_packages=()
 	declare -A -g artifact_map_debs=()
 
@@ -76,8 +73,6 @@ function obtain_complete_artifact() {
 	debug_var artifact_version
 	debug_var artifact_version_reason
 	debug_var artifact_final_file
-	debug_dict artifact_map_versions_legacy
-	debug_dict artifact_map_versions
 	debug_dict artifact_map_packages
 	debug_dict artifact_map_debs
 
@@ -174,8 +169,11 @@ function obtain_complete_artifact() {
 
 	if [[ "${artifact_exists_in_local_cache}" != "yes" && "${artifact_exists_in_remote_cache}" != "yes" ]]; then
 		# Not found in any cache, so we need to build it.
-		# @TODO: only do this if building from CLI: Force high .deb compression.
-		DEB_COMPRESS="xz" artifact_build_from_sources
+		# @TODO: if deploying to remote cache, force high compression, DEB_COMPRESS="xz"
+		artifact_build_from_sources # definitely will end up having its own logging sections
+
+		# pack the artifact to local cache (eg: for deb-tar)
+		LOG_SECTION="pack_artifact_to_local_cache" do_with_logging pack_artifact_to_local_cache
 	fi
 
 	if [[ "${deploy_to_remote:-"no"}" == "yes" ]]; then
@@ -189,64 +187,28 @@ function build_artifact_for_image() {
 	obtain_complete_artifact
 }
 
-function capture_rename_legacy_debs_into_artifacts() {
-	LOG_SECTION="capture_rename_legacy_debs_into_artifacts" do_with_logging capture_rename_legacy_debs_into_artifacts_logged
-}
-
-function capture_rename_legacy_debs_into_artifacts_logged() {
-	# So the deb-building code will consider the artifact_version in it's "Version: " field in the .debs.
-	# But it will produce .deb's with the legacy name. We gotta find and rename them.
-	# Loop over the artifact_map_versions, and rename the .debs.
-	debug_dict artifact_map_versions_legacy
-	debug_dict artifact_map_versions
-
-	declare -a files_to_tar=()
-
-	declare deb_name_base deb_name_full new_name_full legacy_version legacy_base_version new_base_version new_name_fn
-	for deb_name_base in "${!artifact_map_versions[@]}"; do
-		legacy_base_version="${artifact_map_versions_legacy[${deb_name_base}]}"
-		new_base_version="${artifact_map_versions[${deb_name_base}]}"
-		if [[ -z "${legacy_base_version}" ]]; then
-			exit_with_error "Legacy base version not found for artifact '${deb_name_base}'"
-		fi
-
-		display_alert "Legacy base version" "${legacy_base_version}" "info"
-		legacy_version="${legacy_base_version}" # Arch-specific package
-		deb_name_full="${DEST}/debs/${deb_name_base}_${legacy_version}.deb"
-		new_name_fn="${deb_name_base}_${new_base_version}.deb"
-		new_name_full="${DEST}/debs/${new_name_fn}"
-		display_alert "Full legacy deb name" "${deb_name_full}" "info"
-		display_alert "New artifact deb name" "${new_name_full}" "info"
-		run_host_command_logged mv -v "${deb_name_full}" "${new_name_full}"
-		files_to_tar+=("${new_name_fn}")
-	done
-
+function pack_artifact_to_local_cache() {
 	if [[ "${artifact_type}" == "deb-tar" ]]; then
-		# tar up the files_to_tar array in directory ${DEST}/debs into artifact_final_file
-		run_host_command_logged tar -C "${DEST}/debs" -cvf "${artifact_final_file}" "${files_to_tar[@]}"
+		declare -a files_to_tar=()
+		run_host_command_logged tar -C "${DEST}/debs" -cvf "${artifact_final_file}" "${artifact_map_debs[@]}"
 		display_alert "Created deb-tar artifact" "deb-tar: ${artifact_final_file}" "info"
 	fi
 }
 
 function unpack_artifact_from_local_cache() {
 	if [[ "${artifact_type}" == "deb-tar" ]]; then
-
-		# loop over the artifact_map_versions, and check if the new .debs are already unpacked.
 		declare any_missing="no"
-		for deb_name_base in "${!artifact_map_versions[@]}"; do
-			new_base_version="${artifact_map_versions[${deb_name_base}]}"
-			new_name_fn="${deb_name_base}_${new_base_version}.deb"
-			new_name_full="${DEST}/debs/${new_name_fn}"
+		declare deb_name
+		for deb_name in "${artifact_map_debs[@]}"; do
+			declare new_name_full="${DEST}/debs/${deb_name}"
 			if [[ ! -f "${new_name_full}" ]]; then
 				any_missing="yes"
 			fi
 		done
-
 		if [[ "${any_missing}" == "yes" ]]; then
 			display_alert "Unpacking artifact" "deb-tar: ${artifact_final_file_basename}" "info"
 			run_host_command_logged tar -C "${DEST}/debs" -xvf "${artifact_final_file}"
 		fi
-
 		# @TODO: sanity check? did unpacking produce the expected files?
 	fi
 	return 0

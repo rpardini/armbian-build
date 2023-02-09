@@ -52,8 +52,6 @@ function artifact_firmware_prepare_version() {
 
 function artifact_firmware_build_from_sources() {
 	FULL="" REPLACE="-full" LOG_SECTION="compile_firmware" do_with_logging compile_firmware
-
-	capture_rename_legacy_debs_into_artifacts # has its own logging section
 }
 
 function artifact_firmware_cli_adapter_pre_run() {
