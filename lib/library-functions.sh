@@ -33,6 +33,15 @@ source "${SRC}"/lib/functions/artifacts/artifact-kernel.sh
 #set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
 set -o errtrace # trace ERR through - enabled
 set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/artifacts/artifact-rootfs.sh
+# shellcheck source=lib/functions/artifacts/artifact-rootfs.sh
+source "${SRC}"/lib/functions/artifacts/artifact-rootfs.sh
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
 ### lib/functions/artifacts/artifact-uboot.sh
 # shellcheck source=lib/functions/artifacts/artifact-uboot.sh
 source "${SRC}"/lib/functions/artifacts/artifact-uboot.sh
@@ -162,15 +171,6 @@ set -o errexit  ## set -e : exit the script if any statement returns a non-true 
 ### lib/functions/cli/cli-requirements.sh
 # shellcheck source=lib/functions/cli/cli-requirements.sh
 source "${SRC}"/lib/functions/cli/cli-requirements.sh
-
-# no errors tolerated. invoked before each sourced file to make sure.
-#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
-#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
-set -o errtrace # trace ERR through - enabled
-set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
-### lib/functions/cli/cli-rootfs.sh
-# shellcheck source=lib/functions/cli/cli-rootfs.sh
-source "${SRC}"/lib/functions/cli/cli-rootfs.sh
 
 # no errors tolerated. invoked before each sourced file to make sure.
 #set -o pipefail  # trace ERR through pipes - will be enabled "soon"
