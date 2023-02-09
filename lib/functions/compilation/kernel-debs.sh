@@ -33,6 +33,9 @@ if_enabled_echo() {
 }
 
 function prepare_kernel_packaging_debs() {
+	: "${artifact_version:?artifact_version is not set}"
+	: "${kernel_debs_temp_dir:?kernel_debs_temp_dir is not set}"
+
 	declare kernel_work_dir="${1}"
 	declare kernel_dest_install_dir="${2}"
 	declare kernel_version="${3}"
@@ -43,16 +46,7 @@ function prepare_kernel_packaging_debs() {
 	declare kernel_version_family="${kernel_version}-${LINUXFAMILY}"
 
 	# Package version. Affects users upgrading from repo!
-	declare package_version="${REVISION}" # default, "classic" Armbian non-version.
-	# If we're building an artifact, use the pre-determined artifact version.
-	if [[ "${artifact_version:-""}" != "" ]]; then
-		if [[ "${artifact_version}" == "undetermined" ]]; then
-			exit_with_error "Undetermined artifact version during kernel deb packaging. This is a bug, report it."
-		fi
-		display_alert "Using artifact version for kernel package version" "${artifact_version}" "info"
-		package_version="${artifact_version}"
-	fi
-	display_alert "Kernel .deb package version" "${package_version}" "info"
+	display_alert "Kernel .deb package version" "${artifact_version}" "info"
 
 	# show incoming tree
 	#display_alert "Kernel install dir" "incoming from KBUILD make" "debug"
@@ -95,6 +89,7 @@ function prepare_kernel_packaging_debs() {
 }
 
 function create_kernel_deb() {
+	: "${kernel_debs_temp_dir:?kernel_debs_temp_dir is not set}"
 	declare package_name="${1}"
 	declare deb_output_dir="${2}"
 	declare callback_function="${3}"
@@ -148,12 +143,7 @@ function create_kernel_deb() {
 	#display_alert "Package dir" "for package ${package_name}" "debug"
 	#run_host_command_logged tree -C -h -d --du "${package_directory}"
 
-	# Run shellcheck on the produced DEBIAN/xxx scripts
-	dpkg_deb_run_shellcheck_on_scripts "${package_directory}"
-
-	# @TODO: hmm, why doesn't this use fakeroot_dpkg_deb_build() ?
-	declare final_deb_filename="${deb_output_dir}/${package_name}_${REVISION}_${ARCH}.deb"                                   # for compatibility with non-artifacts
-	run_host_command_logged dpkg-deb ${DEB_COMPRESS:+-Z$DEB_COMPRESS} --build "${package_directory}" "${final_deb_filename}" # not KDEB compress, we're not under a Makefile
+	fakeroot_dpkg_deb_build "${package_directory}" "${kernel_debs_temp_dir}/"
 
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 }
@@ -217,7 +207,7 @@ function kernel_package_callback_linux_image() {
 	# Generate a control file
 	cat <<- CONTROL_FILE > "${package_DEBIAN_dir}/control"
 		Package: ${package_name}
-		Version: ${package_version}
+		Version: ${artifact_version}
 		Source: linux-${kernel_version}
 		Architecture: ${ARCH}
 		Maintainer: ${MAINTAINER} <${MAINTAINERMAIL}>
@@ -268,7 +258,7 @@ function kernel_package_callback_linux_dtb() {
 
 	# Generate a control file
 	cat <<- CONTROL_FILE > "${package_DEBIAN_dir}/control"
-		Version: ${package_version}
+		Version: ${artifact_version}
 		Maintainer: ${MAINTAINER} <${MAINTAINERMAIL}>
 		Section: kernel
 		Package: ${package_name}
@@ -383,7 +373,7 @@ function kernel_package_callback_linux_headers() {
 	# Generate a control file
 	# TODO: libssl-dev is only required if we're signing modules, which is a kernel .config option.
 	cat <<- CONTROL_FILE > "${package_DEBIAN_dir}/control"
-		Version: ${package_version}
+		Version: ${artifact_version}
 		Maintainer: ${MAINTAINER} <${MAINTAINERMAIL}>
 		Section: devel
 		Package: ${package_name}
