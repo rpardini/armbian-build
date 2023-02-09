@@ -153,28 +153,6 @@ function obtain_complete_artifact() {
 
 	# @TODO: possibly stop here if only for up-to-date-checking
 
-	declare -g artifact_exists_in_local_cache="undetermined"
-	LOG_SECTION="artifact_is_available_in_local_cache" do_with_logging artifact_is_available_in_local_cache
-
-	debug_var artifact_exists_in_local_cache
-
-	# If available in local cache, we're done (except for deb-tar which needs unpacking...)
-	if [[ "${artifact_exists_in_local_cache}" == "yes" ]]; then
-		display_alert "artifact" "exists in local cache: ${artifact_name} ${artifact_version}" "info"
-		if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
-			display_alert "artifact" "skipping unpacking as requested" "info"
-		else
-			LOG_SECTION="unpack_artifact_from_local_cache" do_with_logging unpack_artifact_from_local_cache
-		fi
-
-		if [[ "${ignore_local_cache:-"no"}" == "yes" ]]; then
-			display_alert "artifact" "ignoring local cache as requested" "info"
-		else
-			display_alert "artifact" "obtained from local cache: ${artifact_name} ${artifact_version}" "info"
-			return 0
-		fi
-	fi
-
 	# Determine OCI coordinates. OCI_TARGET_BASE overrides the default proposed by the artifact.
 	declare artifact_oci_target_base="undetermined"
 	if [[ -n "${OCI_TARGET_BASE}" ]]; then
@@ -187,22 +165,44 @@ function obtain_complete_artifact() {
 
 	declare -g artifact_full_oci_target="${artifact_oci_target_base}${artifact_name}:${artifact_version}"
 
+	declare -g artifact_exists_in_local_cache="undetermined"
 	declare -g artifact_exists_in_remote_cache="undetermined"
 
-	LOG_SECTION="artifact_is_available_in_remote_cache" do_with_logging artifact_is_available_in_remote_cache
+	if [[ "${ARTIFACT_IGNORE_CACHE}" != "yes" ]]; then
+		LOG_SECTION="artifact_is_available_in_local_cache" do_with_logging artifact_is_available_in_local_cache
+		debug_var artifact_exists_in_local_cache
 
-	debug_var artifact_exists_in_remote_cache
+		# If available in local cache, we're done (except for deb-tar which needs unpacking...)
+		if [[ "${artifact_exists_in_local_cache}" == "yes" ]]; then
+			display_alert "artifact" "exists in local cache: ${artifact_name} ${artifact_version}" "info"
+			if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
+				display_alert "artifact" "skipping unpacking as requested" "info"
+			else
+				LOG_SECTION="unpack_artifact_from_local_cache" do_with_logging unpack_artifact_from_local_cache
+			fi
 
-	if [[ "${artifact_exists_in_remote_cache}" == "yes" ]]; then
-		display_alert "artifact" "exists in remote cache: ${artifact_name} ${artifact_version}" "info"
-		if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
-			display_alert "artifact" "skipping obtain from remote & unpacking as requested" "info"
+			if [[ "${ignore_local_cache:-"no"}" == "yes" ]]; then
+				display_alert "artifact" "ignoring local cache as requested" "info"
+			else
+				display_alert "artifact" "obtained from local cache: ${artifact_name} ${artifact_version}" "info"
+				return 0
+			fi
+		fi
+
+		LOG_SECTION="artifact_is_available_in_remote_cache" do_with_logging artifact_is_available_in_remote_cache
+		debug_var artifact_exists_in_remote_cache
+
+		if [[ "${artifact_exists_in_remote_cache}" == "yes" ]]; then
+			display_alert "artifact" "exists in remote cache: ${artifact_name} ${artifact_version}" "info"
+			if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
+				display_alert "artifact" "skipping obtain from remote & unpacking as requested" "info"
+				return 0
+			fi
+			LOG_SECTION="artifact_obtain_from_remote_cache" do_with_logging artifact_obtain_from_remote_cache
+			LOG_SECTION="unpack_artifact_from_local_cache" do_with_logging unpack_artifact_from_local_cache
+			display_alert "artifact" "obtained from remote cache: ${artifact_name} ${artifact_version}" "info"
 			return 0
 		fi
-		LOG_SECTION="artifact_obtain_from_remote_cache" do_with_logging artifact_obtain_from_remote_cache
-		LOG_SECTION="unpack_artifact_from_local_cache" do_with_logging unpack_artifact_from_local_cache
-		display_alert "artifact" "obtained from remote cache: ${artifact_name} ${artifact_version}" "info"
-		return 0
 	fi
 
 	if [[ "${artifact_exists_in_local_cache}" != "yes" && "${artifact_exists_in_remote_cache}" != "yes" ]]; then
