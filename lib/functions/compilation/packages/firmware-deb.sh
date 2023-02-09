@@ -1,21 +1,3 @@
-function compile_firmware_light_and_possibly_full() {
-	if [[ "${INSTALL_ARMBIAN_FIRMWARE:-yes}" == "yes" ]]; then # Build firmware by default.
-		# Build the "light" version of firmware packages, with no conditions.
-		FULL="" REPLACE="-full" LOG_SECTION="compile_firmware" do_with_logging compile_firmware
-
-		# Now, we'll build the "full" version of firmware packages, if:
-		# 1) We've CI==true, or stdout is not a terminal, or
-		# 2) We've been asked to install it for the board being built, BOARD_FIRMWARE_INSTALL="-full"
-		if [[ "${CI}" == "true" || ! -t 1 || "${BOARD_FIRMWARE_INSTALL}" == "-full" ]]; then
-			# Build the full version of firmware package
-			FULL="-full" REPLACE="" LOG_SECTION="compile_firmware_full" do_with_logging compile_firmware
-		else
-			display_alert "Skipping full firmware package build" "" "info"
-		fi
-	fi
-	return 0
-}
-
 function compile_firmware() {
 	: "${artifact_version:?artifact_version is not set}"
 

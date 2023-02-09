@@ -1,4 +1,4 @@
-function artifact_firmware_prepare_version() {
+function artifact_full_firmware_prepare_version() {
 	artifact_version="undetermined"        # outer scope
 	artifact_version_reason="undetermined" # outer scope
 
@@ -7,6 +7,7 @@ function artifact_firmware_prepare_version() {
 
 	debug_var ARMBIAN_FIRMWARE_SOURCE
 	debug_var ARMBIAN_FIRMWARE_BRANCH
+	debug_var MAINLINE_FIRMWARE_SOURCE
 
 	declare short_hash_size=4
 
@@ -14,9 +15,14 @@ function artifact_firmware_prepare_version() {
 	run_memoized GIT_INFO "git2info" memoized_git_ref_to_info
 	debug_dict GIT_INFO
 
+	declare -A GIT_INFO_MAINLINE=([GIT_SOURCE]="${MAINLINE_FIRMWARE_SOURCE}" [GIT_REF]="branch:main")
+	run_memoized GIT_INFO_MAINLINE "git2info" memoized_git_ref_to_info
+	debug_dict GIT_INFO_MAINLINE
+
 	declare fake_unchanging_base_version="1"
 
 	declare short_sha1="${GIT_INFO[SHA1]:0:${short_hash_size}}"
+	declare short_sha1_mainline="${GIT_INFO_MAINLINE[SHA1]:0:${short_hash_size}}"
 
 	# get the hashes of the lib/ bash sources involved...
 	declare hash_files="undetermined"
@@ -25,64 +31,65 @@ function artifact_firmware_prepare_version() {
 	declare bash_hash_short="${bash_hash:0:${short_hash_size}}"
 
 	# outer scope
-	artifact_version="${fake_unchanging_base_version}-SA${short_sha1}-B${bash_hash_short}"
+	artifact_version="${fake_unchanging_base_version}-SA${short_sha1}-SM${short_sha1_mainline}-B${bash_hash_short}"
 	# @TODO: validate it begins with a digit, and is at max X chars long.
 
 	declare -a reasons=(
 		"Armbian firmware git revision \"${GIT_INFO[SHA1]}\""
+		"Mainline firmware git revision \"${GIT_INFO_MAINLINE[SHA1]}\""
 		"framework bash hash \"${bash_hash}\""
 	)
 
 	artifact_version_reason="${reasons[*]}" # outer scope
 
 	artifact_map_packages=(
-		["armbian-firmware"]="armbian-firmware"
+		["armbian-firmware-full"]="armbian-firmware-full"
 	)
 
 	artifact_map_debs=(
-		["armbian-firmware"]="armbian-firmware_${artifact_version}_all.deb"
+		["armbian-firmware-full"]="armbian-firmware-full_${artifact_version}_all.deb"
 	)
 
 	artifact_name="armbian-firmware"
 	artifact_type="deb"
-	artifact_final_file="${DEST}/debs/armbian-firmware_${artifact_version}_all.deb"
+	artifact_final_file="${DEST}/debs/armbian-firmware-full_${artifact_version}_all.deb"
 
 	return 0
 }
 
-function artifact_firmware_build_from_sources() {
-	FULL="" REPLACE="-full" LOG_SECTION="compile_firmware" do_with_logging compile_firmware
+function artifact_full_firmware_build_from_sources() {
+	FULL="-full" REPLACE="" LOG_SECTION="compile_firmware_full" do_with_logging compile_firmware
 }
 
-function artifact_firmware_cli_adapter_pre_run() {
+function artifact_full_firmware_cli_adapter_pre_run() {
 	declare -g ARMBIAN_COMMAND_REQUIRE_BASIC_DEPS="yes" # Require prepare_host_basic to run before the command.
 
 	# "gimme root on a Linux machine"
 	cli_standard_relaunch_docker_or_sudo
 }
 
-function artifact_firmware_cli_adapter_config_prep() {
+function artifact_full_firmware_cli_adapter_config_prep() {
 	declare KERNEL_ONLY="yes"                            # @TODO: this is a hack, for the board/family code's benefit...
 	use_board="no" prep_conf_main_minimal_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
 }
 
-function artifact_firmware_get_default_oci_target() {
+function artifact_full_firmware_get_default_oci_target() {
 	artifact_oci_target_base="ghcr.io/rpardini/armbian-release/"
 }
 
-function artifact_firmware_is_available_in_local_cache() {
+function artifact_full_firmware_is_available_in_local_cache() {
 	is_artifact_available_in_local_cache
 }
 
-function artifact_firmware_is_available_in_remote_cache() {
+function artifact_full_firmware_is_available_in_remote_cache() {
 	is_artifact_available_in_remote_cache
 }
 
-function artifact_firmware_obtain_from_remote_cache() {
+function artifact_full_firmware_obtain_from_remote_cache() {
 	obtain_artifact_from_remote_cache
 }
 
-function artifact_firmware_deploy_to_remote_cache() {
+function artifact_full_firmware_deploy_to_remote_cache() {
 	# having built a new artifact, deploy it to the remote cache.
 	# consider multiple targets, retries, etc.
 	upload_artifact_to_oci

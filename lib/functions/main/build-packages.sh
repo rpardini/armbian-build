@@ -30,7 +30,7 @@ function main_default_build_packages() {
 		artifacts_to_build+=("firmware")
 
 		if [[ ${BOARD_FIRMWARE_INSTALL:-""} == "-full" ]]; then
-			artifacts_to_build+=("firmware_full")
+			artifacts_to_build+=("full_firmware")
 		fi
 	fi
 
@@ -82,12 +82,6 @@ function main_default_build_packages() {
 		fi
 	fi
 
-	# Compile armbian-firmware if packed .deb does not exist or use the one from repository
-	if ! ls "${DEB_STORAGE}/armbian-firmware_${REVISION}_all.deb" 1> /dev/null 2>&1 || ! ls "${DEB_STORAGE}/armbian-firmware-full_${REVISION}_all.deb" 1> /dev/null 2>&1; then
-		if [[ "${REPOSITORY_INSTALL}" != *armbian-firmware* ]]; then
-			compile_firmware_light_and_possibly_full # this has its own logging sections
-		fi
-	fi
 
 	overlayfs_wrapper "cleanup"
 	reset_uid_owner "${DEB_STORAGE}"
