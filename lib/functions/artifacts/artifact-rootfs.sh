@@ -29,6 +29,7 @@ function artifact_rootfs_prepare_version() {
 	artifact_version_reason="${reasons[*]}"
 	artifact_name="rootfs/rootfs-${ARCH}/rootfs-${ARCH}-${RELEASE}-${cache_type}"
 	artifact_type="tar.zst"
+	artifact_base_dir="${SRC}/cache/rootfs"
 	artifact_final_file="${SRC}/cache/rootfs/${ARCH}-${RELEASE}-${rootfs_cache_id}-${ROOT_FS_CREATE_VERSION}.tar.zst"
 
 	return 0

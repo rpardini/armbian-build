@@ -62,6 +62,7 @@ function obtain_complete_artifact() {
 	declare -g artifact_type="undetermined"
 	declare -g artifact_version="undetermined"
 	declare -g artifact_version_reason="undetermined"
+	declare -g artifact_base_dir="undetermined"
 	declare -g artifact_final_file="undetermined"
 	declare -g artifact_final_file_basename="undetermined"
 	declare -g artifact_full_oci_target="undetermined"
@@ -78,6 +79,7 @@ function obtain_complete_artifact() {
 	debug_var artifact_type
 	debug_var artifact_version
 	debug_var artifact_version_reason
+	debug_var artifact_base_dir
 	debug_var artifact_final_file
 	debug_dict artifact_map_packages
 	debug_dict artifact_map_debs
@@ -87,6 +89,7 @@ function obtain_complete_artifact() {
 	[[ "x${artifact_type}x" == "xx" || "${artifact_type}" == "undetermined" ]] && exit_with_error "artifact_type is not set after artifact_prepare_version"
 	[[ "x${artifact_version}x" == "xx" || "${artifact_version}" == "undetermined" ]] && exit_with_error "artifact_version is not set after artifact_prepare_version"
 	[[ "x${artifact_version_reason}x" == "xx" || "${artifact_version_reason}" == "undetermined" ]] && exit_with_error "artifact_version_reason is not set after artifact_prepare_version"
+	[[ "x${artifact_base_dir}x" == "xx" || "${artifact_base_dir}" == "undetermined" ]] && exit_with_error "artifact_base_dir is not set after artifact_prepare_version"
 	[[ "x${artifact_final_file}x" == "xx" || "${artifact_final_file}" == "undetermined" ]] && exit_with_error "artifact_final_file is not set after artifact_prepare_version"
 
 	# validate artifact_type... it must be one of the supported types
@@ -200,7 +203,7 @@ function build_artifact_for_image() {
 function pack_artifact_to_local_cache() {
 	if [[ "${artifact_type}" == "deb-tar" ]]; then
 		declare -a files_to_tar=()
-		run_host_command_logged tar -C "${DEST}/debs" -cvf "${artifact_final_file}" "${artifact_map_debs[@]}"
+		run_host_command_logged tar -C "${artifact_base_dir}" -cvf "${artifact_final_file}" "${artifact_map_debs[@]}"
 		display_alert "Created deb-tar artifact" "deb-tar: ${artifact_final_file}" "info"
 	fi
 }
@@ -210,14 +213,14 @@ function unpack_artifact_from_local_cache() {
 		declare any_missing="no"
 		declare deb_name
 		for deb_name in "${artifact_map_debs[@]}"; do
-			declare new_name_full="${DEST}/debs/${deb_name}"
+			declare new_name_full="${artifact_base_dir}/${deb_name}"
 			if [[ ! -f "${new_name_full}" ]]; then
 				any_missing="yes"
 			fi
 		done
 		if [[ "${any_missing}" == "yes" ]]; then
 			display_alert "Unpacking artifact" "deb-tar: ${artifact_final_file_basename}" "info"
-			run_host_command_logged tar -C "${DEST}/debs" -xvf "${artifact_final_file}"
+			run_host_command_logged tar -C "${artifact_base_dir}" -xvf "${artifact_final_file}"
 		fi
 		# @TODO: sanity check? did unpacking produce the expected files?
 	fi
@@ -270,6 +273,6 @@ function is_artifact_available_in_remote_cache() {
 
 function obtain_artifact_from_remote_cache() {
 	display_alert "Obtaining artifact from remote cache" "${artifact_full_oci_target} into ${artifact_final_file_basename}" "info"
-	oras_pull_artifact_file "${artifact_full_oci_target}" "${DEST}/debs" "${artifact_final_file_basename}"
+	oras_pull_artifact_file "${artifact_full_oci_target}" "${artifact_base_dir}" "${artifact_final_file_basename}"
 	return 0
 }
