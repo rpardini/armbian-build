@@ -1,49 +1,49 @@
-function artifact_kernel_cli_adapter_pre_run() {
-	declare -g ARMBIAN_COMMAND_REQUIRE_BASIC_DEPS="yes" # Require prepare_host_basic to run before the command.
-
-	# "gimme root on a Linux machine"
-	cli_standard_relaunch_docker_or_sudo
-}
-
-function artifact_kernel_cli_adapter_config_prep() {
-	declare KERNEL_ONLY="yes"                             # @TODO: this is a hack, for the board/family code's benefit...
-	use_board="yes" prep_conf_main_minimal_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
-}
-
-function artifact_kernel_get_default_oci_target() {
-	artifact_oci_target_base="ghcr.io/rpardini/armbian-release/"
-}
-
 # This is run in a logging section.
+# Prepare the version, "sans-repos": just the armbian/build repo contents are available.
+# It is OK to reach out to the internet for a curl or ls-remote, but not for a git clone, but
+# you *must* _cache_ results on disk @TODO with a TTL determined by live code, not preset in cached entries.
 function artifact_kernel_prepare_version() {
 	artifact_version="undetermined"        # outer scope
 	artifact_version_reason="undetermined" # outer scope
 
-	# Prepare the version, "sans-repos": just the armbian/build repo contents are available.
-	# It is OK to reach out to the internet for a curl or ls-remote, but not for a git clone.
-
 	# - Given KERNELSOURCE and KERNELBRANCH, get:
 	#    - SHA1 of the commit (this is generic... and used for other pkgs)
-	#    - The first 10 lines of the root Makefile at that commit (cached lookup, same SHA1=same Makefile)
-	#      - This gives us the full version plus codename.
-	#    - Make sure this is sane, ref KERNEL_MAJOR_MINOR.
-	# - Get the drivers patch hash (given LINUXFAMILY and the vX.Z.Y version)
-	# - Get the kernel patches hash. (could just hash the KERNELPATCHDIR non-disabled contents, or use Python patching proper?)
+	#    - The first 10 lines of the root Makefile at that commit (cached lookup, same SHA1=same Makefile, http GET, not cloned)
+	#      - This gives us the full version plus codename, plus catches "version shenanigans" possibly done by patches...
+	#    - @TODO: Make sure this is sane, ref KERNEL_MAJOR_MINOR; it's transitional, but we need to be sure it's sane.
+	# - Get the drivers patch hash (given LINUXFAMILY and the vX.Z.Y version) - the harness can do this by hashing patches and bash code
+	# - Get the kernel patches hash. (@TODO currently hashing files directly, use Python patching proper)
 	# - Get the kernel .config hash, composed of
-	#    - KERNELCONFIG? .config hash
-	#    - extensions mechanism, have an array of hashes that is then hashed together.
-	# - Hash of the relevant lib/ bash sources involved, say compilation-kernel*.sh etc
+	#    - KERNELCONFIG .config hash (contents)
+	#    - extensions mechanism, each hook has an array of hashes that is then hashed together; see the hooks docs.
+	# - Hash of the relevant lib/ bash sources involved, say compilation/kernel*.sh etc
 	# All those produce a version string like:
-	# 6.1.8-<4-digit-SHA1>_<4_digit_drivers>-<4_digit_patches>-<4_digit_config>-<4_digit_libs>
-	# 6.2-rc5-a0b1-c2d3-e4f5-g6h7-i8j9
+	# 6.2-rc7-S4ec5-D1c5d-P0000-Ca00bHc1f3-B6d7b
 
+	# - This code first calculates the globally uniquely-identifying version string for, and then builds, exactly one (01, um,
+	#   uno, ein) kernel.
+	#   - This produces exacly one "linux-image" .deb package, and  _might_ also produce "linux-dtb" and "linux-headers"
+	#     packages.
+	#   - All the .debs have the same version string, which is included in the "Version:" field of the .deb control file.
+	# - "Version: " has special significance in Debian repo mgmt: it governs how "apt upgrade" decides what to upgrade to.
+	# - Note!! how BOARD is not an input here. It is required though by the configuration step;
+	#   - BOARDs can have hooks that completely change  the kernel, including creating new LINUXFAMILY's 🫠
+	#   - It is assumed the process to obtain "all kernels to build"  involves
+	#     - a loop over all boards, and then a loop over all all the  BOARD's KERNEL_TARGET's,
+	#     - map: obtain all the *effective  configurations* after all hooks are run
+	#     - reduce:  to "${LINUXFAMILY}-${BRANCH}", but keep an "example" BOARD= for each group, so that it can be input to
+	#       this building process 🤯
+	# - Also note: BOARDFAMILY is not an input here; and merely a mechanism for BOARDs to share some common defs.
+	#     - That was later (but pre-armbian-next) made more complicated by sourcing, "families/includes/<xxx>_common.inc"
+	# - 👉 tl;dr: Armbian kernels can't have per-board patches or configs; "family code" is a lie; repo management is hell.
+	debug_var BOARD              # Heh.
+	debug_var BOARDFAMILY        # Heh.
+	debug_var KERNEL_MAJOR_MINOR # Double heh. transitional stuff, from when armbian-next began. 🤣
 	debug_var BRANCH
 	debug_var REVISION
 	debug_var KERNELSOURCE
 	debug_var KERNELBRANCH
 	debug_var LINUXFAMILY
-	debug_var BOARDFAMILY
-	debug_var KERNEL_MAJOR_MINOR
 	debug_var KERNELPATCHDIR
 
 	declare short_hash_size=4
@@ -139,6 +139,27 @@ function artifact_kernel_prepare_version() {
 	return 0
 }
 
+function artifact_kernel_build_from_sources() {
+	compile_kernel
+	capture_rename_legacy_debs_into_artifacts
+}
+
+function artifact_kernel_cli_adapter_pre_run() {
+	declare -g ARMBIAN_COMMAND_REQUIRE_BASIC_DEPS="yes" # Require prepare_host_basic to run before the command.
+
+	# "gimme root on a Linux machine"
+	cli_standard_relaunch_docker_or_sudo
+}
+
+function artifact_kernel_cli_adapter_config_prep() {
+	declare KERNEL_ONLY="yes"                             # @TODO: this is a hack, for the board/family code's benefit...
+	use_board="yes" prep_conf_main_minimal_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
+}
+
+function artifact_kernel_get_default_oci_target() {
+	artifact_oci_target_base="ghcr.io/rpardini/armbian-release/"
+}
+
 function artifact_kernel_is_available_in_local_cache() {
 	is_artifact_available_in_local_cache
 }
@@ -149,11 +170,6 @@ function artifact_kernel_is_available_in_remote_cache() {
 
 function artifact_kernel_obtain_from_remote_cache() {
 	obtain_artifact_from_remote_cache
-}
-
-function artifact_kernel_build_from_sources() {
-	compile_kernel
-	capture_rename_legacy_debs_into_artifacts
 }
 
 function artifact_kernel_deploy_to_remote_cache() {
