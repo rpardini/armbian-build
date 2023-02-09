@@ -1,6 +1,5 @@
 function extension_prepare_config__build_machine_image() {
 	display_alert "Target image will be a build machine" "${EXTENSION}" "info"
-	#export BUILD_KSRC=yes
 }
 
 function host_dependencies_known__add_host_deps_to_package_list_board() {
