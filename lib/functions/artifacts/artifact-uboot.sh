@@ -1,19 +1,3 @@
-function artifact_uboot_cli_adapter_pre_run() {
-	declare -g ARMBIAN_COMMAND_REQUIRE_BASIC_DEPS="yes" # Require prepare_host_basic to run before the command.
-
-	# "gimme root on a Linux machine"
-	cli_standard_relaunch_docker_or_sudo
-}
-
-function artifact_uboot_cli_adapter_config_prep() {
-	declare KERNEL_ONLY="yes"                             # @TODO: this is a hack, for the board/family code's benefit...
-	use_board="yes" prep_conf_main_minimal_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
-}
-
-function artifact_uboot_get_default_oci_target() {
-	artifact_oci_target_base="ghcr.io/rpardini/armbian-release/"
-}
-
 function artifact_uboot_prepare_version() {
 	artifact_version="undetermined"        # outer scope
 	artifact_version_reason="undetermined" # outer scope
@@ -34,6 +18,7 @@ function artifact_uboot_prepare_version() {
 	debug_var BOOTBRANCH
 	debug_var BOOTPATCHDIR
 	debug_var BOARD
+	debug_var BRANCH
 
 	declare short_hash_size=4
 
@@ -71,46 +56,19 @@ function artifact_uboot_prepare_version() {
 
 	artifact_version_reason="${reasons[*]}" # outer scope
 
-	# now, one for each file in the artifact...
-	artifact_map_versions=(
-		["u-boot"]="${artifact_version}"
-	)
-
-	# map what "compile_uboot()" will produce - legacy deb names and versions
-	artifact_map_versions_legacy=(
-		["linux-u-boot-${BRANCH}-${BOARD}"]="${REVISION}_${ARCH}"
-	)
-
-	# now, one for each file in the artifact... single package, so just one entry
-	artifact_map_versions=(
-		["linux-u-boot-${BRANCH}-${BOARD}"]="${artifact_version}_${ARCH}"
-	)
-
 	artifact_map_packages=(
-		["uboot"]="linux-u-boot-${BRANCH}-${BOARD}"
+		["uboot"]="linux-u-boot-${BOARD}-${BRANCH}"
 	)
 
 	artifact_map_debs=(
-		["uboot"]="linux-u-boot-${BRANCH}-${BOARD}_${artifact_version}_${ARCH}.deb"
+		["uboot"]="linux-u-boot-${BOARD}-${BRANCH}_${artifact_version}_${ARCH}.deb"
 	)
 
 	artifact_name="uboot-${BOARD}-${BRANCH}"
 	artifact_type="deb"
-	artifact_final_file="${DEST}/debs/linux-u-boot-${BRANCH}-${BOARD}_${artifact_version}_${ARCH}.deb"
+	artifact_final_file="${DEST}/debs/linux-u-boot-${BOARD}-${BRANCH}_${artifact_version}_${ARCH}.deb"
 
 	return 0
-}
-
-function artifact_uboot_is_available_in_local_cache() {
-	is_artifact_available_in_local_cache
-}
-
-function artifact_uboot_is_available_in_remote_cache() {
-	is_artifact_available_in_remote_cache
-}
-
-function artifact_uboot_obtain_from_remote_cache() {
-	obtain_artifact_from_remote_cache
 }
 
 function artifact_uboot_build_from_sources() {
@@ -127,8 +85,34 @@ function artifact_uboot_build_from_sources() {
 	capture_rename_legacy_debs_into_artifacts # has its own logging section
 }
 
+function artifact_uboot_cli_adapter_pre_run() {
+	declare -g ARMBIAN_COMMAND_REQUIRE_BASIC_DEPS="yes" # Require prepare_host_basic to run before the command.
+
+	# "gimme root on a Linux machine"
+	cli_standard_relaunch_docker_or_sudo
+}
+
+function artifact_uboot_cli_adapter_config_prep() {
+	declare KERNEL_ONLY="yes"                             # @TODO: this is a hack, for the board/family code's benefit...
+	use_board="yes" prep_conf_main_minimal_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
+}
+
+function artifact_uboot_get_default_oci_target() {
+	artifact_oci_target_base="ghcr.io/rpardini/armbian-release/"
+}
+
+function artifact_uboot_is_available_in_local_cache() {
+	is_artifact_available_in_local_cache
+}
+
+function artifact_uboot_is_available_in_remote_cache() {
+	is_artifact_available_in_remote_cache
+}
+
+function artifact_uboot_obtain_from_remote_cache() {
+	obtain_artifact_from_remote_cache
+}
+
 function artifact_uboot_deploy_to_remote_cache() {
-	# having built a new artifact, deploy it to the remote cache.
-	# consider multiple targets, retries, etc.
 	upload_artifact_to_oci
 }
