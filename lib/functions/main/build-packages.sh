@@ -26,6 +26,16 @@ function main_default_build_packages() {
 		artifacts_to_build+=("kernel")
 	fi
 
+	if [[ "${INSTALL_ARMBIAN_FIRMWARE:-yes}" == "yes" ]]; then
+		artifacts_to_build+=("firmware")
+
+		if [[ ${BOARD_FIRMWARE_INSTALL:-""} == "-full" ]]; then
+			artifacts_to_build+=("firmware_full")
+		fi
+	fi
+
+	display_alert "Artifacts to build:" "${artifacts_to_build[*]}" "warn"
+
 	# For each artifact, try to obtain them from the local cache, remote cache, or build them.
 	# Store info about all artifacts in the process, for later use (eg during package installation in distro-agnostic).
 	declare -g -a image_artifacts_all=()

@@ -342,8 +342,16 @@ function install_distribution_agnostic() {
 	call_extension_method "post_install_kernel_debs" <<- 'POST_INSTALL_KERNEL_DEBS'
 		*allow config to do more with the installed kernel/headers*
 		Called after packages, u-boot, kernel and headers installed in the chroot, but before the BSP is installed.
-		If `KERNELSOURCE` is (still?) unset after this, Armbian-built firmware will not be installed.
 	POST_INSTALL_KERNEL_DEBS
+
+	# install armbian-firmware by default. Set BOARD_FIRMWARE_INSTALL="-full" to install full firmware variant
+	if [[ "${INSTALL_ARMBIAN_FIRMWARE:-yes}" == "yes" ]]; then
+		if [[ ${BOARD_FIRMWARE_INSTALL:-""} == "-full" ]]; then
+			install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["armbian-firmware-full"]}"
+		else
+			install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["armbian-firmware"]}"
+		fi
+	fi
 
 	# install board support packages
 	if [[ "${REPOSITORY_INSTALL}" != *bsp* ]]; then
@@ -367,17 +375,6 @@ function install_distribution_agnostic() {
 			desktop_postinstall
 		fi
 	fi
-
-	# install armbian-firmware by default. Set BOARD_FIRMWARE_INSTALL="-full" to install full firmware variant
-	[[ "${INSTALL_ARMBIAN_FIRMWARE:-yes}" == "yes" ]] && {
-		if [[ "${REPOSITORY_INSTALL}" != *armbian-firmware* ]]; then
-			if [[ -f ${DEB_STORAGE}/armbian-firmware_${REVISION}_all.deb ]]; then
-				install_deb_chroot "${DEB_STORAGE}/armbian-firmware${BOARD_FIRMWARE_INSTALL:-""}_${REVISION}_all.deb"
-			fi
-		else
-			install_deb_chroot "armbian-firmware${BOARD_FIRMWARE_INSTALL:-""}" "remote"
-		fi
-	}
 
 	# install armbian-config
 	if [[ "${PACKAGE_LIST_RM}" != *armbian-config* ]]; then
