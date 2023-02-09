@@ -91,8 +91,12 @@ function obtain_complete_artifact() {
 
 	# validate artifact_type... it must be one of the supported types
 	case "${artifact_type}" in
-		deb | deb-tar | tar.zst)
-			: # valid
+		deb | deb-tar)
+			# validate artifact_version begins with a digit
+			[[ "${artifact_version}" =~ ^[0-9] ]] || exit_with_error "${artifact_type}: artifact_version '${artifact_version}' does not begin with a digit"
+			;;
+		tar.zst)
+			: # valid, no restrictions on tar.zst versioning
 			;;
 		*)
 			exit_with_error "artifact_type '${artifact_type}' is not supported"
@@ -152,7 +156,7 @@ function obtain_complete_artifact() {
 			if [[ "${ignore_local_cache:-"no"}" == "yes" ]]; then
 				display_alert "artifact" "ignoring local cache as requested" "info"
 			else
-				display_alert "artifact" "obtained from local cache: ${artifact_name} ${artifact_version}" "cachehit"
+				display_alert "artifact" "present in local cache: ${artifact_name} ${artifact_version}" "cachehit"
 				return 0
 			fi
 		fi

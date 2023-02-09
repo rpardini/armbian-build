@@ -93,7 +93,6 @@ function artifact_kernel_prepare_version() {
 
 	# outer scope
 	artifact_version="${GIT_INFO[MAKEFILE_VERSION]}-S${short_sha1}-D${kernel_drivers_hash_short}-P${kernel_patches_hash_short}-C${config_hash_short}H${kernel_config_modification_hash_short}-B${bash_hash_short}"
-	# @TODO: validate it begins with a digit, and is at max X chars long.
 
 	declare -a reasons=(
 		"version \"${GIT_INFO[MAKEFILE_FULL_VERSION]}\""

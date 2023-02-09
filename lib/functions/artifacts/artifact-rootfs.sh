@@ -21,6 +21,9 @@ function artifact_rootfs_prepare_version() {
 		"cache_id \"${rootfs_cache_id}\"" "legacy version \"${ROOT_FS_CREATE_VERSION}\""
 	)
 
+	# @TODO: "rootfs_cache_id" contains "cache_type", split so we don't repeat ourselves
+	# @TODO: gotta include the extensions rootfs-modifying id to cache_type...
+
 	# outer scope
 	artifact_version="${rootfs_cache_id}" # @TODO: validate it begins with a digit, and is at max X chars long.
 	artifact_version_reason="${reasons[*]}"
@@ -106,7 +109,5 @@ function artifact_rootfs_obtain_from_remote_cache() {
 }
 
 function artifact_rootfs_deploy_to_remote_cache() {
-	# having built a new artifact, deploy it to the remote cache.
-	# consider multiple targets, retries, etc.
 	upload_artifact_to_oci
 }

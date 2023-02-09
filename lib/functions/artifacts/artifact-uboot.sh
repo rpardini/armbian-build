@@ -45,7 +45,6 @@ function artifact_uboot_prepare_version() {
 
 	# outer scope
 	artifact_version="${GIT_INFO[MAKEFILE_VERSION]}-S${short_sha1}-P${uboot_patches_hash_short}-B${bash_hash_short}"
-	# @TODO: validate it begins with a digit, and is at max X chars long.
 
 	declare -a reasons=(
 		"version \"${GIT_INFO[MAKEFILE_FULL_VERSION]}\""

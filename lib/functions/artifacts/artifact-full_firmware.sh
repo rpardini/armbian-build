@@ -32,7 +32,6 @@ function artifact_full_firmware_prepare_version() {
 
 	# outer scope
 	artifact_version="${fake_unchanging_base_version}-SA${short_sha1}-SM${short_sha1_mainline}-B${bash_hash_short}"
-	# @TODO: validate it begins with a digit, and is at max X chars long.
 
 	declare -a reasons=(
 		"Armbian firmware git revision \"${GIT_INFO[SHA1]}\""
@@ -90,7 +89,5 @@ function artifact_full_firmware_obtain_from_remote_cache() {
 }
 
 function artifact_full_firmware_deploy_to_remote_cache() {
-	# having built a new artifact, deploy it to the remote cache.
-	# consider multiple targets, retries, etc.
 	upload_artifact_to_oci
 }
