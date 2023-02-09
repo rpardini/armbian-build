@@ -5,6 +5,7 @@ function armbian_register_artifacts() {
 		["kernel"]="kernel"
 		["u-boot"]="uboot"
 		["uboot"]="uboot"
+		["firmware"]="firmware"
 	)
 
 }

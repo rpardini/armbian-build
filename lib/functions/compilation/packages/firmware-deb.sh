@@ -17,6 +17,8 @@ function compile_firmware_light_and_possibly_full() {
 }
 
 function compile_firmware() {
+	: "${artifact_version:?artifact_version is not set}"
+
 	display_alert "Merging and packaging linux firmware" "@host --> firmware${FULL}" "info"
 
 	declare cleanup_id="" fw_temp_dir=""
@@ -66,7 +68,7 @@ function compile_firmware() {
 	# @TODO: rpardini: this needs Conflicts: with the standard Ubuntu/Debian linux-firmware packages and other firmware pkgs in Debian
 	cat <<- END > DEBIAN/control
 		Package: armbian-firmware${FULL}
-		Version: $REVISION
+		Version: ${artifact_version}
 		Architecture: all
 		Maintainer: $MAINTAINER <$MAINTAINERMAIL>
 		Installed-Size: 1
@@ -79,18 +81,9 @@ function compile_firmware() {
 
 	cd "${fw_temp_dir}" || exit_with_error "can't change directory"
 
-	# package
-	run_host_command_logged mv -v "armbian-firmware${FULL}" "armbian-firmware${FULL}_${REVISION}_all"
-	display_alert "Building firmware package" "armbian-firmware${FULL}_${REVISION}_all" "info"
-
-	if [[ -n $FULL ]]; then
-		display_alert "Full firmware, very big, avoiding tmpfs" "armbian-firmware${FULL}_${REVISION}_all" "info"
-		fakeroot_dpkg_deb_build "armbian-firmware${FULL}_${REVISION}_all" "${DEB_STORAGE}"
-	else
-		fakeroot_dpkg_deb_build "armbian-firmware${FULL}_${REVISION}_all"
-		run_host_command_logged mv -v "armbian-firmware${FULL}_${REVISION}_all" "armbian-firmware${FULL}"
-		run_host_command_logged rsync -rq "armbian-firmware${FULL}_${REVISION}_all.deb" "${DEB_STORAGE}/"
-	fi
+	# package, directly to DEB_STORAGE; full version might be very big for tmpfs.
+	display_alert "Building firmware package" "armbian-firmware${FULL}" "info"
+	fakeroot_dpkg_deb_build "armbian-firmware${FULL}" "${DEB_STORAGE}"
 
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 }
