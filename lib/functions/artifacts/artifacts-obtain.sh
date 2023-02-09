@@ -42,9 +42,14 @@ function create_artifact_functions() {
 	fi
 }
 
-# @TODO: DONT_BUILD_ARTIFACTS=kernel
 function initialize_artifact() {
 	declare -g chosen_artifact="${1}"
+
+	# cant be empty, or have spaces nor commas
+	[[ "x${chosen_artifact}x" == "xx" ]] && exit_with_error "Artifact name is empty"
+	[[ "${chosen_artifact}" == *" "* ]] && exit_with_error "Artifact name cannot contain spaces"
+	[[ "${chosen_artifact}" == *","* ]] && exit_with_error "Artifact name cannot contain commas"
+
 	armbian_register_artifacts
 	declare -g chosen_artifact_impl="${ARMBIAN_ARTIFACTS_TO_HANDLERS_DICT["${chosen_artifact}"]}"
 	[[ "x${chosen_artifact_impl}x" == "xx" ]] && exit_with_error "Unknown artifact '${chosen_artifact}'"
@@ -66,6 +71,7 @@ function obtain_complete_artifact() {
 	# Check if REVISION is set, otherwise exit_with_error
 	[[ "x${REVISION}x" == "xx" ]] && exit_with_error "REVISION is not set"
 
+	# Contentious; it might be that prepare_version is complex enough to warrant more than 1 logging section.
 	LOG_SECTION="artifact_prepare_version" do_with_logging artifact_prepare_version
 
 	debug_var artifact_name
@@ -85,11 +91,11 @@ function obtain_complete_artifact() {
 
 	# validate artifact_type... it must be one of the supported types
 	case "${artifact_type}" in
-		deb | deb-tar)
+		deb | deb-tar | tar.zst)
 			: # valid
 			;;
 		*)
-			exit_with_error "artifact_type '${artifact_type}' for '${artifact_name}' is not supported"
+			exit_with_error "artifact_type '${artifact_type}' is not supported"
 			;;
 	esac
 
@@ -136,7 +142,7 @@ function obtain_complete_artifact() {
 
 		# If available in local cache, we're done (except for deb-tar which needs unpacking...)
 		if [[ "${artifact_exists_in_local_cache}" == "yes" ]]; then
-			display_alert "artifact" "exists in local cache: ${artifact_name} ${artifact_version}" "info"
+			display_alert "artifact" "exists in local cache: ${artifact_name} ${artifact_version}" "cachehit"
 			if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
 				display_alert "artifact" "skipping unpacking as requested" "info"
 			else
@@ -146,7 +152,7 @@ function obtain_complete_artifact() {
 			if [[ "${ignore_local_cache:-"no"}" == "yes" ]]; then
 				display_alert "artifact" "ignoring local cache as requested" "info"
 			else
-				display_alert "artifact" "obtained from local cache: ${artifact_name} ${artifact_version}" "info"
+				display_alert "artifact" "obtained from local cache: ${artifact_name} ${artifact_version}" "cachehit"
 				return 0
 			fi
 		fi
@@ -155,14 +161,14 @@ function obtain_complete_artifact() {
 		debug_var artifact_exists_in_remote_cache
 
 		if [[ "${artifact_exists_in_remote_cache}" == "yes" ]]; then
-			display_alert "artifact" "exists in remote cache: ${artifact_name} ${artifact_version}" "info"
+			display_alert "artifact" "exists in remote cache: ${artifact_name} ${artifact_version}" "cachehit"
 			if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
 				display_alert "artifact" "skipping obtain from remote & unpacking as requested" "info"
 				return 0
 			fi
 			LOG_SECTION="artifact_obtain_from_remote_cache" do_with_logging artifact_obtain_from_remote_cache
 			LOG_SECTION="unpack_artifact_from_local_cache" do_with_logging unpack_artifact_from_local_cache
-			display_alert "artifact" "obtained from remote cache: ${artifact_name} ${artifact_version}" "info"
+			display_alert "artifact" "obtained from remote cache: ${artifact_name} ${artifact_version}" "cachehit"
 			return 0
 		fi
 	fi
@@ -183,7 +189,7 @@ function obtain_complete_artifact() {
 
 # This is meant to be run after config, inside default build.
 function build_artifact_for_image() {
-	initialize_artifact "${WHAT:-"kernel"}"
+	initialize_artifact "${WHAT}"
 	obtain_complete_artifact
 }
 
@@ -221,7 +227,7 @@ function upload_artifact_to_oci() {
 	fi
 
 	display_alert "Pushing to OCI" "'${artifact_final_file}' -> '${artifact_full_oci_target}'" "info"
-	oras_push_artifact_file "${artifact_full_oci_target}" "${artifact_final_file}" "${artifact_name} - ${artifact_version} - ${artifact_version_reason} - type: ${artifact_type}: this NOT a Docker image"
+	oras_push_artifact_file "${artifact_full_oci_target}" "${artifact_final_file}" "${artifact_name} - ${artifact_version} - ${artifact_version_reason} - type: ${artifact_type}"
 }
 
 function is_artifact_available_in_local_cache() {

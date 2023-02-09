@@ -1,5 +1,5 @@
 function cli_artifact_pre_run() {
-	initialize_artifact "${WHAT:-"kernel"}"
+	initialize_artifact "${WHAT}"
 	# Run the pre run adapter
 	artifact_cli_adapter_pre_run
 }
