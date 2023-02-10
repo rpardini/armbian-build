@@ -6,19 +6,15 @@ function artifact_rootfs_prepare_version() {
 
 	declare -g rootfs_cache_id="none_yet"
 
-	#LOG_SECTION="prepare_rootfs_build_params_and_trap" do_with_logging
-	prepare_rootfs_build_params_and_trap
-
-	#LOG_SECTION="calculate_rootfs_cache_id" do_with_logging
 	calculate_rootfs_cache_id # sets rootfs_cache_id
 
 	display_alert "Going to build rootfs" "packages_hash: '${packages_hash:-}' cache_type: '${cache_type:-}' rootfs_cache_id: '${rootfs_cache_id}'" "info"
 
-	# @TODO: ROOT_FS_CREATE_VERSION is only here for compatibility with legacy code, which requires the exact amount of dashes in the filename
-
 	declare -a reasons=(
-		"arch \"${ARCH}\"" "release \"${RELEASE}\"" "type \"${cache_type}\""
-		"cache_id \"${rootfs_cache_id}\"" "legacy version \"${ROOT_FS_CREATE_VERSION}\""
+		"arch \"${ARCH}\""
+		"release \"${RELEASE}\""
+		"type \"${cache_type}\""
+		"cache_id \"${rootfs_cache_id}\""
 	)
 
 	# @TODO: "rootfs_cache_id" contains "cache_type", split so we don't repeat ourselves
@@ -30,19 +26,53 @@ function artifact_rootfs_prepare_version() {
 	artifact_name="rootfs/rootfs-${ARCH}/rootfs-${ARCH}-${RELEASE}-${cache_type}"
 	artifact_type="tar.zst"
 	artifact_base_dir="${SRC}/cache/rootfs"
-	artifact_final_file="${SRC}/cache/rootfs/${ARCH}-${RELEASE}-${rootfs_cache_id}-${ROOT_FS_CREATE_VERSION}.tar.zst"
+	artifact_final_file="${SRC}/cache/rootfs/${ARCH}-${RELEASE}-${rootfs_cache_id}.tar.zst"
 
 	return 0
 }
 
 function artifact_rootfs_build_from_sources() {
+	debug_var artifact_final_file
+	debug_var artifact_final_file_basename
+
+	# Creates a cleanup handler 'trap_handler_cleanup_rootfs_and_image'
+	LOG_SECTION="prepare_rootfs_build_params_and_trap" do_with_logging prepare_rootfs_build_params_and_trap
+
+	debug_var artifact_final_file
+	debug_var artifact_final_file_basename
+
+	# validate that tmpfs_estimated_size is set and higher than zero, or exit_with_error
+	[[ -z ${tmpfs_estimated_size} ]] && exit_with_error "tmpfs_estimated_size is not set"
+	[[ ${tmpfs_estimated_size} -le 0 ]] && exit_with_error "tmpfs_estimated_size is not higher than zero"
+
 	# "rootfs" CLI skips over a lot goes straight to create the rootfs. It doesn't check cache etc.
 	LOG_SECTION="create_new_rootfs_cache" do_with_logging create_new_rootfs_cache
 
-	reset_uid_owner "${BUILT_ROOTFS_CACHE_FILE}"
+	debug_var artifact_final_file
+	debug_var artifact_final_file_basename
+	debug_var cache_name
+	debug_var cache_fname
 
-	display_alert "Rootfs build complete" "${BUILT_ROOTFS_CACHE_NAME}" "info"
-	display_alert "Rootfs build complete, file: " "${BUILT_ROOTFS_CACHE_FILE}" "info"
+	if [[ ! -f "${artifact_final_file}" ]]; then
+		exit_with_error "Rootfs cache file '${artifact_final_file}' does not exist after create_new_rootfs_cache()."
+	else
+		display_alert "Rootfs cache file '${artifact_final_file}' exists after create_new_rootfs_cache()." "YESSS" "warn"
+	fi
+
+	# obtain the size, in MiB, of "${SDCARD}" at this point.
+	declare -i rootfs_size_mib
+	rootfs_size_mib=$(du -sm "${SDCARD}" | awk '{print $1}')
+	display_alert "Actual rootfs size" "${rootfs_size_mib}MiB after basic/cache" ""
+
+	# warn if rootfs_size_mib is higher than the tmpfs_estimated_size
+	if [[ ${rootfs_size_mib} -gt ${tmpfs_estimated_size} ]]; then
+		display_alert "Rootfs actual size is larger than estimated tmpfs size after basic/cache" "${rootfs_size_mib}MiB > ${tmpfs_estimated_size}MiB" "wrn"
+	fi
+
+	# Run the cleanup handler.
+	execute_and_remove_cleanup_handler trap_handler_cleanup_rootfs_and_image
+
+	return 0
 }
 
 function artifact_rootfs_cli_adapter_pre_run() {
@@ -82,14 +112,6 @@ function artifact_rootfs_cli_adapter_config_prep() {
 	declare -g -r ARCH="${ARCH}" # make readonly for finding who tries to change it
 	if [[ "${ARCH}" != "${__wanted_rootfs_arch}" ]]; then
 		exit_with_error "Param 'ARCH' is set to '${ARCH}' after config, but different from wanted '${__wanted_rootfs_arch}'"
-	fi
-
-	declare -g ROOT_FS_CREATE_VERSION
-	if [[ -z ${ROOT_FS_CREATE_VERSION} ]]; then
-		ROOT_FS_CREATE_VERSION="$(date --utc +"%Y%m%d")"
-		display_alert "ROOT_FS_CREATE_VERSION is not set, defaulting to current date" "ROOT_FS_CREATE_VERSION=${ROOT_FS_CREATE_VERSION}" "info"
-	else
-		display_alert "ROOT_FS_CREATE_VERSION is set" "ROOT_FS_CREATE_VERSION=${ROOT_FS_CREATE_VERSION}" "info"
 	fi
 }
 

@@ -15,6 +15,9 @@
 # "oldcache" = remove old cached rootfs except for the newest 8 files
 
 function general_cleaning() {
+	display_alert "Cleaning" "general_cleaning '$1' - NOT" "warn"
+	return 0
+
 	case $1 in
 		debs) # delete ${DEB_STORAGE} for current branch and family
 			# @TODO: this is completely obsolete with artifacts?

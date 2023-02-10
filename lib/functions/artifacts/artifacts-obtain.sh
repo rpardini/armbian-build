@@ -114,8 +114,7 @@ function obtain_complete_artifact() {
 	github_actions_add_output artifact_final_file "${artifact_final_file}"
 
 	# compute artifact_final_file relative to ${SRC} but don't use realpath
-	declare -g artifact_file_relative="undetermined"
-	artifact_file_relative="${artifact_final_file#${SRC}/}"
+	declare -g artifact_file_relative="${artifact_final_file#${SRC}/}"
 	github_actions_add_output artifact_file_relative "${artifact_file_relative}"
 
 	# just the file name, sans any path
@@ -187,6 +186,13 @@ function obtain_complete_artifact() {
 
 		# pack the artifact to local cache (eg: for deb-tar)
 		LOG_SECTION="pack_artifact_to_local_cache" do_with_logging pack_artifact_to_local_cache
+		
+		# Sanity check: the artifact_final_file should exist now.
+		if [[ ! -f "${artifact_final_file}" ]]; then
+			exit_with_error "Artifact file ${artifact_final_file} did not exist, after artifact_build_from_sources()."
+		else
+			display_alert "Artifact file exists" "${artifact_final_file} YESSS" "warn"
+		fi
 	fi
 
 	if [[ "${deploy_to_remote:-"no"}" == "yes" ]]; then
@@ -215,6 +221,7 @@ function unpack_artifact_from_local_cache() {
 		for deb_name in "${artifact_map_debs[@]}"; do
 			declare new_name_full="${artifact_base_dir}/${deb_name}"
 			if [[ ! -f "${new_name_full}" ]]; then
+				display_alert "Unpacking artifact" "deb-tar: ${artifact_final_file_basename} missing: ${new_name_full}" "warn"
 				any_missing="yes"
 			fi
 		done
@@ -222,7 +229,19 @@ function unpack_artifact_from_local_cache() {
 			display_alert "Unpacking artifact" "deb-tar: ${artifact_final_file_basename}" "info"
 			run_host_command_logged tar -C "${artifact_base_dir}" -xvf "${artifact_final_file}"
 		fi
-		# @TODO: sanity check? did unpacking produce the expected files?
+		# sanity check? did unpacking produce the expected files?
+		declare any_missing="no"
+		declare deb_name
+		for deb_name in "${artifact_map_debs[@]}"; do
+			declare new_name_full="${artifact_base_dir}/${deb_name}"
+			if [[ ! -f "${new_name_full}" ]]; then
+				display_alert "Unpacking artifact" "AFTER UNPACK! deb-tar: ${artifact_final_file_basename} missing: ${new_name_full}" "err"
+				any_missing="yes"
+			fi
+		done
+		if [[ "${any_missing}" == "yes" ]]; then
+			display_alert "Files missing from deb-tar" "this is a bug, please report it. artifact_name: '${artifact_name}' artifact_version: '${artifact_version}'" "err"
+		fi
 	fi
 	return 0
 }
