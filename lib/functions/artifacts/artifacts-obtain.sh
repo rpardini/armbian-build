@@ -113,6 +113,9 @@ function obtain_complete_artifact() {
 	github_actions_add_output artifact_version_reason "${artifact_version_reason}"
 	github_actions_add_output artifact_final_file "${artifact_final_file}"
 
+	# ensure artifact_base_dir exists
+	mkdir -p "${artifact_base_dir}"
+
 	# compute artifact_final_file relative to ${SRC} but don't use realpath
 	declare -g artifact_file_relative="${artifact_final_file#${SRC}/}"
 	github_actions_add_output artifact_file_relative "${artifact_file_relative}"
@@ -186,7 +189,7 @@ function obtain_complete_artifact() {
 
 		# pack the artifact to local cache (eg: for deb-tar)
 		LOG_SECTION="pack_artifact_to_local_cache" do_with_logging pack_artifact_to_local_cache
-		
+
 		# Sanity check: the artifact_final_file should exist now.
 		if [[ ! -f "${artifact_final_file}" ]]; then
 			exit_with_error "Artifact file ${artifact_final_file} did not exist, after artifact_build_from_sources()."
