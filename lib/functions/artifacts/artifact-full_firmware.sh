@@ -49,7 +49,7 @@ function artifact_full_firmware_prepare_version() {
 		["armbian-firmware-full"]="armbian-firmware-full_${artifact_version}_all.deb"
 	)
 
-	artifact_name="armbian-firmware"
+	artifact_name="armbian-firmware-full"
 	artifact_type="deb"
 	artifact_base_dir="${DEST}/debs"
 	artifact_final_file="${DEST}/debs/armbian-firmware-full_${artifact_version}_all.deb"
