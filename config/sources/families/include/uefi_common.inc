@@ -21,9 +21,8 @@ case "${BRANCH}" in
 	edge)
 		declare -g DISTRO_GENERIC_KERNEL=no
 		declare -g LINUXCONFIG="linux-uefi-${LINUXFAMILY}-${BRANCH}"
-		declare -g KERNEL_MAJOR_MINOR="6.2"    # Major and minor versions of this kernel. For mainline caching.
-		declare -g KERNELBRANCH='tag:v6.2-rc7' # @TODO: soon-to-be 'branch:linux-6.2.y' when it is released
-		#declare -g KERNELBRANCH="branch:linux-6.2.y"             # Branch or tag to build from. It should match MAJOR_MINOR
+		declare -g KERNEL_MAJOR_MINOR="6.2"                       # Major and minor versions of this kernel. For mainline caching.
+		declare -g KERNELBRANCH="branch:linux-6.2.y"              # Branch or tag to build from. It should match MAJOR_MINOR
 		declare -g KERNELPATCHDIR="uefi-${LINUXFAMILY}-${BRANCH}" # Might be empty.
 		;;
 esac
