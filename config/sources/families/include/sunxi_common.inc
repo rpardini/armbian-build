@@ -23,8 +23,8 @@ case $BRANCH in
 		;;
 
 	edge)
-		export KERNEL_MAJOR_MINOR="6.1" # Major and minor versions of this kernel.
-		export KERNELBRANCH="tag:v6.1.11"
+		export KERNEL_MAJOR_MINOR="6.2" # Major and minor versions of this kernel.
+		export KERNELBRANCH="tag:v6.2.1"
 		;;
 esac
 
