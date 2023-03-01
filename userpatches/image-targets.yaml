@@ -1,0 +1,109 @@
+# This targets file has 2 templates that generate images, and 2 item groups that use them in different ways for maximum flexibility.
+templates:
+  "default-cli":
+    inputs:
+      board:
+        use_as_var: BOARD
+        description: "Board id/name"
+        required: true
+      branch:
+        use_as_var: BRANCH
+        description: "Branch to build (legacy/current/edge)"
+        default: "current"
+
+    images: # this template generates 'images' to build; each image might have kernel/uboot/rootfs automatically generated
+      "stable-debian-cli":
+        enabled: false
+        vars:
+          RELEASE: bullseye
+
+      "lts-ubuntu-cli":
+        vars:
+          RELEASE: jammy
+
+  "default-minimal":
+    inputs:
+      board:
+        use_as_var: BOARD
+        description: "Board id/name"
+        required: true
+      branch:
+        use_as_var: BRANCH
+        description: "Branch to build (legacy/current/edge)"
+        default: "current"
+
+    images:
+      "stable-debian-minimal":
+        enabled: false
+        vars:
+          RELEASE: bullseye
+          BUILD_MINIMAL: "yes"
+
+      "lts-ubuntu-minimal":
+        enabled: false
+        vars:
+          RELEASE: jammy
+          BUILD_MINIMAL: "yes"
+
+  "default-cli-and-minimal":
+    expand_templates:
+      - "default-cli"
+      - "default-minimal"
+
+  "default-desktop":
+    inputs:
+      board:
+        use_as_var: BOARD
+        description: "Board id/name"
+        required: true
+      branch:
+        use_as_var: BRANCH
+        description: "Branch to build (legacy/current/edge)"
+        default: "current"
+      desktop:
+        use_as_var: DESKTOP_ENVIRONMENT
+        description: "Desktop environment to build"
+        default: "xfce"
+    images:
+      "stable-debian-desktop":
+        enabled: false
+        vars:
+          RELEASE: bullseye
+          BUILD_DESKTOP: "yes"
+          DESKTOP_ENVIRONMENT_CONFIG_NAME: config_base
+          DESKTOP_APPGROUPS_SELECTED: "3dsupport,browsers,chat,desktop_tools,editors,email,internet,multimedia,office,programming,remote_desktop"
+
+      "lts-ubuntu-desktop":
+        vars:
+          RELEASE: bullseye
+          BUILD_DESKTOP: "yes"
+          DESKTOP_ENVIRONMENT_CONFIG_NAME: config_base
+          DESKTOP_APPGROUPS_SELECTED: "3dsupport,browsers,chat,desktop_tools,editors,email,internet,multimedia,office,programming,remote_desktop"
+
+itemGroups:
+  - group: rpardini's boards, all with cli and desktop, defined only once
+    templates: [ "default-cli-and-minimal", "default-desktop" ] # every item in group will have the 2 templates
+    items:
+      - { board: "quartz64a" } # will default to branch current and desktop xfce
+      - { board: "odroidn2", branch: "edge" } # override to 'edge'
+
+  - group: another way, with more flexibility per-item
+    items:
+      - { board: "orangepi5", branch: "legacy", templates: [ "default-desktop" ] } # only desktops
+      - { board: "radxa-zero", branch: "edge", templates: [ "default-cli-and-minimal" ] } # only CLI's
+      # same as above, but spread out over lines, and with extra variables
+      - board: "radxa-zero"
+        branch: "edge"
+        templates: [ "default-cli-and-minimal" ] # @TODO: split cli and minimal into separate templates?
+        vars:
+          CLOUD_IMAGE: "yes"
+
+itemGenerators:
+  - generator: all_boards_all_branches # reference to Python code generator id; this one finds all boards and all branches for each
+    templates: [ "default-cli-and-minimal" ] # every item in group will have the 2 templates
+    preFilter: # optional filter to limit boards/branches at the pre-resolved level; very fast
+      #boards: [ "odroid*" ] # only these boards, additive: adding more items to array adds more boards to build
+      branches: [ "edge" ] # only these branches, additive
+      #boardfamilies: [ "g12a", "sm1", "g12b" ] # only these BOARDFAMILY families, additive
+    postFilter: # optional filter to limit items after resolving their characteristics, which is slow
+      LINUXFAMILY: [ "meson64" ] # only meson64 boards
