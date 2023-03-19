@@ -44,6 +44,8 @@ function armbian_register_commands() {
 		["u-boot"]="artifact"
 		["uboot"]="artifact"
 
+		["fake_ubuntu_advantage_tools"]="fake_ubuntu_advantage_tools"
+
 		["undecided"]="undecided" # implemented in cli_undecided_pre_run and cli_undecided_run - relaunches either build or docker
 	)
 

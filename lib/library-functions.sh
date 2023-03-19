@@ -64,6 +64,16 @@ set -o errexit  ## set -e : exit the script if any statement returns a non-true 
 # shellcheck source=lib/functions/artifacts/artifacts-registry.sh
 source "${SRC}"/lib/functions/artifacts/artifacts-registry.sh
 
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/artifacts/artifacts-registry.sh
+# shellcheck source=lib/functions/artifacts/artifacts-registry.sh
+source "${SRC}"/lib/functions/artifacts/artifact-fake-ubuntu-advantage-tools.sh
+
 # no errors tolerated. invoked before each sourced file to make sure.
 #set -o pipefail  # trace ERR through pipes - will be enabled "soon"
 #set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
@@ -333,6 +343,15 @@ set -o errexit  ## set -e : exit the script if any statement returns a non-true 
 ### lib/functions/compilation/packages/firmware-deb.sh
 # shellcheck source=lib/functions/compilation/packages/firmware-deb.sh
 source "${SRC}"/lib/functions/compilation/packages/firmware-deb.sh
+
+# no errors tolerated. invoked before each sourced file to make sure.
+#set -o pipefail  # trace ERR through pipes - will be enabled "soon"
+#set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable - one day will be enabled
+set -o errtrace # trace ERR through - enabled
+set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
+### lib/functions/compilation/packages/fake_ubuntu_advantage_tools-deb.sh
+# shellcheck source=lib/functions/compilation/packages/fake_ubuntu_advantage_tools-deb.sh
+source "${SRC}"/lib/functions/compilation/packages/fake_ubuntu_advantage_tools-deb.sh
 
 # no errors tolerated. invoked before each sourced file to make sure.
 #set -o pipefail  # trace ERR through pipes - will be enabled "soon"
