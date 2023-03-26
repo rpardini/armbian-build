@@ -45,6 +45,10 @@ function main_default_build_packages() {
 
 	artifacts_to_build+=("fake_ubuntu_advantage_tools")
 
+	artifacts_to_build+=("armbian-config")
+	artifacts_to_build+=("armbian-zsh")
+	artifacts_to_build+=("armbian-plymouth-theme")
+
 	display_alert "Artifacts to build:" "${artifacts_to_build[*]}" "debug"
 
 	# For each artifact, try to obtain them from the local cache, remote cache, or build them.
@@ -69,29 +73,6 @@ function main_default_build_packages() {
 
 	debug_dict image_artifacts_packages
 	debug_dict image_artifacts_debs
-
-	### OLD / Legacy / Needs conversion to new artifact system @TODO
-
-	# Compile armbian-config if packed .deb does not exist or use the one from repository
-	if [[ ! -f ${DEB_STORAGE}/armbian-config_${REVISION}_all.deb ]]; then
-		if [[ "${REPOSITORY_INSTALL}" != *armbian-config* ]]; then
-			LOG_SECTION="compile_armbian-config" do_with_logging compile_armbian-config
-		fi
-	fi
-
-	# Compile armbian-zsh if packed .deb does not exist or use the one from repository
-	if [[ ! -f ${DEB_STORAGE}/armbian-zsh_${REVISION}_all.deb ]]; then
-		if [[ "${REPOSITORY_INSTALL}" != *armbian-zsh* ]]; then
-			LOG_SECTION="compile_armbian-zsh" do_with_logging compile_armbian-zsh
-		fi
-	fi
-
-	# Compile plymouth-theme-armbian if packed .deb does not exist or use the one from repository
-	if [[ ! -f ${DEB_STORAGE}/plymouth-theme-armbian_${REVISION}_all.deb ]]; then
-		if [[ "${REPOSITORY_INSTALL}" != *plymouth-theme-armbian* ]]; then
-			LOG_SECTION="compile_plymouth_theme_armbian" do_with_logging compile_plymouth_theme_armbian
-		fi
-	fi
 
 	overlayfs_wrapper "cleanup"
 	reset_uid_owner "${DEB_STORAGE}"
