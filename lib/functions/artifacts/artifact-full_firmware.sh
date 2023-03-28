@@ -7,7 +7,7 @@
 # This file is a part of the Armbian Build Framework
 # https://github.com/armbian/build/
 
-function artifact_firmware_config_dump() {
+function artifact_full_firmware_config_dump() {
 	# artifact_input_variables: None, for firmware.
 	:
 }
