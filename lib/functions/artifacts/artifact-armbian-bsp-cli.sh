@@ -7,6 +7,13 @@
 # This file is a part of the Armbian Build Framework
 # https://github.com/armbian/build/
 
+function artifact_armbian-bsp-cli_config_dump() {
+	artifact_input_variables[BOARD]="${BOARD}"
+	artifact_input_variables[RELEASE]="${RELEASE}"
+	artifact_input_variables[VENDOR]="${VENDOR}"
+	artifact_input_variables[EXTRA_BSP_NAME]="${EXTRA_BSP_NAME}"
+}
+
 function artifact_armbian-bsp-cli_prepare_version() {
 	artifact_version="undetermined"        # outer scope
 	artifact_version_reason="undetermined" # outer scope
@@ -59,7 +66,8 @@ function artifact_armbian-bsp-cli_cli_adapter_pre_run() {
 }
 
 function artifact_armbian-bsp-cli_cli_adapter_config_prep() {
-	use_board="no" prep_conf_main_minimal_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
+	# this requires aggregation, and thus RELEASE, but also everything else.
+	use_board="yes" allow_no_family="no" skip_kernel="no" prep_conf_main_only_rootfs_ni < /dev/null # no stdin for this, so it bombs if tries to be interactive.
 }
 
 function artifact_armbian-bsp-cli_get_default_oci_target() {

@@ -9,6 +9,8 @@
 
 function compile_armbian-bsp-cli() {
 	: "${artifact_version:?artifact_version is not set}"
+	: "${BOARD:?BOARD is not set}"
+	: "${RELEASE:?RELEASE is not set}"
 
 	declare -g BSP_CLI_PACKAGE_NAME="armbian-bsp-cli-${BOARD}${EXTRA_BSP_NAME}"
 	declare -g BSP_CLI_PACKAGE_FULLNAME="${BSP_CLI_PACKAGE_NAME}_${artifact_version}_${ARCH}"
