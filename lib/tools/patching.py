@@ -231,7 +231,16 @@ if apply_patches:
 			raise Exception("BASE_GIT_REVISION or BASE_GIT_TAG must be set")
 		else:
 			log.debug(f"Getting revision of BASE_GIT_TAG={BASE_GIT_TAG}")
-			BASE_GIT_REVISION = git_repo.tags[BASE_GIT_TAG].commit.hexsha
+			# first, try as a tag:
+			try:
+				BASE_GIT_REVISION = git_repo.tags[BASE_GIT_TAG].commit.hexsha
+			except IndexError:
+				# not a tag, try as a branch:
+				try:
+					BASE_GIT_REVISION = git_repo.branches[BASE_GIT_TAG].commit.hexsha
+				except IndexError:
+					raise Exception(f"BASE_GIT_TAG={BASE_GIT_TAG} is neither a tag nor a branch")
+
 			log.debug(f"Found BASE_GIT_REVISION={BASE_GIT_REVISION} for BASE_GIT_TAG={BASE_GIT_TAG}")
 
 	patching_utils.prepare_clean_git_tree_for_patching(git_repo, BASE_GIT_REVISION, BRANCH_FOR_PATCHES)
