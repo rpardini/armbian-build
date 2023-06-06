@@ -10,6 +10,7 @@
 import logging
 import os
 
+import rich.box
 # Let's use GitPython to query and manipulate the git repo
 from git import Actor
 from git import GitCmdObjectDB
@@ -58,6 +59,9 @@ GIT_WORK_DIR = armbian_utils.get_from_env("GIT_WORK_DIR")
 BOARD = armbian_utils.get_from_env("BOARD")
 TARGET = armbian_utils.get_from_env("TARGET")
 USERPATCHES_PATH = armbian_utils.get_from_env("USERPATCHES_PATH")
+
+# The exit exception, if any.
+exit_with_exception: "Exception | None" = None
 
 # Some path possibilities
 CONST_PATCH_ROOT_DIRS = []
@@ -214,6 +218,9 @@ if apply_patches_to_git and git_archeology:
 # Now, we need to apply the patches.
 git_repo: "git.Repo | None" = None
 total_patches = len(VALID_PATCHES)
+any_failed_to_apply = False
+failed_to_apply_list = []
+
 if apply_patches:
 	log.debug("Cleaning target git directory...")
 	git_repo = Repo(GIT_WORK_DIR, odbt=GitCmdObjectDB)
@@ -249,12 +256,11 @@ if apply_patches:
 	log.info(f"Applying {total_patches} patches {patch_file_desc}...")
 	# Grab the date of the root Makefile; that is the minimum date for the patched files.
 	root_makefile = os.path.join(GIT_WORK_DIR, "Makefile")
-	apply_options["root_makefile_date"] = os.path.getmtime(root_makefile)
-	log.debug(f"- Root Makefile '{root_makefile}' date: '{os.path.getmtime(root_makefile)}'")
+	root_makefile_mtime = os.path.getmtime(root_makefile)
+	apply_options["root_makefile_date"] = root_makefile_mtime
+	log.debug(f"- Root Makefile '{root_makefile}' date: '{root_makefile_mtime}'")
 	chars_total = len(str(total_patches))
 	counter = 0
-	any_failed_to_apply = False
-	failed_to_apply_list = []
 	for one_patch in VALID_PATCHES:
 		counter += 1
 		counter_str = str(counter).zfill(chars_total)
@@ -284,7 +290,7 @@ if apply_patches:
 	if (not apply_patches_to_git) and (not rewrite_patches_in_place) and any_failed_to_apply:
 		log.error(
 			f"Failed to apply {len(failed_to_apply_list)} patches: {','.join([failed_patch.__str__() for failed_patch in failed_to_apply_list])}")
-		raise Exception(f"Failed to apply {len(failed_to_apply_list)} patches.")
+		exit_with_exception = Exception(f"Failed to apply {len(failed_to_apply_list)} patches.")
 
 	if rewrite_patches_in_place:
 		# Now; we need to write the patches to files.
@@ -366,3 +372,48 @@ if apply_patches_to_git and readme_markdown is not None and git_repo is not None
 	)
 	log.info(f"Committed changes to git: {commit.hexsha}")
 	log.info("Done with summary commit.")
+
+# Use Rich.
+from rich.console import Console
+from rich.table import Table
+from rich.syntax import Syntax
+
+# console width is COLUMNS env var minus 12, or just 160 if GITHUB_ACTIONS env is not empty
+console_width = (int(os.environ.get("COLUMNS", 160)) - 12) if os.environ.get("GITHUB_ACTIONS", "") == "" else 160
+console = Console(color_system="standard", width=console_width, highlight=False)
+
+# Use Rich to print a summary of the patches
+if True:
+	summary_table = Table(title=f"Summary of {PATCH_TYPE} patches", show_header=True, show_lines=True, box=rich.box.ROUNDED)
+	summary_table.add_column("Patch / Status", overflow="fold", min_width=25, max_width=35)
+	summary_table.add_column("Diffstat / files", max_width=35)
+	summary_table.add_column("Author / Subject", overflow="ellipsis")
+	for one_patch in VALID_PATCHES:
+		summary_table.add_row(
+			# (one_patch.markdown_name(skip_markdown=True)),  # + " " + one_patch.markdown_problems()
+			one_patch.rich_name_status(),
+			(one_patch.text_diffstats() + " " + one_patch.text_files()),
+			(one_patch.text_author() + ": " + one_patch.text_subject())
+		)
+	console.print(summary_table)
+
+# Use Rich to print a summary of the failed patches and their rejects
+if any_failed_to_apply:
+	summary_table = Table(title="Summary of failed patches", show_header=True, show_lines=True, box=rich.box.ROUNDED)
+	summary_table.add_column("Patch", overflow="fold", min_width=5, max_width=20)
+	summary_table.add_column("Patching output", overflow="fold", min_width=20, max_width=40)
+	summary_table.add_column("Rejects")
+	for one_patch in failed_to_apply_list:
+		reject_compo = "No rejects"
+		if one_patch.rejects is not None:
+			reject_compo = Syntax(one_patch.rejects, "diff", line_numbers=False, word_wrap=True)
+
+		summary_table.add_row(
+			one_patch.rich_name_status(),
+			one_patch.rich_patch_output(),
+			reject_compo
+		)
+	console.print(summary_table)
+
+if exit_with_exception is not None:
+	raise exit_with_exception
