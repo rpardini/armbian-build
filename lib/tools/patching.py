@@ -18,6 +18,7 @@ from git import InvalidGitRepositoryError
 from git import Repo
 
 import common.armbian_utils as armbian_utils
+import common.dt_makefile_patcher as dt_makefile_patcher
 import common.patching_utils as patching_utils
 from common.md_asset_log import SummarizedMarkdownWriter
 from common.md_asset_log import get_gh_pages_workflow_script
@@ -59,6 +60,7 @@ GIT_WORK_DIR = armbian_utils.get_from_env("GIT_WORK_DIR")
 BOARD = armbian_utils.get_from_env("BOARD")
 TARGET = armbian_utils.get_from_env("TARGET")
 USERPATCHES_PATH = armbian_utils.get_from_env("USERPATCHES_PATH")
+DT_REL_DIR = armbian_utils.get_from_env("DT_REL_DIR", "arch/arm64/boot/dts/amlogic")
 
 # The exit exception, if any.
 exit_with_exception: "Exception | None" = None
@@ -291,6 +293,22 @@ if apply_patches:
 		log.error(
 			f"Failed to apply {len(failed_to_apply_list)} patches: {','.join([failed_patch.__str__() for failed_patch in failed_to_apply_list])}")
 		exit_with_exception = Exception(f"Failed to apply {len(failed_to_apply_list)} patches.")
+
+	# Autopatch the Makefile if DT_REL_DIR is set
+	if DT_REL_DIR is not None:
+		log.warning(f"Autopatching DT Makefile in {DT_REL_DIR}...")
+		autopatch_makefile_info = dt_makefile_patcher.auto_patch_dt_makefile(GIT_WORK_DIR, DT_REL_DIR)
+		if apply_patches_to_git:
+			git_repo.git.add(autopatch_makefile_info["MAKEFILE_PATH"])
+			maintainer_actor: Actor = Actor("Armbian AutoPatcher", "patching@armbian.com")
+			commit = git_repo.index.commit(
+				message="Armbian automatic DT Makefile patch",
+				author=maintainer_actor,
+				committer=maintainer_actor,
+				skip_hooks=True
+			)
+			log.info(f"Committed changes to git: {commit.hexsha}")
+			log.info("Done with Makefile autopatch commit.")
 
 	if rewrite_patches_in_place:
 		# Now; we need to write the patches to files.
