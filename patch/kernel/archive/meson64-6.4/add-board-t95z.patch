@@ -230,10 +230,10 @@ index 000000000000..5f4bd19d5d77
 +	};
 +};
 diff --git a/drivers/media/rc/keymaps/Makefile b/drivers/media/rc/keymaps/Makefile
-index f513ff5caf4e..d286beafb389 100644
+index f19558fdab0c..8f8466ea9dad 100644
 --- a/drivers/media/rc/keymaps/Makefile
 +++ b/drivers/media/rc/keymaps/Makefile
-@@ -105,6 +105,7 @@ obj-$(CONFIG_RC_MAP) += \
+@@ -107,6 +107,7 @@ obj-$(CONFIG_RC_MAP) += \
  			rc-reddo.o \
  			rc-snapstream-firefly.o \
  			rc-streamzap.o \
@@ -323,10 +323,10 @@ index 000000000000..aaaf6b1c0045
 +MODULE_LICENSE("GPL");
 +MODULE_AUTHOR("Christian Hewitt <christianshewitt@gmail.com>");
 diff --git a/include/media/rc-map.h b/include/media/rc-map.h
-index 793b54342dff..10f07975e7d8 100644
+index 4676545ffd8f..770527edee1d 100644
 --- a/include/media/rc-map.h
 +++ b/include/media/rc-map.h
-@@ -312,6 +312,7 @@ struct rc_map *rc_map_get(const char *name);
+@@ -314,6 +314,7 @@ struct rc_map *rc_map_get(const char *name);
  #define RC_MAP_REDDO                     "rc-reddo"
  #define RC_MAP_SNAPSTREAM_FIREFLY        "rc-snapstream-firefly"
  #define RC_MAP_STREAMZAP                 "rc-streamzap"
