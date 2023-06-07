@@ -496,7 +496,15 @@ class PatchInPatchFile:
 				return self.commit_changes_to_git_grouped(all_files_to_add, repo)
 
 			if not add_all_changes_in_git:
-				repo.git.add("-f", all_files_to_add)
+				log.debug(f"Adding (initial) {len(all_files_to_add)} files to git: {' '.join(all_files_to_add)}")
+				do_not_commit_files = ['MAINTAINERS']
+				do_not_commit_prefixes = []
+				do_not_commit_regexes = [r'^arch/([a-zA-Z0-9]+)/boot/dts/([a-zA-Z0-9]+)/Makefile$']
+				final_files_to_add = [f for f in all_files_to_add if f not in do_not_commit_files]
+				final_files_to_add = [f for f in final_files_to_add if not any(f.startswith(p) for p in do_not_commit_prefixes)]
+				final_files_to_add = [f for f in final_files_to_add if not any(re.match(r, f) for r in do_not_commit_regexes)]
+				log.debug(f"Adding (final ) {len(final_files_to_add)} files to git: {' '.join(final_files_to_add)}")
+				repo.git.add("-f", final_files_to_add)
 
 		if self.failed_to_parse or self.parent.patch_dir.is_autogen_dir or add_all_changes_in_git:
 			log.warning(f"Rescue: adding all changed files to git for {self}")
