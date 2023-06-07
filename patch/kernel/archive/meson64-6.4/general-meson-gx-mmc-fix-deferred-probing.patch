@@ -12,24 +12,24 @@ can safely ignore it...
 Fixes: cbcaac6d7dd2 ("mmc: meson-gx-mmc: Fix platform_get_irq's error checking")
 Signed-off-by: Sergey Shtylyov <s.shtylyov@omp.ru>
 ---
- drivers/mmc/host/meson-gx-mmc.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/mmc/host/meson-gx-mmc.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/mmc/host/meson-gx-mmc.c b/drivers/mmc/host/meson-gx-mmc.c
-index 5c94ad4661ce..64a1520321b0 100644
+index b8514d9d5e73..75903decdfbe 100644
 --- a/drivers/mmc/host/meson-gx-mmc.c
 +++ b/drivers/mmc/host/meson-gx-mmc.c
-@@ -1233,8 +1233,8 @@ static int meson_mmc_probe(struct platform_device *pdev)
- 	}
+@@ -1193,7 +1193,9 @@ static int meson_mmc_probe(struct platform_device *pdev)
  
  	host->irq = platform_get_irq(pdev, 0);
--	if (host->irq <= 0) {
--		ret = -EINVAL;
-+	if (host->irq < 0) {
+ 	if (host->irq <= 0)
+-		return -EINVAL;
 +		ret = host->irq;
- 		goto free_host;
- 	}
++		goto free_host;
++	}
  
+ 	cd_irq = platform_get_irq_optional(pdev, 1);
+ 	mmc_gpio_set_cd_irq(mmc, cd_irq);
 -- 
 Armbian
 
