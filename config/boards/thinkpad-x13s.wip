@@ -2,7 +2,7 @@
 declare -g BOARD_NAME="ThinkPad X13s"
 declare -g BOARD_MAINTAINER="rpardini"
 declare -g BOARDFAMILY="uefi-arm64"
-declare -g KERNEL_TARGET="sc8280xp"
+declare -g KERNEL_TARGET="sc8280xp,jhovoldsc8280xp"
 
 declare -g BOOT_LOGO=desktop
 
@@ -11,12 +11,18 @@ declare -g GRUB_CMDLINE_LINUX_DEFAULT="efi=noruntime clk_ignore_unused pd_ignore
 declare -g BOOT_FDT_FILE="qcom/sc8280xp-lenovo-thinkpad-x13s.dtb"
 enable_extension "grub-with-dtb" # important, puts the whole DTB handling in place.
 
-# use Armbian's Full firmware, already set in common uefi include: BOARD_FIRMWARE_INSTALL="-full"
 function post_family_config_branch_sc8280xp__doit() {
 	display_alert "Setting up steev's kernel for" "${BOARD}" "warn"
 	declare -g KERNEL_MAJOR_MINOR="6.4" # Major and minor versions of this kernel.
 	declare -g KERNELBRANCH='branch:lenovo-x13s-linux-6.4.y'
 	declare -g KERNELSOURCE='https://github.com/steev/linux.git'
+}
+
+function post_family_config_branch_jhovoldsc8280xp__doit() {
+	display_alert "Setting up jhovold's kernel for" "${BOARD}" "warn"
+	declare -g KERNEL_MAJOR_MINOR="6.5" # Major and minor versions of this kernel.
+	declare -g KERNELBRANCH='branch:wip/sc8280xp-v6.5-rc1'
+	declare -g KERNELSOURCE='https://github.com/jhovold/linux.git'
 }
 
 function pre_customize_image__add_x13s_firmware_and_modules_to_initrd() {
@@ -38,6 +44,7 @@ function pre_customize_image__add_x13s_firmware_and_modules_to_initrd() {
 	# Modules, required to boot, add them to initrd
 	cat <<- EXTRA_MODULES >> "${SDCARD}"/etc/initramfs-tools/modules
 		pwm_bl
+		phy_qcom_qmp_pcie
 		pcie_qcom
 		phy_qcom
 		qmp_pcie
@@ -45,10 +52,13 @@ function pre_customize_image__add_x13s_firmware_and_modules_to_initrd() {
 		qrtr
 		phy_qcom_edp
 		gpio_sbu_mux
+		i2c_hid_of
+		i2c_qcom_geni
 		pmic_glink_altmode
 		leds_qcom_lpg
 		qcom_q6v5_pas  # This module loads a lot of FW blobs
 		panel_edp
+		panel-edp
 		msm
 		nvme
 		usb_storage
