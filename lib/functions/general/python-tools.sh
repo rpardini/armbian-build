@@ -22,6 +22,7 @@ function early_prepare_pip3_dependencies_for_python_tools() {
 		"oras==0.1.17"        # for OCI stuff in mapper-oci-update
 		"Jinja2==3.1.2"       # for templating
 		"rich==13.4.1"        # for rich text formatting
+		"b4==0.12.3"          # b4: patch/mailing list workhorse from kernel.org
 	)
 	return 0
 }
