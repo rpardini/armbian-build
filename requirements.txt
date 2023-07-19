@@ -23,3 +23,4 @@ pylibfdt @ git+https://github.com/devicetree-org/pylibfdt.git@v1.7.2-2 # upstrea
 dtschema == 2026.9     # for checking dts files and dt bindings
 yamllint == 1.38.0     # for checking dts files and dt bindings
 berkeleydb==18.1.6     # berkeleydb: for reading reprepro's 'db' files directly
+b4==0.12.3             # b4: patch/mailing list workhorse from kernel.org
