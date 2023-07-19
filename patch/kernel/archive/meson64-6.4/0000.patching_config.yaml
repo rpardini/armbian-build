@@ -9,6 +9,11 @@ config: # This is file 'patch/kernel/archive/meson64-6.4/0000.patching_config.ya
   maintainers:
     - { github: rpardini, name: Ricardo Pardini, email: ricardo@pardini.net, armbian-forum: rpardini }
 
+  # Automatic grabbing of patches from mailing lists, using 'b4' tool 'am' command.
+  # Patches will be grabbed and written to disk in the order they are listed here, before any other processing is done.
+  #b4-am:
+  #  - { prefix: "0666", lore: "https://lore.kernel.org/r/20230706-topic-amlogic-upstream-dt-fixes-take3-v1-0-63ed070eeab2@linaro.org" }
+
   # .dts files in these directories will be copied as-is to the build tree; later ones overwrite earlier ones.
   # This is meant to provide a way to "add a board DTS" without having to null-patch them in.
   dts-directories:
