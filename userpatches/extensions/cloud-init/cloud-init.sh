@@ -73,7 +73,7 @@ function extension_prepare_config__990_late_finish_cloud_init_config() {
 	fi
 
 	ci_packages_install+=("cloud-init" "cloud-initramfs-growroot" "busybox" "eatmydata" "curl" "tree") # 'busybox' helps with growroot working on bookworm
-	ci_packages_install+=("lvm2" "thin-provisioning-tools" "systemd-timesyncd" "wpasupplicant")
+	ci_packages_install+=("lvm2" "thin-provisioning-tools" "systemd-timesyncd" "wpasupplicant" "ccze")
 
 	# This means "add to rootfs cache list", not "for this board".
 	add_packages_to_rootfs "${ci_packages_install[@]}"
