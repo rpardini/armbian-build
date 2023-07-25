@@ -31,6 +31,11 @@ on:
         required: false
         default: ''
         type: string
+      targetsFilterInclude:
+        description: 'TARGETS_FILTER_INCLUDE, example: "BOARD:odroidhc4,BOARD:odroidn2"'
+        required: false
+        default: ''
+        type: string
 
 env:
 
@@ -129,7 +134,14 @@ jobs:
         id: prepare-matrix
         run: |
           # this sets outputs "artifact-matrix" #and "image-matrix"
-          bash ./compile.sh gha-matrix [[userpatches_config_for_prepare_job]] CLEAN_INFO=yes CLEAN_MATRIX=yes MATRIX_ARTIFACT_CHUNKS=[[num_chunks_artifacts]] MATRIX_IMAGE_CHUNKS=[[num_chunks_images]] BETA=${{ github.event.inputs.nightly || 'yes' }} CHECK_OCI=${{ github.event.inputs.checkOci || 'yes' }} TARGETS_FILENAME=targets.yaml SKIP_IMAGES=${{ github.event.inputs.skipImages || 'yes' }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} #  IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
+          bash ./compile.sh gha-matrix [[userpatches_config_for_prepare_job]] ${{env.EXTRA_PARAMS_ALL_BUILDS}} \
+            TARGETS_FILTER_INCLUDE='${{ github.event.inputs.targetsFilterInclude || '' }}' \
+            MATRIX_ARTIFACT_CHUNKS=[[num_chunks_artifacts]] \
+            MATRIX_IMAGE_CHUNKS=[[num_chunks_images]] \
+            BETA=${{ github.event.inputs.nightly || 'yes' }} \
+            CHECK_OCI=${{ github.event.inputs.checkOci || 'yes' }} \
+            TARGETS_FILENAME=targets.yaml \
+            SKIP_IMAGES=${{ github.event.inputs.skipImages || 'yes' }}
 
       - name: "Logs: ${{ steps.prepare-matrix.outputs.logs_url }}"
         run: |
