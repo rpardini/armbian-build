@@ -79,6 +79,7 @@ function obtain_complete_artifact() {
 	declare -g artifact_full_oci_target="undetermined"
 	declare -A -g artifact_map_packages=()
 	declare -A -g artifact_map_debs=()
+	declare -A -g artifact_map_debs_reversioned=()
 
 	# Contentious; it might be that prepare_version is complex enough to warrant more than 1 logging section.
 	LOG_SECTION="artifact_prepare_version" do_with_logging artifact_prepare_version
@@ -91,6 +92,7 @@ function obtain_complete_artifact() {
 	debug_var artifact_final_file
 	debug_dict artifact_map_packages
 	debug_dict artifact_map_debs
+	debug_dict artifact_map_debs_reversioned
 
 	# sanity checks. artifact_version/artifact_version_reason/artifact_final_file *must* be set
 	[[ "x${artifact_name}x" == "xx" || "${artifact_name}" == "undetermined" ]] && exit_with_error "artifact_name is not set after artifact_prepare_version"
@@ -307,6 +309,9 @@ function build_artifact_for_image() {
 		obtain_complete_artifact
 	fi
 
+	artifact_reversion_for_deployment
+	debug_dict artifact_map_debs_reversioned
+
 	return 0
 }
 
@@ -438,13 +443,14 @@ function standard_artifact_reversion_for_deployment() {
 	display_alert "Reversioning artifact" "artifact_type: ${artifact_type} artifact_name: ${artifact_name} artifact_version: ${artifact_version} artifact_version_reason: ${artifact_version_reason}" "warn"
 
 	declare artifact_mapped_deb
-	for artifact_mapped_deb in "${artifact_map_debs[@]}"; do
+	for one_artifact_package in "${!artifact_map_packages[@]}"; do
+		declare artifact_mapped_deb="${artifact_map_debs["${one_artifact_package}"]}"
 		declare hashed_storage_deb_full_path="${PACKAGES_HASHED_STORAGE}/${artifact_mapped_deb}"
 		if [[ ! -f "${hashed_storage_deb_full_path}" ]]; then
 			exit_with_error "hashed storage does not have ${hashed_storage_deb_full_path}"
 		fi
 
-		display_alert "Found hashed storage file" "${hashed_storage_deb_full_path}" "info"
+		display_alert "Found hashed storage file" "'${artifact_mapped_deb}': ${hashed_storage_deb_full_path}" "info"
 
 		# relative path to the deb file from PACKAGES_HASHED_STORAGE, using coreutils
 		declare deb_relative_path
@@ -463,8 +469,13 @@ function standard_artifact_reversion_for_deployment() {
 		display_alert "target_deb_storage_dir" "${target_deb_storage_dir}" "info"
 		mkdir -p "${target_deb_storage_dir}"
 
+		declare target_deb_reversioned_map_value="undetermined" # filled in function
+
 		# call function for each deb, pass parameters
 		standard_artifact_reversion_for_deployment_one_deb "${@}"
+
+		# publish revision information to outer scope
+		artifact_map_debs_reversioned+=(["${one_artifact_package}"]="${target_deb_reversioned_map_value}")
 
 	done
 
@@ -538,6 +549,9 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	run_host_command_logged ar rcs "${target_deb_storage_full_path}" "${deb_contents_dir}/debian-binary" "${deb_contents_dir}/control.tar${control_compressed}" "${deb_contents_dir}/data.tar${control_compressed}"
 
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
+
+	# set outer scope variable
+	target_deb_reversioned_map_value="${deb_relative_dir}/${package_name}_${REVISION}_${package_architecture}.deb"
 
 	return 0
 }
