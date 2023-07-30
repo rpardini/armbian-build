@@ -112,6 +112,11 @@ function install_deb_chroot() {
 
 function install_artifact_deb_chroot() {
 	declare deb_name="$1"
-	display_alert "Installing artifact deb" "${deb_name} :: ${image_artifacts_debs["${deb_name}"]}" "warn"
-	install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["${deb_name}"]}"
+	declare -A -g image_artifacts_debs_reversioned # global associative array
+	declare revisioned_deb_rel_path="${image_artifacts_debs_reversioned["${deb_name}"]}"
+	if [[ -z "${revisioned_deb_rel_path}" ]]; then
+		exit_with_error "No revisioned deb path found for '${deb_name}'"
+	fi
+	display_alert "Installing artifact deb" "${deb_name} :: ${revisioned_deb_rel_path}" "debug"
+	install_deb_chroot "${DEB_STORAGE}/${revisioned_deb_rel_path}"
 }
