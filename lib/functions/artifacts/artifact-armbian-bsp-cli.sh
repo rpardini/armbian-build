@@ -174,3 +174,7 @@ function artifact_armbian-bsp-cli_needs_transitional_package() {
 		return 1
 	fi
 }
+
+function artifact_armbian-bsp-cli_reversion_for_deployment() {
+	standard_artifact_reversion_for_deployment
+}

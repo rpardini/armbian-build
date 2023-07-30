@@ -16,6 +16,7 @@ function create_artifact_functions() {
 		"is_available_in_local_cache" "is_available_in_remote_cache" "obtain_from_remote_cache"
 		"deploy_to_remote_cache"
 		"build_from_sources"
+		"reversion_for_deployment"
 	)
 	for func in "${funcs[@]}"; do
 		declare impl_func="artifact_${chosen_artifact_impl}_${func}"
@@ -429,6 +430,114 @@ function obtain_artifact_from_remote_cache() {
 	if [[ "${artifact_exists_in_local_cache}" == "no" ]]; then
 		exit_with_error "Artifact is not available in local cache after obtaining remotely: ${artifact_full_oci_target} into '${artifact_base_dir}' file '${artifact_final_file_basename}'"
 	fi
+
+	return 0
+}
+
+function standard_artifact_reversion_for_deployment() {
+	display_alert "Reversioning artifact" "artifact_type: ${artifact_type} artifact_name: ${artifact_name} artifact_version: ${artifact_version} artifact_version_reason: ${artifact_version_reason}" "warn"
+
+	declare artifact_mapped_deb
+	for artifact_mapped_deb in "${artifact_map_debs[@]}"; do
+		declare hashed_storage_deb_full_path="${PACKAGES_HASHED_STORAGE}/${artifact_mapped_deb}"
+		if [[ ! -f "${hashed_storage_deb_full_path}" ]]; then
+			exit_with_error "hashed storage does not have ${hashed_storage_deb_full_path}"
+		fi
+
+		display_alert "Found hashed storage file" "${hashed_storage_deb_full_path}" "info"
+
+		# relative path to the deb file from PACKAGES_HASHED_STORAGE, using coreutils
+		declare deb_relative_path
+		deb_relative_path="$(realpath --relative-to="${PACKAGES_HASHED_STORAGE}" "${hashed_storage_deb_full_path}")"
+		display_alert "deb_relative_path" "${deb_relative_path}" "info"
+
+		declare deb_relative_dir
+		deb_relative_dir="$(dirname "${deb_relative_path}")"
+		display_alert "deb_relative_dir" "${deb_relative_dir}" "info"
+
+		declare deb_filename
+		deb_filename="$(basename "${deb_relative_path}")"
+		display_alert "deb_filename" "${deb_filename}" "info"
+
+		declare target_deb_storage_dir="${DEB_STORAGE}/${deb_relative_dir}"
+		display_alert "target_deb_storage_dir" "${target_deb_storage_dir}" "info"
+		mkdir -p "${target_deb_storage_dir}"
+
+		# call function for each deb, pass parameters
+		standard_artifact_reversion_for_deployment_one_deb "${@}"
+
+	done
+
+}
+
+function standard_artifact_reversion_for_deployment_one_deb() {
+	display_alert "Will repack" "hashed_storage_deb_full_path: ${hashed_storage_deb_full_path}" "warn"
+	display_alert "Will repack" "deb_relative_dir: ${deb_relative_dir}" "warn"
+	display_alert "Will repack" "artifact_version: ${artifact_version}" "warn"
+	display_alert "Will repack" "REVISION: ${REVISION}" "warn"
+
+	declare cleanup_id="" unpack_dir=""
+	prepare_temp_dir_in_workdir_and_schedule_cleanup "reversion-${artifact_name}" cleanup_id unpack_dir # namerefs
+
+	declare deb_contents_dir="${unpack_dir}/deb-contents"
+	mkdir -p "${deb_contents_dir}"
+
+	# unpack the hashed_storage_deb_full_path .deb, which is just an "ar" file, to the deb_contents_dir
+	run_host_command_logged ar xv "${hashed_storage_deb_full_path}" --output="${deb_contents_dir}"
+
+	# find out if compressed or not, and store for future recompressing
+	control_compressed=""
+	if [[ -f "${deb_contents_dir}/control.tar.xz" ]]; then
+		control_compressed=".xz"
+		run_host_command_logged xz -d "${deb_contents_dir}/control.tar.xz" # decompress
+	fi
+
+	# untar the control into its own specific dir
+	declare control_dir="${unpack_dir}/control"
+	mkdir -p "${control_dir}"
+	run_host_command_logged tar -xvf "${deb_contents_dir}/control.tar" --directory="${control_dir}"
+
+	# Hack at the control file...
+	declare control_file="${control_dir}/control"
+	declare control_file_new="${control_dir}/control.new"
+
+	# First, parse the package name and architecture from the control file
+	declare package_name
+	package_name="$(grep -E "^Package: " "${control_file}" | sed -e "s/^Package: //")"
+	declare package_architecture
+	package_architecture="$(grep -E "^Architecture: " "${control_file}" | sed -e "s/^Architecture: //")"
+
+	# Calculate the final filename
+	declare target_deb_storage_full_path
+	target_deb_storage_full_path="${target_deb_storage_dir}/${package_name}_${REVISION}_${package_architecture}.deb"
+
+	# Replace "Version: " field with our own
+	sed -e "s/^Version: .*/Version: ${REVISION}/" "${control_file}" > "${control_file_new}"
+	echo "Original-Armbian-Hash: ${artifact_version}" >> "${control_file_new}" # non-standard field.
+
+	# Show a nice diff using batcat
+	diff -u "${control_file_new}" "${control_file}" > "${unpack_dir}/control.diff" || true
+	run_tool_batcat "${unpack_dir}/control.diff"
+
+	# Move new control on top of old
+	mv "${control_file_new}" "${control_file}"
+
+	run_host_command_logged rm "${deb_contents_dir}/control.tar"
+
+	cd "${control_dir}" || exit_with_error "cray-cray about control_dir ${control_dir}"
+	run_host_command_logged tar cvf "${deb_contents_dir}/control.tar" .
+
+	# if it was compressed to begin with, recompress...
+	if [[ "${control_compressed}" == ".xz" ]]; then
+		run_host_command_logged xz "${deb_contents_dir}/control.tar"
+	fi
+
+	run_host_command_logged ls -lat "${deb_contents_dir}/"
+
+	# re-ar the whole .deb back in place, using the new version for filename.
+	run_host_command_logged ar rcs "${target_deb_storage_full_path}" "${deb_contents_dir}/debian-binary" "${deb_contents_dir}/control.tar${control_compressed}" "${deb_contents_dir}/data.tar${control_compressed}"
+
+	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 
 	return 0
 }
