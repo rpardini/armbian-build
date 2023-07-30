@@ -109,3 +109,9 @@ function install_deb_chroot() {
 	# IMPORTANT! Do not use short-circuit above as last statement in a function, since it determines the result of the function.
 	return 0
 }
+
+function install_artifact_deb_chroot() {
+	declare deb_name="$1"
+	display_alert "Installing artifact deb" "${deb_name} :: ${image_artifacts_debs["${deb_name}"]}" "warn"
+	install_deb_chroot "${DEB_STORAGE}/${image_artifacts_debs["${deb_name}"]}"
+}
