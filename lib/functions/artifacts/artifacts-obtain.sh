@@ -90,21 +90,12 @@ function obtain_complete_artifact() {
 	debug_var artifact_type
 	debug_var artifact_version
 	debug_var artifact_version_reason
-	debug_var artifact_base_dir
-	debug_var artifact_final_file
-	debug_dict artifact_map_packages
-	debug_dict artifact_map_debs
-	debug_dict artifact_map_debs_reversioned
 
 	# sanity checks. artifact_version/artifact_version_reason/artifact_final_file *must* be set
 	[[ "x${artifact_name}x" == "xx" || "${artifact_name}" == "undetermined" ]] && exit_with_error "artifact_name is not set after artifact_prepare_version"
 	[[ "x${artifact_type}x" == "xx" || "${artifact_type}" == "undetermined" ]] && exit_with_error "artifact_type is not set after artifact_prepare_version"
 	[[ "x${artifact_version}x" == "xx" || "${artifact_version}" == "undetermined" ]] && exit_with_error "artifact_version is not set after artifact_prepare_version"
 	[[ "x${artifact_version_reason}x" == "xx" || "${artifact_version_reason}" == "undetermined" ]] && exit_with_error "artifact_version_reason is not set after artifact_prepare_version"
-	[[ "x${artifact_base_dir}x" == "xx" || "${artifact_base_dir}" == "undetermined" ]] && exit_with_error "artifact_base_dir is not set after artifact_prepare_version"
-	[[ "x${artifact_final_file}x" == "xx" || "${artifact_final_file}" == "undetermined" ]] && exit_with_error "artifact_final_file is not set after artifact_prepare_version"
-	[[ "x${artifact_deb_repo}x" == "xx" || "${artifact_deb_repo}" == "undetermined" ]] && exit_with_error "artifact_deb_repo is not set after artifact_prepare_version"
-	[[ "x${artifact_deb_arch}x" == "xx" || "${artifact_deb_arch}" == "undetermined" ]] && exit_with_error "artifact_deb_arch is not set after artifact_prepare_version"
 
 	# validate artifact_version begins with a digit when building deb packages (or deb-tar); dpkg requires it
 	if [[ "${artifact_type}" != "tar.zst" ]]; then
@@ -118,6 +109,39 @@ function obtain_complete_artifact() {
 		deb | deb-tar)
 			# validate artifact_version begins with a digit
 			[[ "${artifact_version}" =~ ^[0-9] ]] || exit_with_error "${artifact_type}: artifact_version '${artifact_version}' does not begin with a digit"
+			# since it's a deb or deb-tar, validate deb-specific variables
+			[[ "x${artifact_deb_repo}x" == "xx" || "${artifact_deb_repo}" == "undetermined" ]] && exit_with_error "artifact_deb_repo is not set after artifact_prepare_version"
+			[[ "x${artifact_deb_arch}x" == "xx" || "${artifact_deb_arch}" == "undetermined" ]] && exit_with_error "artifact_deb_arch is not set after artifact_prepare_version"
+			# validate there's at least one item in artifact_map_packages
+			[[ "${#artifact_map_packages[@]}" -eq 0 ]] && exit_with_error "artifact_map_packages is empty after artifact_prepare_version"
+
+			debug_dict artifact_map_packages
+			debug_dict artifact_map_debs
+			debug_dict artifact_map_debs_reversioned
+
+			# produce the mapped/reversioned deb info given the debs.
+			display_alert "Here new" "new new new" "warn"
+
+			declare one_artifact_deb_id one_artifact_deb_package
+			for one_artifact_deb_id in "${!artifact_map_packages[@]}"; do
+				one_artifact_deb_package="${artifact_map_packages["${one_artifact_deb_id}"]}"
+				artifact_map_debs+=(["${one_artifact_deb_id}"]="${artifact_deb_repo}/${one_artifact_deb_package}_${artifact_version}_${artifact_deb_arch}.deb")
+				artifact_map_debs_reversioned+=(["${one_artifact_deb_id}"]="${REVISION}/${artifact_deb_repo}/${artifact_name}/${artifact_version}/${one_artifact_deb_package}_${REVISION}_${artifact_deb_arch}.deb")
+			done
+
+			# moved from each artifact:
+			# deb-tar:
+			if [[ "${artifact_type}" == "deb-tar" ]]; then
+				artifact_base_dir="${PACKAGES_HASHED_STORAGE}" # deb-tar's always at the root. they're temporary anyway
+				artifact_final_file="${artifact_base_dir}/${artifact_name}_${artifact_version}_${artifact_deb_arch}.tar"
+			else # deb, single-deb
+				artifact_base_dir="${PACKAGES_HASHED_STORAGE}/${artifact_deb_repo}"
+				artifact_final_file="${artifact_base_dir}/${artifact_name}_${artifact_version}_${artifact_deb_arch}.deb"
+			fi
+
+			debug_dict artifact_map_packages
+			debug_dict artifact_map_debs
+			debug_dict artifact_map_debs_reversioned
 
 			# grab the the deb maps, and add them to plain arrays.
 			artifact_map_debs_keys=("${!artifact_map_debs[@]}")
@@ -129,12 +153,17 @@ function obtain_complete_artifact() {
 
 			;;
 		tar.zst)
-			: # valid, no restrictions on tar.zst versioning
+			# tar.zst (rootfs) must specify the directories directly, since we can't determine from deb info.
+			[[ "x${artifact_base_dir}x" == "xx" || "${artifact_base_dir}" == "undetermined" ]] && exit_with_error "artifact_base_dir is not set after artifact_prepare_version"
+			[[ "x${artifact_final_file}x" == "xx" || "${artifact_final_file}" == "undetermined" ]] && exit_with_error "artifact_final_file is not set after artifact_prepare_version"
 			;;
 		*)
 			exit_with_error "artifact_type '${artifact_type}' is not supported"
 			;;
 	esac
+
+	debug_var artifact_base_dir
+	debug_var artifact_final_file
 
 	# set those as outputs for GHA
 	github_actions_add_output artifact_name "${artifact_name}"
@@ -245,10 +274,11 @@ function obtain_complete_artifact() {
 
 		if [[ "${artifact_exists_in_remote_cache}" == "yes" ]]; then
 			display_alert "artifact" "exists in remote cache: ${artifact_name} ${artifact_version}" "debug"
-			if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
-				display_alert "artifact" "skipping obtain from remote & unpacking as requested" "info"
-				return 0
-			fi
+			# WHY THE HELL WE HAD THIS? there's no point in this at all
+			#if [[ "${skip_unpack_if_found_in_caches:-"no"}" == "yes" ]]; then
+			#	display_alert "artifact" "skipping obtain from remote & unpacking as requested" "info"
+			#	return 0
+			#fi
 			LOG_SECTION="artifact_obtain_from_remote_cache" do_with_logging artifact_obtain_from_remote_cache
 			LOG_SECTION="unpack_artifact_from_local_cache" do_with_logging unpack_artifact_from_local_cache
 			display_alert "artifact" "obtained from remote cache: ${artifact_name} ${artifact_version}" "cachehit"
@@ -453,8 +483,8 @@ function standard_artifact_reversion_for_deployment() {
 	display_alert "Reversioning artifact" "artifact_type: ${artifact_type} artifact_name: ${artifact_name} artifact_version: ${artifact_version} artifact_version_reason: ${artifact_version_reason}" "warn"
 
 	declare artifact_mapped_deb
-	for one_artifact_package in "${!artifact_map_packages[@]}"; do
-		declare artifact_mapped_deb="${artifact_map_debs["${one_artifact_package}"]}"
+	for one_artifact_deb_package in "${!artifact_map_packages[@]}"; do
+		declare artifact_mapped_deb="${artifact_map_debs["${one_artifact_deb_package}"]}"
 		declare hashed_storage_deb_full_path="${PACKAGES_HASHED_STORAGE}/${artifact_mapped_deb}"
 		if [[ ! -f "${hashed_storage_deb_full_path}" ]]; then
 			exit_with_error "hashed storage does not have ${hashed_storage_deb_full_path}"
@@ -462,40 +492,29 @@ function standard_artifact_reversion_for_deployment() {
 
 		display_alert "Found hashed storage file" "'${artifact_mapped_deb}': ${hashed_storage_deb_full_path}" "info"
 
-		# relative path to the deb file from PACKAGES_HASHED_STORAGE, using coreutils
-		declare deb_relative_path
-		deb_relative_path="$(realpath --relative-to="${PACKAGES_HASHED_STORAGE}" "${hashed_storage_deb_full_path}")"
-		display_alert "deb_relative_path" "${deb_relative_path}" "info"
+		# find the target dir and full path to the reversioned file
+		declare deb_versioned_rel_path="${artifact_map_debs_reversioned["${one_artifact_deb_package}"]}"
+		declare deb_versioned_full_path="${DEB_STORAGE}/${deb_versioned_rel_path}"
+		declare deb_versioned_dirname
+		deb_versioned_dirname="$(dirname "${deb_versioned_full_path}")"
 
-		declare deb_relative_dir
-		deb_relative_dir="$(dirname "${deb_relative_path}")"
-		display_alert "deb_relative_dir" "${deb_relative_dir}" "info"
-
-		declare deb_filename
-		deb_filename="$(basename "${deb_relative_path}")"
-		display_alert "deb_filename" "${deb_filename}" "info"
-
-		declare target_deb_storage_dir="${DEB_STORAGE}/${deb_relative_dir}"
-		display_alert "target_deb_storage_dir" "${target_deb_storage_dir}" "info"
-		mkdir -p "${target_deb_storage_dir}"
-
-		declare target_deb_reversioned_map_value="undetermined" # filled in function
+		run_host_command_logged mkdir -p "${deb_versioned_dirname}"
 
 		# call function for each deb, pass parameters
 		standard_artifact_reversion_for_deployment_one_deb "${@}"
 
-		# publish revision information to outer scope
-		artifact_map_debs_reversioned+=(["${one_artifact_package}"]="${target_deb_reversioned_map_value}")
-
+		# make sure reversioning produced the expected file
+		if [[ ! -f "${deb_versioned_full_path}" ]]; then
+			exit_with_error "reversioning did not produce the expected file: ${deb_versioned_full_path}"
+		fi
 	done
 
 }
 
 function standard_artifact_reversion_for_deployment_one_deb() {
 	display_alert "Will repack" "hashed_storage_deb_full_path: ${hashed_storage_deb_full_path}" "warn"
-	display_alert "Will repack" "deb_relative_dir: ${deb_relative_dir}" "warn"
+	display_alert "Will repack" "deb_versioned_full_path: ${deb_versioned_full_path}" "warn"
 	display_alert "Will repack" "artifact_version: ${artifact_version}" "warn"
-	display_alert "Will repack" "REVISION: ${REVISION}" "warn"
 
 	declare cleanup_id="" unpack_dir=""
 	prepare_temp_dir_in_workdir_and_schedule_cleanup "reversion-${artifact_name}" cleanup_id unpack_dir # namerefs
@@ -522,16 +541,6 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	declare control_file="${control_dir}/control"
 	declare control_file_new="${control_dir}/control.new"
 
-	# First, parse the package name and architecture from the control file
-	declare package_name
-	package_name="$(grep -E "^Package: " "${control_file}" | sed -e "s/^Package: //")"
-	declare package_architecture
-	package_architecture="$(grep -E "^Architecture: " "${control_file}" | sed -e "s/^Architecture: //")"
-
-	# Calculate the final filename
-	declare target_deb_storage_full_path
-	target_deb_storage_full_path="${target_deb_storage_dir}/${package_name}_${REVISION}_${package_architecture}.deb"
-
 	# Replace "Version: " field with our own
 	sed -e "s/^Version: .*/Version: ${REVISION}/" "${control_file}" > "${control_file_new}"
 	echo "Original-Armbian-Hash: ${artifact_version}" >> "${control_file_new}" # non-standard field.
@@ -556,12 +565,9 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	run_host_command_logged ls -lat "${deb_contents_dir}/"
 
 	# re-ar the whole .deb back in place, using the new version for filename.
-	run_host_command_logged ar rcs "${target_deb_storage_full_path}" "${deb_contents_dir}/debian-binary" "${deb_contents_dir}/control.tar${control_compressed}" "${deb_contents_dir}/data.tar${control_compressed}"
+	run_host_command_logged ar rcs "${deb_versioned_full_path}" "${deb_contents_dir}/debian-binary" "${deb_contents_dir}/control.tar${control_compressed}" "${deb_contents_dir}/data.tar${control_compressed}"
 
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
-
-	# set outer scope variable
-	target_deb_reversioned_map_value="${deb_relative_dir}/${package_name}_${REVISION}_${package_architecture}.deb"
 
 	return 0
 }

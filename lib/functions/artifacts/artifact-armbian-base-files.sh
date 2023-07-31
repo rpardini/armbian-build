@@ -51,14 +51,10 @@ function artifact_armbian-base-files_prepare_version() {
 	artifact_version_reason="${reasons[*]}" # outer scope
 
 	artifact_name="armbian-base-files-${RELEASE}-${ARCH}"
-	declare deb_name="base-files" # the artifact_name is only Armbian's reference; the deb_name is still base_files
 	artifact_type="deb"
-	artifact_base_dir="${PACKAGES_HASHED_STORAGE}/${RELEASE}"
-	artifact_final_file="${PACKAGES_HASHED_STORAGE}/${RELEASE}/${deb_name}_${artifact_version}_${ARCH}.deb"
-
-	artifact_map_packages=(["armbian-base-files"]="${deb_name}")
-
-	artifact_map_debs=(["armbian-base-files"]="${RELEASE}/${deb_name}_${artifact_version}_${ARCH}.deb")
+	artifact_deb_repo="${RELEASE}" # release-specific repo (jammy etc)
+	artifact_deb_arch="${ARCH}"    # arch-specific packages (arm64 etc)
+	artifact_map_packages=(["armbian-base-files"]="base-files")
 
 	return 0
 }
@@ -181,7 +177,7 @@ function compile_armbian-base-files() {
 	rm -f "${destination}"/etc/os-release.orig "${destination}"/etc/issue.orig "${destination}"/etc/issue.net.orig "${destination}"/DEBIAN/conffiles.orig
 
 	# Done, pack it.
-	fakeroot_dpkg_deb_build "${destination}"
+	fakeroot_dpkg_deb_build "${destination}" "armbian-base-files"
 
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 }
@@ -224,4 +220,3 @@ function artifact_armbian-base-files_deploy_to_remote_cache() {
 function artifact_armbian-base-files_reversion_for_deployment() {
 	standard_artifact_reversion_for_deployment
 }
-

@@ -35,7 +35,7 @@ function compile_armbian-bsp-cli-transitional() {
 	EOF
 
 	# Build / close the package. This will run shellcheck / show the generated files if debugging
-	fakeroot_dpkg_deb_build "${destination}"
+	fakeroot_dpkg_deb_build "${destination}" "armbian-bsp-cli-transitional"
 
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 
@@ -210,7 +210,7 @@ function compile_armbian-bsp-cli() {
 	fi
 
 	# Build / close the package. This will run shellcheck / show the generated files if debugging
-	fakeroot_dpkg_deb_build "${destination}"
+	fakeroot_dpkg_deb_build "${destination}" "armbian-bsp-cli"
 
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 
