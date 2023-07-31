@@ -24,7 +24,7 @@ function fakeroot_dpkg_deb_build() {
 
 	# Check artifact_deb_id is set and not empty
 	if [[ -z "${artifact_deb_id}" ]]; then
-		exit_with_error "fakeroot_dpkg_deb_build: artifact_deb_id (2nd parameter) is not set"
+		exit_with_error "fakeroot_dpkg_deb_build: artifact_deb_id (2nd parameter) is not set, called with package_directory: '${package_directory}'"
 	fi
 
 	# Obtain from the globals

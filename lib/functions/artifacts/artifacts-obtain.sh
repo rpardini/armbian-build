@@ -107,6 +107,10 @@ function obtain_complete_artifact() {
 	# validate artifact_type... it must be one of the supported types
 	case "${artifact_type}" in
 		deb | deb-tar)
+			# check artifact_base_dir and artifact_base_dir are 'undetermined', or bomb; deb/deb-tar shouldn't set those anymore
+			[[ "${artifact_base_dir}" != "undetermined" ]] && exit_with_error "artifact ${artifact_name} is setting artifact_base_dir, legacy code, remove."
+			[[ "${artifact_final_file}" != "undetermined" ]] && exit_with_error "artifact ${artifact_name} is setting artifact_final_file, legacy code, remove."
+
 			# validate artifact_version begins with a digit
 			[[ "${artifact_version}" =~ ^[0-9] ]] || exit_with_error "${artifact_type}: artifact_version '${artifact_version}' does not begin with a digit"
 			# since it's a deb or deb-tar, validate deb-specific variables
