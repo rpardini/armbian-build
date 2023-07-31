@@ -102,7 +102,12 @@ function obtain_complete_artifact() {
 		[[ "${artifact_version}" =~ ^[0-9] ]] || exit_with_error "${artifact_type}: artifact_version '${artifact_version}' does not begin with a digit"
 	fi
 
-	declare -a artifact_map_debs_values=() artifact_map_packages_values=() artifact_map_debs_keys=() artifact_map_packages_keys=()
+	declare -a artifact_map_debs_values=()
+	declare -a artifact_map_packages_values=()
+	declare -a artifact_map_debs_keys=()
+	declare -a artifact_map_packages_keys=()
+	declare -a artifact_map_debs_reversioned_keys=()
+	declare -a artifact_map_debs_reversioned_values=()
 
 	# validate artifact_type... it must be one of the supported types
 	case "${artifact_type}" in
