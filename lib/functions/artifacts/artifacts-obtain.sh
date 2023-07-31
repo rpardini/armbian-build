@@ -77,6 +77,8 @@ function obtain_complete_artifact() {
 	declare -g artifact_final_file="undetermined"
 	declare -g artifact_final_file_basename="undetermined"
 	declare -g artifact_full_oci_target="undetermined"
+	declare -g artifact_deb_repo="undetermined"
+	declare -g artifact_deb_arch="undetermined"
 	declare -A -g artifact_map_packages=()
 	declare -A -g artifact_map_debs=()
 	declare -A -g artifact_map_debs_reversioned=()
@@ -101,6 +103,8 @@ function obtain_complete_artifact() {
 	[[ "x${artifact_version_reason}x" == "xx" || "${artifact_version_reason}" == "undetermined" ]] && exit_with_error "artifact_version_reason is not set after artifact_prepare_version"
 	[[ "x${artifact_base_dir}x" == "xx" || "${artifact_base_dir}" == "undetermined" ]] && exit_with_error "artifact_base_dir is not set after artifact_prepare_version"
 	[[ "x${artifact_final_file}x" == "xx" || "${artifact_final_file}" == "undetermined" ]] && exit_with_error "artifact_final_file is not set after artifact_prepare_version"
+	[[ "x${artifact_deb_repo}x" == "xx" || "${artifact_deb_repo}" == "undetermined" ]] && exit_with_error "artifact_deb_repo is not set after artifact_prepare_version"
+	[[ "x${artifact_deb_arch}x" == "xx" || "${artifact_deb_arch}" == "undetermined" ]] && exit_with_error "artifact_deb_arch is not set after artifact_prepare_version"
 
 	# validate artifact_version begins with a digit when building deb packages (or deb-tar); dpkg requires it
 	if [[ "${artifact_type}" != "tar.zst" ]]; then
@@ -120,6 +124,8 @@ function obtain_complete_artifact() {
 			artifact_map_debs_values=("${artifact_map_debs[@]}")
 			artifact_map_packages_keys=("${!artifact_map_packages[@]}")
 			artifact_map_packages_values=("${artifact_map_packages[@]}")
+			artifact_map_debs_reversioned_keys=("${!artifact_map_debs_reversioned[@]}")
+			artifact_map_debs_reversioned_values=("${artifact_map_debs_reversioned[@]}")
 
 			;;
 		tar.zst)
@@ -171,6 +177,8 @@ function obtain_complete_artifact() {
 		declare -a wanted_vars=(
 			artifact_name
 			artifact_type
+			artifact_deb_repo
+			artifact_deb_arch
 			artifact_version
 			artifact_version_reason
 			artifact_base_dir
@@ -184,6 +192,8 @@ function obtain_complete_artifact() {
 			artifact_map_debs_values
 			artifact_map_packages_keys
 			artifact_map_packages_values
+			artifact_map_debs_reversioned_keys
+			artifact_map_debs_reversioned_values
 		)
 
 		declare -A ARTIFACTS_VAR_DICT=()
