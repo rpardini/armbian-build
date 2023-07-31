@@ -123,10 +123,15 @@ function obtain_complete_artifact() {
 			display_alert "Here new" "new new new" "warn"
 
 			declare one_artifact_deb_id one_artifact_deb_package
+			declare -i debs_counter=0
+			declare single_deb_hashed_rel_path
 			for one_artifact_deb_id in "${!artifact_map_packages[@]}"; do
 				one_artifact_deb_package="${artifact_map_packages["${one_artifact_deb_id}"]}"
-				artifact_map_debs+=(["${one_artifact_deb_id}"]="${artifact_deb_repo}/${one_artifact_deb_package}_${artifact_version}_${artifact_deb_arch}.deb")
+				# @TODO: might be "${artifact_name}/${artifact_version}/" in the middle can be beneficial for cleaning, later?
+				single_deb_hashed_rel_path="${artifact_deb_repo}/${one_artifact_deb_package}_${artifact_version}_${artifact_deb_arch}.deb"
+				artifact_map_debs+=(["${one_artifact_deb_id}"]="${single_deb_hashed_rel_path}")
 				artifact_map_debs_reversioned+=(["${one_artifact_deb_id}"]="${REVISION}/${artifact_deb_repo}/${artifact_name}/${artifact_version}/${one_artifact_deb_package}_${REVISION}_${artifact_deb_arch}.deb")
+				debs_counter+=1
 			done
 
 			# moved from each artifact:
@@ -135,8 +140,11 @@ function obtain_complete_artifact() {
 				artifact_base_dir="${PACKAGES_HASHED_STORAGE}" # deb-tar's always at the root. they're temporary anyway
 				artifact_final_file="${artifact_base_dir}/${artifact_name}_${artifact_version}_${artifact_deb_arch}.tar"
 			else # deb, single-deb
-				artifact_base_dir="${PACKAGES_HASHED_STORAGE}/${artifact_deb_repo}"
-				artifact_final_file="${artifact_base_dir}/${artifact_name}_${artifact_version}_${artifact_deb_arch}.deb"
+				# bomb if we have more than one...
+				[[ "${debs_counter}" -gt 1 ]] && exit_with_error "artifact_type '${artifact_type}' has more than one deb file. This is not supported."
+				# just use the single deb rel path
+				artifact_base_dir="${PACKAGES_HASHED_STORAGE}"
+				artifact_final_file="${artifact_base_dir}/${single_deb_hashed_rel_path}"
 			fi
 
 			debug_dict artifact_map_packages
