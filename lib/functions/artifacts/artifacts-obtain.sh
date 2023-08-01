@@ -524,6 +524,13 @@ function standard_artifact_reversion_for_deployment() {
 
 		run_host_command_logged mkdir -p "${deb_versioned_dirname}"
 
+		# since the full versioned path includes the original hash, if the file already exists, we can trust
+		# it's the correct one, and skip reversioning.
+		if [[ -f "${deb_versioned_full_path}" ]]; then
+			display_alert "Skipping reversioning" "deb: ${deb_versioned_full_path} already exists" "debug"
+			continue
+		fi
+
 		# call function for each deb, pass parameters
 		standard_artifact_reversion_for_deployment_one_deb "${@}"
 
@@ -533,6 +540,7 @@ function standard_artifact_reversion_for_deployment() {
 		fi
 	done
 
+	return 0
 }
 
 function standard_artifact_reversion_for_deployment_one_deb() {
