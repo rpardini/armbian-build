@@ -7,7 +7,7 @@
 # This file is a part of the Armbian Build Framework
 # https://github.com/armbian/build/
 
-# for RAW deb building. does a bunch of magic to "DEBIAN" directory. Argument is the open package directory. Target is always artifact_base_dir
+# for RAW deb building. does a bunch of magic to "DEBIAN" directory. Arguments are the open package directory and the artifact_deb_id
 function fakeroot_dpkg_deb_build() {
 	# check artifact_name and artifact_version is set otherwise exit_with_error
 	[[ -z "${artifact_name}" ]] && exit_with_error "fakeroot_dpkg_deb_build: artifact_name is not set"
