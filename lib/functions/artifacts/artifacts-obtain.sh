@@ -73,6 +73,7 @@ function obtain_complete_artifact() {
 	declare -g artifact_type="undetermined"
 	declare -g artifact_version="undetermined"
 	declare -g artifact_version_reason="undetermined"
+	declare -g artifact_final_version_reversioned="${REVISION}" # by default
 	declare -g artifact_base_dir="undetermined"
 	declare -g artifact_final_file="undetermined"
 	declare -g artifact_final_file_basename="undetermined"
@@ -137,7 +138,7 @@ function obtain_complete_artifact() {
 				# @TODO: might be "${artifact_name}/${artifact_version}/" in the middle can be beneficial for cleaning, later?
 				single_deb_hashed_rel_path="${artifact_deb_repo}/${one_artifact_deb_package}_${artifact_version}_${artifact_deb_arch}.deb"
 				artifact_map_debs+=(["${one_artifact_deb_id}"]="${single_deb_hashed_rel_path}")
-				artifact_map_debs_reversioned+=(["${one_artifact_deb_id}"]="${REVISION}/${artifact_deb_repo}/${artifact_name}/${artifact_version}/${one_artifact_deb_package}_${REVISION}_${artifact_deb_arch}.deb")
+				artifact_map_debs_reversioned+=(["${one_artifact_deb_id}"]="${REVISION}/${artifact_deb_repo}/${artifact_name}/${artifact_version}/${one_artifact_deb_package}_${artifact_final_version_reversioned}_${artifact_deb_arch}.deb")
 				debs_counter+=1
 			done
 
@@ -225,6 +226,7 @@ function obtain_complete_artifact() {
 			artifact_deb_arch
 			artifact_version
 			artifact_version_reason
+			artifact_final_version_reversioned
 			artifact_base_dir
 			artifact_final_file
 			artifact_final_file_basename
@@ -504,7 +506,7 @@ function obtain_artifact_from_remote_cache() {
 }
 
 function standard_artifact_reversion_for_deployment() {
-	display_alert "Reversioning package" "re-version '${artifact_name}(${artifact_type})::${artifact_version}' to '${REVISION}'" "info"
+	display_alert "Reversioning package" "re-version '${artifact_name}(${artifact_type})::${artifact_version}' to '${artifact_final_version_reversioned}'" "info"
 
 	declare artifact_mapped_deb
 	for one_artifact_deb_package in "${!artifact_map_packages[@]}"; do
@@ -574,7 +576,7 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	declare control_file_new="${control_dir}/control.new"
 
 	# Replace "Version: " field with our own
-	sed -e "s/^Version: .*/Version: ${REVISION}/" "${control_file}" > "${control_file_new}"
+	sed -e "s/^Version: .*/Version: ${artifact_final_version_reversioned}/" "${control_file}" > "${control_file_new}"
 	echo "Original-Armbian-Hash: ${artifact_version}" >> "${control_file_new}" # non-standard field.
 
 	# Show a nice diff using batcat if debugging

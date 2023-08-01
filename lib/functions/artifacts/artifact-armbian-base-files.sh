@@ -56,6 +56,10 @@ function artifact_armbian-base-files_prepare_version() {
 	artifact_deb_arch="${ARCH}"    # arch-specific packages (arm64 etc)
 	artifact_map_packages=(["armbian-base-files"]="base-files")
 
+	# Important. Force the final reversioned version to contain the release name.
+	# Otherwise, when publishing to a repo, pool/main/b/base-files/base-files_${REVISION}.deb will be the same across releases.
+	artifact_final_version_reversioned="${REVISION}-${RELEASE}"
+
 	return 0
 }
 
