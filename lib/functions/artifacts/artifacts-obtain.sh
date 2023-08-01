@@ -129,8 +129,6 @@ function obtain_complete_artifact() {
 			debug_dict artifact_map_debs_reversioned
 
 			# produce the mapped/reversioned deb info given the debs.
-			display_alert "Here new" "new new new" "warn"
-
 			declare one_artifact_deb_id one_artifact_deb_package
 			declare -i debs_counter=0
 			declare single_deb_hashed_rel_path
@@ -375,7 +373,7 @@ function build_artifact_for_image() {
 function pack_artifact_to_local_cache() {
 	if [[ "${artifact_type}" == "deb-tar" ]]; then
 		declare -a files_to_tar=()
-		run_host_command_logged tar -C "${artifact_base_dir}" -cvf "${artifact_final_file}" "${artifact_map_debs[@]}"
+		run_host_command_logged tar -C "${artifact_base_dir}" -cf "${artifact_final_file}" "${artifact_map_debs[@]}"
 		display_alert "Created deb-tar artifact" "deb-tar: ${artifact_final_file}" "info"
 	fi
 }
@@ -506,7 +504,7 @@ function obtain_artifact_from_remote_cache() {
 }
 
 function standard_artifact_reversion_for_deployment() {
-	display_alert "Reversioning artifact" "artifact_type: ${artifact_type} artifact_name: ${artifact_name} artifact_version: ${artifact_version} artifact_version_reason: ${artifact_version_reason}" "warn"
+	display_alert "Reversioning package" "re-version '${artifact_name}(${artifact_type})::${artifact_version}' to '${REVISION}'" "info"
 
 	declare artifact_mapped_deb
 	for one_artifact_deb_package in "${!artifact_map_packages[@]}"; do
@@ -516,7 +514,7 @@ function standard_artifact_reversion_for_deployment() {
 			exit_with_error "hashed storage does not have ${hashed_storage_deb_full_path}"
 		fi
 
-		display_alert "Found hashed storage file" "'${artifact_mapped_deb}': ${hashed_storage_deb_full_path}" "info"
+		display_alert "Found hashed storage file" "'${artifact_mapped_deb}': ${hashed_storage_deb_full_path}" "debug"
 
 		# find the target dir and full path to the reversioned file
 		declare deb_versioned_rel_path="${artifact_map_debs_reversioned["${one_artifact_deb_package}"]}"
@@ -538,9 +536,9 @@ function standard_artifact_reversion_for_deployment() {
 }
 
 function standard_artifact_reversion_for_deployment_one_deb() {
-	display_alert "Will repack" "hashed_storage_deb_full_path: ${hashed_storage_deb_full_path}" "warn"
-	display_alert "Will repack" "deb_versioned_full_path: ${deb_versioned_full_path}" "warn"
-	display_alert "Will repack" "artifact_version: ${artifact_version}" "warn"
+	display_alert "Will repack" "hashed_storage_deb_full_path: ${hashed_storage_deb_full_path}" "debug"
+	display_alert "Will repack" "deb_versioned_full_path: ${deb_versioned_full_path}" "debug"
+	display_alert "Will repack" "artifact_version: ${artifact_version}" "debug"
 
 	declare cleanup_id="" unpack_dir=""
 	prepare_temp_dir_in_workdir_and_schedule_cleanup "reversion-${artifact_name}" cleanup_id unpack_dir # namerefs
@@ -549,7 +547,7 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	mkdir -p "${deb_contents_dir}"
 
 	# unpack the hashed_storage_deb_full_path .deb, which is just an "ar" file, to the deb_contents_dir
-	run_host_command_logged ar xv "${hashed_storage_deb_full_path}" --output="${deb_contents_dir}"
+	run_host_command_logged ar x "${hashed_storage_deb_full_path}" --output="${deb_contents_dir}"
 
 	# find out if compressed or not, and store for future recompressing
 	control_compressed=""
@@ -561,7 +559,7 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	# untar the control into its own specific dir
 	declare control_dir="${unpack_dir}/control"
 	mkdir -p "${control_dir}"
-	run_host_command_logged tar -xvf "${deb_contents_dir}/control.tar" --directory="${control_dir}"
+	run_host_command_logged tar -xf "${deb_contents_dir}/control.tar" --directory="${control_dir}"
 
 	# Hack at the control file...
 	declare control_file="${control_dir}/control"
@@ -571,24 +569,24 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	sed -e "s/^Version: .*/Version: ${REVISION}/" "${control_file}" > "${control_file_new}"
 	echo "Original-Armbian-Hash: ${artifact_version}" >> "${control_file_new}" # non-standard field.
 
-	# Show a nice diff using batcat
-	diff -u "${control_file_new}" "${control_file}" > "${unpack_dir}/control.diff" || true
-	run_tool_batcat "${unpack_dir}/control.diff"
+	# Show a nice diff using batcat if debugging
+	if [[ "${SHOW_DEBUG}" == "yes" ]]; then
+		diff -u "${control_file_new}" "${control_file}" > "${unpack_dir}/control.diff" || true
+		run_tool_batcat "${unpack_dir}/control.diff"
+	fi
 
 	# Move new control on top of old
-	mv "${control_file_new}" "${control_file}"
+	run_host_command_logged mv "${control_file_new}" "${control_file}"
 
 	run_host_command_logged rm "${deb_contents_dir}/control.tar"
 
 	cd "${control_dir}" || exit_with_error "cray-cray about control_dir ${control_dir}"
-	run_host_command_logged tar cvf "${deb_contents_dir}/control.tar" .
+	run_host_command_logged tar cf "${deb_contents_dir}/control.tar" .
 
 	# if it was compressed to begin with, recompress...
 	if [[ "${control_compressed}" == ".xz" ]]; then
 		run_host_command_logged xz "${deb_contents_dir}/control.tar"
 	fi
-
-	run_host_command_logged ls -lat "${deb_contents_dir}/"
 
 	# re-ar the whole .deb back in place, using the new version for filename.
 	run_host_command_logged ar rcs "${deb_versioned_full_path}" "${deb_contents_dir}/debian-binary" "${deb_contents_dir}/control.tar${control_compressed}" "${deb_contents_dir}/data.tar${control_compressed}"
