@@ -414,7 +414,8 @@ function compile_uboot() {
 		Provides: armbian-u-boot
 		Replaces: armbian-u-boot
 		Conflicts: armbian-u-boot, u-boot-sunxi
-		Description: Das U-Boot for ${BOARD} ${artifact_version_reason:-"${version}"}
+		Description: Das U-Boot for ${BOARD}
+		 ${artifact_version_reason:-"${version}"}
 	EOF
 
 	# copy license files, config, etc.

@@ -229,8 +229,8 @@ function kernel_package_callback_linux_image() {
 	# Clean up symlinks in lib/modules/${kernel_version_family}/build and lib/modules/${kernel_version_family}/source; will be in the headers package
 	run_host_command_logged rm -v -f "${package_directory}/lib/modules/${kernel_version_family}/build" "${package_directory}/lib/modules/${kernel_version_family}/source"
 
-	display_alert "Showing contents of Kbuild produced modules" "linux-image" "debug"
 	if [[ -d "${package_directory}/lib/modules/${kernel_version_family}/kernel" ]]; then
+		display_alert "Showing contents of Kbuild produced modules" "linux-image" "debug"
 		run_host_command_logged tree -C --du -h -d -L 1 "${package_directory}/lib/modules/${kernel_version_family}/kernel" "|| true" # do not fail
 	fi
 
@@ -247,14 +247,16 @@ function kernel_package_callback_linux_image() {
 		Package: ${package_name}
 		Version: ${artifact_version}
 		Source: linux-${kernel_version}
+		Armbian-Kernel-Version: ${kernel_version}
+		Armbian-Kernel-Version-Family: ${kernel_version_family}
 		Architecture: ${ARCH}
 		Maintainer: ${MAINTAINER} <${MAINTAINERMAIL}>
 		Section: kernel
 		Priority: optional
 		Provides: linux-image, linux-image-armbian, armbian-$BRANCH
-		Description: Armbian Linux $BRANCH kernel image ${artifact_version_reason:-"${kernel_version_family}"}
-		 This package contains the Linux kernel, modules and corresponding other
-		 files, kernel_version_family: $kernel_version_family.
+		Description: Armbian Linux $BRANCH kernel image $kernel_version_family
+		 This package contains the Linux kernel, modules and corresponding other files.
+		 ${artifact_version_reason:-"${kernel_version_family}"}
 	CONTROL_FILE
 
 	# Install the maintainer scripts
@@ -329,8 +331,9 @@ function kernel_package_callback_linux_dtb() {
 		Architecture: ${ARCH}
 		Priority: optional
 		Provides: linux-dtb, linux-dtb-armbian, armbian-$BRANCH
-		Description: Armbian Linux $BRANCH DTBs ${artifact_version_reason:-"${kernel_version_family}"} in /boot/dtb-${kernel_version_family}
-		 This package contains device blobs from the Linux kernel, version ${kernel_version_family}
+		Description: Armbian Linux $BRANCH DTBs in /boot/dtb-${kernel_version_family}
+		 This package contains device tree blobs from the Linux kernel, version ${kernel_version_family}
+		 ${artifact_version_reason:-"${kernel_version_family}"}
 	CONTROL_FILE
 
 	kernel_package_hook_helper "preinst" <(
@@ -465,10 +468,11 @@ function kernel_package_callback_linux_headers() {
 		Priority: optional
 		Provides: linux-headers, linux-headers-armbian, armbian-$BRANCH
 		Depends: make, gcc, libc6-dev, bison, flex, libssl-dev, libelf-dev
-		Description: Armbian Linux $BRANCH headers ${artifact_version_reason:-"${kernel_version_family}"}
+		Description: Armbian Linux $BRANCH headers ${kernel_version_family}
 		 This package provides kernel header files for ${kernel_version_family}
 		 .
 		 This is useful for DKMS and building of external modules.
+		 ${artifact_version_reason:-"${kernel_version_family}"}
 	CONTROL_FILE
 
 	# Make sure the target dir is clean/not-existing before installing.

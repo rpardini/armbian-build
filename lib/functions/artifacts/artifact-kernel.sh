@@ -219,7 +219,7 @@ function artifact_kernel_build_from_sources() {
 	compile_kernel
 
 	if [[ "${ARTIFACT_WILL_NOT_BUILD}" != "yes" ]]; then # true if kernel-patch, kernel-config, etc.
-		display_alert "Kernel build finished" "${artifact_version_reason}" "info"
+		display_alert "Kernel build finished" "${artifact_version}" "info"
 	fi
 }
 

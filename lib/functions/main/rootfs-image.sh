@@ -106,7 +106,7 @@ function list_installed_packages() {
 		pkg_wanted_version="${image_artifacts_packages_version[${pkg_name}]}" # this is the hash-version
 		display_alert "Checking installed version of package" "${pkg_name}=${pkg_wanted_version}" "debug"
 		declare actual_version
-		actual_version=$(chroot "${SDCARD}" dpkg-query -W -f='${Status} ${Package} ${Original-Armbian-Hash}\n' "${pkg_name}" | grep "install ok installed" | cut -d " " -f 5)
+		actual_version=$(chroot "${SDCARD}" dpkg-query -W -f='${Status} ${Package} ${Armbian-Original-Hash}\n' "${pkg_name}" | grep "install ok installed" | cut -d " " -f 5)
 		if [[ "${actual_version}" != "${pkg_wanted_version}" ]]; then
 			display_alert "Installed hash of package does not match wanted hash. Check for inconsistent repo, customize.sh/hooks, extensions, or upgrades installing wrong version" "${pkg_name} :: actual:'${actual_version}' wanted:'${pkg_wanted_version}'" "warn"
 		else

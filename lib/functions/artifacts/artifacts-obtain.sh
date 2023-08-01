@@ -577,7 +577,7 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 
 	# Replace "Version: " field with our own
 	sed -e "s/^Version: .*/Version: ${artifact_final_version_reversioned}/" "${control_file}" > "${control_file_new}"
-	echo "Original-Armbian-Hash: ${artifact_version}" >> "${control_file_new}" # non-standard field.
+	echo "Armbian-Original-Hash: ${artifact_version}" >> "${control_file_new}" # non-standard field.
 
 	# Show a nice diff using batcat if debugging
 	if [[ "${SHOW_DEBUG}" == "yes" ]]; then
