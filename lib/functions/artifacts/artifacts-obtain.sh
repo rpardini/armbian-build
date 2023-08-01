@@ -486,6 +486,15 @@ function obtain_artifact_from_remote_cache() {
 	display_alert "Obtaining artifact from remote cache" "${artifact_full_oci_target} into ${artifact_final_file_basename}" "info"
 	oras_pull_artifact_file "${artifact_full_oci_target}" "${artifact_base_dir}" "${artifact_final_file_basename}"
 
+	# if this is a 'deb', (not deb-tar, not tar.zst), OCI hasn't kept the directory structure, so move it into place.
+	if [[ "${artifact_type}" == "deb" ]]; then
+		declare final_file_dirname
+		final_file_dirname="$(dirname "${artifact_final_file}")"
+		mkdir -p "${final_file_dirname}"
+		display_alert "Moving deb into place" "deb: ${artifact_final_file_basename}" "debug"
+		run_host_command_logged mv "${artifact_base_dir}/${artifact_final_file_basename}" "${artifact_final_file}"
+	fi
+
 	# sanity check: after obtaining remotely, is it available locally? it should, otherwise there's some inconsistency.
 	declare artifact_exists_in_local_cache="not-yet-after-obtaining-remotely"
 	is_artifact_available_in_local_cache
