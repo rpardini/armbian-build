@@ -265,9 +265,9 @@ function install_distribution_agnostic() {
 
 	# install u-boot
 	# @TODO: add install_bootloader() extension method, refactor into u-boot extension
-	declare -g image_artifacts_packages image_artifacts_debs
+	declare -g image_artifacts_packages image_artifacts_debs_reversioned
 	debug_dict image_artifacts_packages
-	debug_dict image_artifacts_debs
+	debug_dict image_artifacts_debs_reversioned
 	if [[ "${BOOTCONFIG}" != "none" ]]; then
 		install_artifact_deb_chroot "uboot"
 	fi
@@ -295,7 +295,7 @@ function install_distribution_agnostic() {
 		fi
 
 		# Determine "IMAGE_INSTALLED_KERNEL_VERSION" for compatiblity with legacy update-initramfs code. @TODO get rid of this one day
-		IMAGE_INSTALLED_KERNEL_VERSION=$(dpkg --info "${DEB_STORAGE}/${image_artifacts_debs["linux-image"]}" | grep "^ Source:" | sed -e 's/ Source: linux-//')
+		IMAGE_INSTALLED_KERNEL_VERSION=$(dpkg --info "${DEB_STORAGE}/${image_artifacts_debs_reversioned["linux-image"]}" | grep "^ Source:" | sed -e 's/ Source: linux-//')
 		display_alert "Parsed kernel version from local package" "${IMAGE_INSTALLED_KERNEL_VERSION}" "debug"
 
 	fi
