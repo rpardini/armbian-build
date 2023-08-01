@@ -425,7 +425,7 @@ function upload_artifact_to_oci() {
 
 	# If this is a deb-tar, delete the .tar after the upload. We won't ever need it again.
 	if [[ "${artifact_type}" == "deb-tar" ]]; then
-		display_alert "Deleting deb-tar after OCI deploy" "deb-tar: ${artifact_final_file_basename}" "warn" # @TODO
+		display_alert "Deleting deb-tar after OCI deploy" "deb-tar: ${artifact_final_file_basename}" "debug"
 		run_host_command_logged rm -fv "${artifact_final_file}"
 	fi
 }
