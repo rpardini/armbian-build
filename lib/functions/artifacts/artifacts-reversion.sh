@@ -88,6 +88,10 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	mkdir -p "${control_dir}"
 	run_host_command_logged tar -xf "${deb_contents_dir}/control.tar" --directory="${control_dir}"
 
+	# prepare for unpacking the data tarball as well
+	declare data_dir="${unpack_dir}/data"
+	mkdir -p "${data_dir}"
+
 	# Hack at the control file...
 	declare control_file="${control_dir}/control"
 	declare control_file_new="${control_dir}/control.new"
@@ -126,4 +130,14 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 
 	return 0
+}
+
+function artifact_deb_reversion_unpack_data_deb() {
+	run_host_command_logged tar -xf "${deb_contents_dir}/data.tar" --directory="${data_dir}"
+}
+
+function artifact_deb_reversion_repack_data_deb() {
+	run_host_command_logged rm "${deb_contents_dir}/data.tar"
+	cd "${data_dir}" || exit_with_error "cray-cray about data_dir ${data_dir}"
+	run_host_command_logged tar cf "${deb_contents_dir}/data.tar" .
 }

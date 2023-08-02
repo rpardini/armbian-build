@@ -239,14 +239,22 @@ function reversion_armbian-bsp-cli_deb_contents() {
 		Replaces: zram-config, armbian-bsp-cli-${BOARD}${EXTRA_BSP_NAME} (<< ${REVISION})
 		Breaks: armbian-bsp-cli-${BOARD}${EXTRA_BSP_NAME} (<< ${REVISION})
 	EOF
-	# @TODO this is $REVISION!
 
-	return 0 # @TODO: this needs the unpacked data.tar(.xz)!!!!
-	cat <<- EOF >> "${destination}"/etc/armbian-release
+	artifact_deb_reversion_unpack_data_deb
+
+	cat <<- EOF >> "${data_dir}"/etc/armbian-release
 		VERSION=${REVISION}
 		REVISION=$REVISION
 	EOF
 
+	# Show results if debugging
+	if [[ "${SHOW_DEBUG}" == "yes" ]]; then
+		run_tool_batcat --file-name "armbian-release.sh" "${data_dir}"/etc/armbian-release
+	fi
+
+	artifact_deb_reversion_repack_data_deb
+
+	return 0
 }
 
 function get_bootscript_info() {
