@@ -15,6 +15,7 @@ function artifact_calculate_reversioning_hash() {
 
 	declare hash_functions="undetermined"
 	declare -a all_functions=("standard_artifact_reversion_for_deployment" "standard_artifact_reversion_for_deployment_one_deb")
+	all_functions+=("artifact_deb_reversion_unpack_data_deb" "artifact_deb_reversion_repack_data_deb")
 	all_functions+=("${artifact_debs_reversion_functions[@]}")
 	calculate_hash_for_function_bodies "${all_functions[@]}" # sets hash_functions
 	artifact_reversioning_hash="${hash_functions}"           # outer scope
@@ -91,6 +92,10 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	# prepare for unpacking the data tarball as well
 	declare data_dir="${unpack_dir}/data"
 	mkdir -p "${data_dir}"
+	declare data_compressed=""
+	if [[ -f "${deb_contents_dir}/data.tar.xz" ]]; then
+		data_compressed=".xz"
+	fi
 
 	# Hack at the control file...
 	declare control_file="${control_dir}/control"
@@ -125,7 +130,10 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	fi
 
 	# re-ar the whole .deb back in place, using the new version for filename.
-	run_host_command_logged ar rcs "${deb_versioned_full_path}" "${deb_contents_dir}/debian-binary" "${deb_contents_dir}/control.tar${control_compressed}" "${deb_contents_dir}/data.tar${control_compressed}"
+	run_host_command_logged ar rcs "${deb_versioned_full_path}" \
+		"${deb_contents_dir}/debian-binary" \
+		"${deb_contents_dir}/control.tar${control_compressed}" \
+		"${deb_contents_dir}/data.tar${data_compressed}"
 
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 
@@ -133,6 +141,10 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 }
 
 function artifact_deb_reversion_unpack_data_deb() {
+	if [[ "${data_compressed}" == ".xz" ]]; then
+		run_host_command_logged xz -d "${deb_contents_dir}/data.tar.xz" # decompress
+	fi
+
 	run_host_command_logged tar -xf "${deb_contents_dir}/data.tar" --directory="${data_dir}"
 }
 
@@ -140,4 +152,9 @@ function artifact_deb_reversion_repack_data_deb() {
 	run_host_command_logged rm "${deb_contents_dir}/data.tar"
 	cd "${data_dir}" || exit_with_error "cray-cray about data_dir ${data_dir}"
 	run_host_command_logged tar cf "${deb_contents_dir}/data.tar" .
+
+	# if it was compressed to begin with, recompress...
+	if [[ "${data_compressed}" == ".xz" ]]; then
+		run_host_command_logged xz "${deb_contents_dir}/data.tar"
+	fi
 }
