@@ -191,10 +191,24 @@ function reversion_armbian-base-files_deb_contents() {
 	# Change the PRETTY_NAME and add ARMBIAN_PRETTY_NAME in os-release, and change issue, issue.net
 	declare orig_distro_release="${RELEASE}"
 
-	echo "ARMBIAN_PRETTY_NAME=\"${VENDOR} ${REVISION} ${orig_distro_release}\"" >> "${destination}"/etc/os-release
-	echo -e "${VENDOR} ${REVISION} ${orig_distro_release} \\l \n" > "${destination}"/etc/issue
-	echo -e "${VENDOR} ${REVISION} ${orig_distro_release}" > "${destination}"/etc/issue.net
-	sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"${VENDOR} $REVISION ${orig_distro_release}\"/" "${destination}"/etc/os-release
+	artifact_deb_reversion_unpack_data_deb
+	: "${data_dir:?data_dir is not set}"
+
+	echo "ARMBIAN_PRETTY_NAME=\"${VENDOR} ${REVISION} ${orig_distro_release}\"" >> "${data_dir}"/etc/os-release
+	echo -e "${VENDOR} ${REVISION} ${orig_distro_release} \\l \n" > "${data_dir}"/etc/issue
+	echo -e "${VENDOR} ${REVISION} ${orig_distro_release}" > "${data_dir}"/etc/issue.net
+	sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"${VENDOR} $REVISION ${orig_distro_release}\"/" "${data_dir}"/etc/os-release
+
+	# Show results if debugging
+	if [[ "${SHOW_DEBUG}" == "yes" ]]; then
+		run_tool_batcat --file-name "/etc/os-release.sh" "${data_dir}"/etc/os-release
+		run_tool_batcat --file-name "/etc/issue" "${data_dir}"/etc/issue
+		run_tool_batcat --file-name "/etc/issue.net" "${data_dir}"/etc/issue.net
+	fi
+
+	artifact_deb_reversion_repack_data_deb
+
+	return 0
 }
 
 function artifact_armbian-base-files_cli_adapter_pre_run() {

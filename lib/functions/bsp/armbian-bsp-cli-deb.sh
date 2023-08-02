@@ -241,6 +241,7 @@ function reversion_armbian-bsp-cli_deb_contents() {
 	EOF
 
 	artifact_deb_reversion_unpack_data_deb
+	: "${data_dir:?data_dir is not set}"
 
 	cat <<- EOF >> "${data_dir}"/etc/armbian-release
 		VERSION=${REVISION}
