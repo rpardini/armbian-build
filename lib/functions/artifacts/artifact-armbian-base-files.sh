@@ -8,8 +8,7 @@
 # We find what is the latest version of the original distro's base-files.
 # Then we download it, and we modify it to suit our needs.
 # The artifact is named "armbian-base-files".
-# But the package is still named "base-files"; its version is bumped to ${REVISION}
-# This is similar to what Linux Mint does for the same purpose.
+# But the package is still named "base-files", this is similar to what Linux Mint does for the same purpose.
 
 function artifact_armbian-base-files_config_dump() {
 	artifact_input_variables[RELEASE]="${RELEASE}"
@@ -59,6 +58,9 @@ function artifact_armbian-base-files_prepare_version() {
 	# Important. Force the final reversioned version to contain the release name.
 	# Otherwise, when publishing to a repo, pool/main/b/base-files/base-files_${REVISION}.deb will be the same across releases.
 	artifact_final_version_reversioned="${REVISION}-${RELEASE}"
+
+	# Register the function used to re-version the _contents_ of the base-files deb file.
+	artifact_debs_reversion_functions+=("reversion_armbian-base-files_deb_contents")
 
 	return 0
 }
@@ -123,18 +125,14 @@ function compile_armbian-base-files() {
 	cp "${destination}"/etc/issue.net "${destination}"/etc/issue.net.orig
 	cp "${destination}"/DEBIAN/conffiles "${destination}"/DEBIAN/conffiles.orig
 
-	# Change the PRETTY_NAME and add ARMBIAN_PRETTY_NAME in os-release, and change issue, issue.net
-	declare orig_distro_release="${RELEASE}"
+	# Attention: this is just a few base changes that don't involve "$REVISION".
+	# More are done in reversion_armbian-base-files_deb_contents()
 	cat <<- EOD >> "${destination}/etc/dpkg/origins/armbian"
 		Vendor: ${VENDOR}
 		Vendor-URL: ${VENDORURL}
 		Bugs: ${VENDORBUGS}
 		Parent: ${DISTRIBUTION}
 	EOD
-	echo "ARMBIAN_PRETTY_NAME=\"${VENDOR} ${REVISION} ${orig_distro_release}\"" >> "${destination}"/etc/os-release
-	echo -e "${VENDOR} ${REVISION} ${orig_distro_release} \\l \n" > "${destination}"/etc/issue
-	echo -e "${VENDOR} ${REVISION} ${orig_distro_release}" > "${destination}"/etc/issue.net
-	sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"${VENDOR} $REVISION ${orig_distro_release}\"/" "${destination}"/etc/os-release
 	sed -i "s|^HOME_URL=.*|HOME_URL=\"${VENDORURL}\"|" "${destination}"/etc/os-release
 	sed -i "s|^SUPPORT_URL=.*|SUPPORT_URL=\"${VENDORSUPPORT}\"|" "${destination}"/etc/os-release
 	sed -i "s|^BUG_REPORT_URL=.*|BUG_REPORT_URL=\"${VENDORBUGS}\"|" "${destination}"/etc/os-release
@@ -186,6 +184,19 @@ function compile_armbian-base-files() {
 	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
 }
 
+# Used to reversion the artifact contents.
+function reversion_armbian-base-files_deb_contents() {
+	display_alert "Reversioning" "reversioning base-files CONTENTS: '$*'" "warn"
+
+	# Change the PRETTY_NAME and add ARMBIAN_PRETTY_NAME in os-release, and change issue, issue.net
+	declare orig_distro_release="${RELEASE}"
+
+	echo "ARMBIAN_PRETTY_NAME=\"${VENDOR} ${REVISION} ${orig_distro_release}\"" >> "${destination}"/etc/os-release
+	echo -e "${VENDOR} ${REVISION} ${orig_distro_release} \\l \n" > "${destination}"/etc/issue
+	echo -e "${VENDOR} ${REVISION} ${orig_distro_release}" > "${destination}"/etc/issue.net
+	sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"${VENDOR} $REVISION ${orig_distro_release}\"/" "${destination}"/etc/os-release
+}
+
 function artifact_armbian-base-files_cli_adapter_pre_run() {
 	declare -g ARMBIAN_COMMAND_REQUIRE_BASIC_DEPS="yes" # Require prepare_host_basic to run before the command.
 
@@ -219,8 +230,4 @@ function artifact_armbian-base-files_obtain_from_remote_cache() {
 
 function artifact_armbian-base-files_deploy_to_remote_cache() {
 	upload_artifact_to_oci
-}
-
-function artifact_armbian-base-files_reversion_for_deployment() {
-	standard_artifact_reversion_for_deployment
 }

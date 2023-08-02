@@ -104,7 +104,3 @@ function artifact_armbian-bsp-desktop_obtain_from_remote_cache() {
 function artifact_armbian-bsp-desktop_deploy_to_remote_cache() {
 	upload_artifact_to_oci
 }
-
-function artifact_armbian-bsp-desktop_reversion_for_deployment() {
-	standard_artifact_reversion_for_deployment
-}

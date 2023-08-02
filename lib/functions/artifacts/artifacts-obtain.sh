@@ -16,7 +16,6 @@ function create_artifact_functions() {
 		"is_available_in_local_cache" "is_available_in_remote_cache" "obtain_from_remote_cache"
 		"deploy_to_remote_cache"
 		"build_from_sources"
-		"reversion_for_deployment"
 	)
 	for func in "${funcs[@]}"; do
 		declare impl_func="artifact_${chosen_artifact_impl}_${func}"
@@ -83,6 +82,7 @@ function obtain_complete_artifact() {
 	declare -A -g artifact_map_packages=()
 	declare -A -g artifact_map_debs=()
 	declare -A -g artifact_map_debs_reversioned=()
+	declare -a -g artifact_debs_reversion_functions=()
 
 	# Contentious; it might be that prepare_version is complex enough to warrant more than 1 logging section.
 	LOG_SECTION="artifact_prepare_version" do_with_logging artifact_prepare_version
@@ -98,11 +98,6 @@ function obtain_complete_artifact() {
 	[[ "x${artifact_version}x" == "xx" || "${artifact_version}" == "undetermined" ]] && exit_with_error "artifact_version is not set after artifact_prepare_version"
 	[[ "x${artifact_version_reason}x" == "xx" || "${artifact_version_reason}" == "undetermined" ]] && exit_with_error "artifact_version_reason is not set after artifact_prepare_version"
 
-	# validate artifact_version begins with a digit when building deb packages (or deb-tar); dpkg requires it
-	if [[ "${artifact_type}" != "tar.zst" ]]; then
-		[[ "${artifact_version}" =~ ^[0-9] ]] || exit_with_error "${artifact_type}: artifact_version '${artifact_version}' does not begin with a digit"
-	fi
-
 	declare -a artifact_map_debs_values=()
 	declare -a artifact_map_packages_values=()
 	declare -a artifact_map_debs_keys=()
@@ -117,13 +112,20 @@ function obtain_complete_artifact() {
 			[[ "${artifact_base_dir}" != "undetermined" ]] && exit_with_error "artifact ${artifact_name} is setting artifact_base_dir, legacy code, remove."
 			[[ "${artifact_final_file}" != "undetermined" ]] && exit_with_error "artifact ${artifact_name} is setting artifact_final_file, legacy code, remove."
 
-			# validate artifact_version begins with a digit
+			# validate artifact_version begins with a digit when building deb packages; dpkg requires it
 			[[ "${artifact_version}" =~ ^[0-9] ]] || exit_with_error "${artifact_type}: artifact_version '${artifact_version}' does not begin with a digit"
 			# since it's a deb or deb-tar, validate deb-specific variables
 			[[ "x${artifact_deb_repo}x" == "xx" || "${artifact_deb_repo}" == "undetermined" ]] && exit_with_error "artifact_deb_repo is not set after artifact_prepare_version"
 			[[ "x${artifact_deb_arch}x" == "xx" || "${artifact_deb_arch}" == "undetermined" ]] && exit_with_error "artifact_deb_arch is not set after artifact_prepare_version"
 			# validate there's at least one item in artifact_map_packages
 			[[ "${#artifact_map_packages[@]}" -eq 0 ]] && exit_with_error "artifact_map_packages is empty after artifact_prepare_version"
+
+			# Add the reversioning hash to the artifact_version
+			declare artifact_reversioning_hash="undetermined"
+			# standard_artifact_reversion_for_deployment
+
+
+			artifact_version="${artifact_version}-R6666"
 
 			debug_dict artifact_map_packages
 			debug_dict artifact_map_debs
@@ -505,103 +507,3 @@ function obtain_artifact_from_remote_cache() {
 	return 0
 }
 
-function standard_artifact_reversion_for_deployment() {
-	display_alert "Reversioning package" "re-version '${artifact_name}(${artifact_type})::${artifact_version}' to '${artifact_final_version_reversioned}'" "info"
-
-	declare artifact_mapped_deb
-	for one_artifact_deb_package in "${!artifact_map_packages[@]}"; do
-		declare artifact_mapped_deb="${artifact_map_debs["${one_artifact_deb_package}"]}"
-		declare hashed_storage_deb_full_path="${PACKAGES_HASHED_STORAGE}/${artifact_mapped_deb}"
-		if [[ ! -f "${hashed_storage_deb_full_path}" ]]; then
-			exit_with_error "hashed storage does not have ${hashed_storage_deb_full_path}"
-		fi
-
-		display_alert "Found hashed storage file" "'${artifact_mapped_deb}': ${hashed_storage_deb_full_path}" "debug"
-
-		# find the target dir and full path to the reversioned file
-		declare deb_versioned_rel_path="${artifact_map_debs_reversioned["${one_artifact_deb_package}"]}"
-		declare deb_versioned_full_path="${DEB_STORAGE}/${deb_versioned_rel_path}"
-		declare deb_versioned_dirname
-		deb_versioned_dirname="$(dirname "${deb_versioned_full_path}")"
-
-		run_host_command_logged mkdir -p "${deb_versioned_dirname}"
-
-		# since the full versioned path includes the original hash, if the file already exists, we can trust
-		# it's the correct one, and skip reversioning.
-		if [[ -f "${deb_versioned_full_path}" ]]; then
-			display_alert "Skipping reversioning" "deb: ${deb_versioned_full_path} already exists" "debug"
-			continue
-		fi
-
-		# call function for each deb, pass parameters
-		standard_artifact_reversion_for_deployment_one_deb "${@}"
-
-		# make sure reversioning produced the expected file
-		if [[ ! -f "${deb_versioned_full_path}" ]]; then
-			exit_with_error "reversioning did not produce the expected file: ${deb_versioned_full_path}"
-		fi
-	done
-
-	return 0
-}
-
-function standard_artifact_reversion_for_deployment_one_deb() {
-	display_alert "Will repack" "hashed_storage_deb_full_path: ${hashed_storage_deb_full_path}" "debug"
-	display_alert "Will repack" "deb_versioned_full_path: ${deb_versioned_full_path}" "debug"
-	display_alert "Will repack" "artifact_version: ${artifact_version}" "debug"
-
-	declare cleanup_id="" unpack_dir=""
-	prepare_temp_dir_in_workdir_and_schedule_cleanup "reversion-${artifact_name}" cleanup_id unpack_dir # namerefs
-
-	declare deb_contents_dir="${unpack_dir}/deb-contents"
-	mkdir -p "${deb_contents_dir}"
-
-	# unpack the hashed_storage_deb_full_path .deb, which is just an "ar" file, to the deb_contents_dir
-	run_host_command_logged ar x "${hashed_storage_deb_full_path}" --output="${deb_contents_dir}"
-
-	# find out if compressed or not, and store for future recompressing
-	control_compressed=""
-	if [[ -f "${deb_contents_dir}/control.tar.xz" ]]; then
-		control_compressed=".xz"
-		run_host_command_logged xz -d "${deb_contents_dir}/control.tar.xz" # decompress
-	fi
-
-	# untar the control into its own specific dir
-	declare control_dir="${unpack_dir}/control"
-	mkdir -p "${control_dir}"
-	run_host_command_logged tar -xf "${deb_contents_dir}/control.tar" --directory="${control_dir}"
-
-	# Hack at the control file...
-	declare control_file="${control_dir}/control"
-	declare control_file_new="${control_dir}/control.new"
-
-	# Replace "Version: " field with our own
-	sed -e "s/^Version: .*/Version: ${artifact_final_version_reversioned}/" "${control_file}" > "${control_file_new}"
-	echo "Armbian-Original-Hash: ${artifact_version}" >> "${control_file_new}" # non-standard field.
-
-	# Show a nice diff using batcat if debugging
-	if [[ "${SHOW_DEBUG}" == "yes" ]]; then
-		diff -u "${control_file_new}" "${control_file}" > "${unpack_dir}/control.diff" || true
-		run_tool_batcat "${unpack_dir}/control.diff"
-	fi
-
-	# Move new control on top of old
-	run_host_command_logged mv "${control_file_new}" "${control_file}"
-
-	run_host_command_logged rm "${deb_contents_dir}/control.tar"
-
-	cd "${control_dir}" || exit_with_error "cray-cray about control_dir ${control_dir}"
-	run_host_command_logged tar cf "${deb_contents_dir}/control.tar" .
-
-	# if it was compressed to begin with, recompress...
-	if [[ "${control_compressed}" == ".xz" ]]; then
-		run_host_command_logged xz "${deb_contents_dir}/control.tar"
-	fi
-
-	# re-ar the whole .deb back in place, using the new version for filename.
-	run_host_command_logged ar rcs "${deb_versioned_full_path}" "${deb_contents_dir}/debian-binary" "${deb_contents_dir}/control.tar${control_compressed}" "${deb_contents_dir}/data.tar${control_compressed}"
-
-	done_with_temp_dir "${cleanup_id}" # changes cwd to "${SRC}" and fires the cleanup function early
-
-	return 0
-}

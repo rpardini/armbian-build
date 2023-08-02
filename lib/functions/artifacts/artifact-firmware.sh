@@ -95,7 +95,3 @@ function artifact_firmware_obtain_from_remote_cache() {
 function artifact_firmware_deploy_to_remote_cache() {
 	upload_artifact_to_oci
 }
-
-function artifact_firmware_reversion_for_deployment() {
-	standard_artifact_reversion_for_deployment
-}

@@ -213,7 +213,3 @@ function artifact_uboot_obtain_from_remote_cache() {
 function artifact_uboot_deploy_to_remote_cache() {
 	upload_artifact_to_oci
 }
-
-function artifact_uboot_reversion_for_deployment() {
-	standard_artifact_reversion_for_deployment
-}
