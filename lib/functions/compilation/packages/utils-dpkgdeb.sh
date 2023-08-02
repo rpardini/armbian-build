@@ -12,6 +12,7 @@ function fakeroot_dpkg_deb_build() {
 	# check artifact_name and artifact_version is set otherwise exit_with_error
 	[[ -z "${artifact_name}" ]] && exit_with_error "fakeroot_dpkg_deb_build: artifact_name is not set"
 	[[ -z "${artifact_version}" ]] && exit_with_error "fakeroot_dpkg_deb_build: artifact_version is not set"
+	[[ -z "${artifact_deb_repo}" ]] && exit_with_error "fakeroot_dpkg_deb_build: artifact_deb_repo is not set"
 
 	display_alert "Building .deb package" "${artifact_name}: $*" "debug"
 
@@ -66,7 +67,7 @@ function fakeroot_dpkg_deb_build() {
 
 	# generate minimal DEBIAN/changelog
 	cat <<- EOF > "${package_directory}"/DEBIAN/changelog
-		${control_package_name} (${artifact_version}) armbian-repo-name; urgency=low
+		${control_package_name} (${artifact_version}) ${artifact_deb_repo}; urgency=low
 
 		  * Initial changelog entry for ${control_package_name} package hash ${artifact_version}
 
