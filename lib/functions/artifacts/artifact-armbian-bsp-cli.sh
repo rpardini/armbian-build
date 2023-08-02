@@ -110,11 +110,13 @@ function artifact_armbian-bsp-cli_prepare_version() {
 
 	# Register the function used to re-version the _contents_ of the bsp-cli deb file (non-transitional)
 	artifact_debs_reversion_functions+=("reversion_armbian-bsp-cli_deb_contents")
+	display_alert "artifact_armbian-bsp-cli" "reversion funcs: ${artifact_debs_reversion_functions[*]}" "warn"
 
 	if artifact_armbian-bsp-cli_needs_transitional_package; then
 		artifact_map_packages+=(["armbian-bsp-cli-transitional"]="armbian-bsp-cli-${BOARD}${EXTRA_BSP_NAME}")
 		# Register the function used to re-version the _contents_ of the bsp-cli deb file (non-transitional)
 		artifact_debs_reversion_functions+=("reversion_armbian-bsp-cli-transitional_deb_contents")
+		display_alert "artifact_armbian-bsp-cli" "reversion funcs: ${artifact_debs_reversion_functions[*]}" "warn"
 	fi
 
 	return 0

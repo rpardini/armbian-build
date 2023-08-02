@@ -122,10 +122,10 @@ function obtain_complete_artifact() {
 
 			# Add the reversioning hash to the artifact_version
 			declare artifact_reversioning_hash="undetermined"
-			# standard_artifact_reversion_for_deployment
-
-
-			artifact_version="${artifact_version}-R6666"
+			artifact_calculate_reversioning_hash
+			declare artifact_reversioning_hash_short="${artifact_reversioning_hash:0:7}" # @TODO: 4
+			artifact_version="${artifact_version}-R${artifact_reversioning_hash_short}"
+			display_alert "Final artifact_version with reversioning hash" "${artifact_version}" "warn"
 
 			debug_dict artifact_map_packages
 			debug_dict artifact_map_debs
@@ -506,4 +506,3 @@ function obtain_artifact_from_remote_cache() {
 
 	return 0
 }
-

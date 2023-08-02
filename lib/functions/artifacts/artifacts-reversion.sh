@@ -5,13 +5,26 @@
 #
 
 function artifact_reversion_for_deployment() {
+	display_alert "artifact_reversion_for_deployment" "artifact_reversion_for_deployment" "warn"
+	standard_artifact_reversion_for_deployment "${artifact_debs_reversion_functions[@]}"
 	:
+}
+
+function artifact_calculate_reversioning_hash() {
+	display_alert "artifact_calculate_reversioning_hash" "artifact_calculate_reversioning_hash" "warn"
+
+	declare hash_functions="undetermined"
+	declare -a all_functions=("standard_artifact_reversion_for_deployment" "standard_artifact_reversion_for_deployment_one_deb")
+	all_functions+=("${artifact_debs_reversion_functions[@]}")
+	calculate_hash_for_function_bodies "${all_functions[@]}" # sets hash_functions
+	artifact_reversioning_hash="${hash_functions}"           # outer scope
+	return 0
 }
 
 function standard_artifact_reversion_for_deployment() {
 	display_alert "Reversioning package" "re-version '${artifact_name}(${artifact_type})::${artifact_version}' to '${artifact_final_version_reversioned}'" "info"
 
-	declare artifact_mapped_deb
+	declare artifact_mapped_deb one_artifact_deb_package
 	for one_artifact_deb_package in "${!artifact_map_packages[@]}"; do
 		declare artifact_mapped_deb="${artifact_map_debs["${one_artifact_deb_package}"]}"
 		declare hashed_storage_deb_full_path="${PACKAGES_HASHED_STORAGE}/${artifact_mapped_deb}"
@@ -49,6 +62,7 @@ function standard_artifact_reversion_for_deployment() {
 }
 
 function standard_artifact_reversion_for_deployment_one_deb() {
+	display_alert "Will repack" "one_artifact_deb_package: ${one_artifact_deb_package}" "debug"
 	display_alert "Will repack" "hashed_storage_deb_full_path: ${hashed_storage_deb_full_path}" "debug"
 	display_alert "Will repack" "deb_versioned_full_path: ${deb_versioned_full_path}" "debug"
 	display_alert "Will repack" "artifact_version: ${artifact_version}" "debug"
@@ -81,6 +95,11 @@ function standard_artifact_reversion_for_deployment_one_deb() {
 	# Replace "Version: " field with our own
 	sed -e "s/^Version: .*/Version: ${artifact_final_version_reversioned}/" "${control_file}" > "${control_file_new}"
 	echo "Armbian-Original-Hash: ${artifact_version}" >> "${control_file_new}" # non-standard field.
+
+	for one_reversion_function_name in "${@}"; do
+		display_alert "TODO" "call custom function: '${one_reversion_function_name}'" "warn"
+		"${one_reversion_function_name}" "${one_artifact_deb_package}"
+	done
 
 	# Show a nice diff using batcat if debugging
 	if [[ "${SHOW_DEBUG}" == "yes" ]]; then

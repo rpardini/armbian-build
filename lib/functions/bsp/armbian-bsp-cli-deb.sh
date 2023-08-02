@@ -42,13 +42,16 @@ function compile_armbian-bsp-cli-transitional() {
 }
 
 function reversion_armbian-bsp-cli-transitional_deb_contents() {
-	display_alert "Reversion" "reversion_armbian-bsp-cli-transitional_deb_contents" "warn"
+	display_alert "Reversion" "reversion_armbian-bsp-cli-transitional_deb_contents: '$*'" "warn"
 
-	# Add transitional package
-	cat <<- EOF >> "${destination}"/DEBIAN/control
+	if [[ "${1}" != "armbian-bsp-cli-transitional" ]]; then
+		return 0 # Not our deb, nothing to do.
+	fi
+
+	# Depends on the new package
+	cat <<- EOF >> "${control_file_new}"
 		Depends: ${artifact_name} (= ${REVISION})
 	EOF
-	# @TODO this is $REVISION!
 
 }
 
@@ -214,8 +217,14 @@ function compile_armbian-bsp-cli() {
 	display_alert "Done building BSP CLI package" "${destination}" "debug"
 }
 
+# Reversion function is called with the following parameters:
+# ${1} == deb_id
 function reversion_armbian-bsp-cli_deb_contents() {
 	display_alert "Reversion" "reversion_armbian-bsp-cli_deb_contents: '$*'" "warn"
+
+	if [[ "${1}" != "armbian-bsp-cli" ]]; then
+		return 0 # Not our deb, nothing to do.
+	fi
 
 	# Replaces: base-files is needed to replace /etc/update-motd.d/ files on Xenial
 	# Depends: linux-base is needed for "linux-version" command in initrd cleanup script
@@ -225,13 +234,14 @@ function reversion_armbian-bsp-cli_deb_contents() {
 	if [[ "${KEEP_ORIGINAL_OS_RELEASE:-"no"}" == "yes" ]]; then
 		depends_base_files=""
 	fi
-	cat <<- EOF >> "${destination}"/DEBIAN/control
+	cat <<- EOF >> "${control_file_new}"
 		Depends: bash, linux-base, u-boot-tools, initramfs-tools, lsb-release, fping${depends_base_files}
 		Replaces: zram-config, armbian-bsp-cli-${BOARD}${EXTRA_BSP_NAME} (<< ${REVISION})
 		Breaks: armbian-bsp-cli-${BOARD}${EXTRA_BSP_NAME} (<< ${REVISION})
 	EOF
 	# @TODO this is $REVISION!
 
+	return 0 # @TODO: this needs the unpacked data.tar(.xz)!!!!
 	cat <<- EOF >> "${destination}"/etc/armbian-release
 		VERSION=${REVISION}
 		REVISION=$REVISION

@@ -186,7 +186,7 @@ function compile_armbian-base-files() {
 
 # Used to reversion the artifact contents.
 function reversion_armbian-base-files_deb_contents() {
-	display_alert "Reversioning" "reversioning base-files CONTENTS: '$*'" "warn"
+	display_alert "Reversioning" "reversioning base-files CONTENTS: '$*' here we go" "warn"
 
 	# Change the PRETTY_NAME and add ARMBIAN_PRETTY_NAME in os-release, and change issue, issue.net
 	declare orig_distro_release="${RELEASE}"
