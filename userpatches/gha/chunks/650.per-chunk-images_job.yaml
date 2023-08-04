@@ -57,7 +57,7 @@ jobs: # <TEMPLATE-IGNORE>
       - name: ${{matrix.desc}}
         id: build-one-image
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_IMAGE}} ${{env.EXTRA_PARAMS_ALL_BUILDS}} "IMAGE_VERSION=${{ needs.matrix_prep.outputs.images_release }}"
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_IMAGE}} ${{env.EXTRA_PARAMS_ALL_BUILDS}} OUTPUT_IMAGES_ONLY=yes
 
       - name: "Logs: ${{ steps.build-one-image.outputs.logs_url }}"
         if: always()
