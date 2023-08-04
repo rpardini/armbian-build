@@ -57,7 +57,7 @@ jobs: # <TEMPLATE-IGNORE>
       - name: Build  ${{matrix.desc}}
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
