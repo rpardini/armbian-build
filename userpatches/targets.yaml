@@ -62,9 +62,9 @@ lists:
 
   desktop-boards: &desktop-boards # Gotta define RELEASE here
     - { BOARD: thinkpad-x13s, BRANCH: sc8280xp, RELEASE: lunar, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
-    - { BOARD: thinkpad-x13s, BRANCH: jhovoldsc8280xp, RELEASE: lunar, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
-    - { BOARD: khadas-vim3, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
-    - { BOARD: khadas-vim3l, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
+    #- { BOARD: thinkpad-x13s, BRANCH: jhovoldsc8280xp, RELEASE: lunar, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
+    #- { BOARD: khadas-vim3, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
+    #- { BOARD: khadas-vim3l, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
     #- { BOARD: rock-5-cmio, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     #- { BOARD: rock-5b, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     #- { BOARD: rock-5a, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
