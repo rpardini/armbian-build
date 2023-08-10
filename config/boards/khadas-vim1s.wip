@@ -12,5 +12,22 @@ KHADAS_BOARD_ID="kvim1s" # used to compile the fip blobs
 
 declare -g KHADAS_OOWOW_BOARD_ID="VIM1S" # for use with EXT=output-image-oowow
 
-# Use extlinux and u-boot-menu extension
-SRC_CMDLINE="console=tty0 console=ttyS0,921600 no_console_suspend earlycon=aml-uart,0xfe078000 meson-gx-mmc.caps2_quirks=mmc-hs400 mac=\\\${eth_mac} khadas.serial=\\\${usid} partition_type=generic"
+BOOTSCRIPT="boot-meson-s4t7.cmd:boot.cmd"
+BOOTENV_FILE='meson.txt'
+OVERLAY_PREFIX='s4-s905y4'
+
+function pre_package_kernel_image__copy_vim1s_overlays(){
+    display_alert "Copy vim1s overlays"
+    declare dtbo_destination="${tmp_kernel_install_dirs[INSTALL_DTBS_PATH]}"/amlogic
+
+    run_host_command_logged cp -r ${SRC}/patch/kernel/${KERNELPATCHDIR}/overlay ${dtbo_destination}/
+
+    display_alert "Enable Device Tree Overlays"
+    run_host_command_logged ln -sf amlogic/overlay "${tmp_kernel_install_dirs[INSTALL_DTBS_PATH]}"/overlay
+}
+
+function image_specific_armbian_env_ready__set_vim1s_specific_parameters() {
+    display_alert "Writing vim1s parameters in /boot/armbianEnv.txt"
+    run_host_command_logged echo "earlycon=on" >>${SDCARD}/boot/armbianEnv.txt
+    run_host_command_logged echo "extraargs=meson-gx-mmc.caps2_quirks=mmc-hs400" >>${SDCARD}/boot/armbianEnv.txt
+}
