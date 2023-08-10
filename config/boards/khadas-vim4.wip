@@ -11,4 +11,18 @@ BOOTCONFIG="kvim4_defconfig"
 KHADAS_BOARD_ID="kvim4" # used to compile the fip blobs
 
 # Use extlinux and u-boot-menu extension
-SRC_CMDLINE="console=tty0 console=ttyS0,921600 no_console_suspend earlycon=aml-uart,0xfe078000 mac=\\\${eth_mac} khadas.serial=\\\${usid} partition_type=generic"
+# bootargs & boot_user_args: Khadas-specific uboot variables.... double-escaped, so they survive u-boot-menu's processing
+SRC_CMDLINE="\\\${bootargs} fan=\\\${fan_mode} partition_type=generic \\\${boot_user_args} console=ttyS0,921600"
+
+# Use uEnv.txt to conform to Khadas' documentation
+function pre_umount_final_image__khadas_s4t7_uenv() {
+	display_alert "$BOARD" "creating uEnv.txt; UUID=${ROOT_PART_UUID}" "info"
+	cat <<- UENV_KHADAS > "${MOUNT}/boot/uEnv.txt"
+		rootdev=root=UUID=${ROOT_PART_UUID}
+		partitiontype=partition_type=generic
+		fan_mode=auto
+		boot_user_args=
+	UENV_KHADAS
+
+	return 0
+}
