@@ -18,8 +18,6 @@ lists:
     # Actual Physical boards
     #- { BOARD: odroidn2, BRANCH: edge }
     #- { BOARD: odroidhc4, BRANCH: edge }
-    - { BOARD: khadas-vim3l, BRANCH: edge }
-    - { BOARD: khadas-vim3, BRANCH: edge }
     - { BOARD: radxa-zero2, BRANCH: edge }
     #- { BOARD: radxa-zero2, BRANCH: current, RELEASE: bullseye }
     #- { BOARD: radxa-zero, BRANCH: edge }
@@ -33,16 +31,18 @@ lists:
     #- { BOARD: oneplus5, BRANCH: edge }
     #- { BOARD: phytium-d2000, BRANCH: legacy }
     - { BOARD: thinkpad-x13s, BRANCH: sc8280xp }
-    - { BOARD: khadas-vim4, BRANCH: legacy }
-    - { BOARD: khadas-vim1s, BRANCH: legacy }
+    - { BOARD: khadas-vim3l, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-oowow" }
+    - { BOARD: khadas-vim3, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-oowow" }
+    - { BOARD: khadas-vim4, BRANCH: legacy, ENABLE_EXTENSIONS: "image-output-oowow" }
+    - { BOARD: khadas-vim1s, BRANCH: legacy, ENABLE_EXTENSIONS: "image-output-oowow" }
 
   my-virtual-boards: &my-virtual-boards
     # UTM images, virtual
     - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: image-output-utm }
     - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: image-output-utm }
-    # Plain UEFI's, for physical machines, build-machine-image, current (6.1-ish LTS)  @TODO change arm64 to current
-    - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: build-machine-image }
-    - { BOARD: uefi-x86, BRANCH: current, ENABLE_EXTENSIONS: build-machine-image }
+    # Plain UEFI's, for physical machines
+    - { BOARD: uefi-arm64, BRANCH: edge }
+    - { BOARD: uefi-x86, BRANCH: edge }
 
   not-mine: &not-mine
     #- { BOARD: orangepizero2, BRANCH: legacy }
@@ -69,12 +69,12 @@ lists:
     #- { BOARD: rock-5b, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     #- { BOARD: rock-5a, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     - { BOARD: mixtile-blade3, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
-    #- { BOARD: khadas-edge2, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     #- { BOARD: mekotronics-r58x, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     - { BOARD: mekotronics-r58x-4g, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     #- { BOARD: mekotronics-r58-minipc, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     #- { BOARD: nanopi-r6s, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     - { BOARD: uefi-x86, BRANCH: edge, RELEASE: jammy, ENABLE_EXTENSIONS: vmware-vm, DESKTOP_APPGROUPS_SELECTED: "none" }
+    - { BOARD: khadas-edge2, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming,image-output-oowow" }
 
   home-assistant-boards: &home-assistant-boards
     - { BOARD: odroidhc4, BRANCH: current }
