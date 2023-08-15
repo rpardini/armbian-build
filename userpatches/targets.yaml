@@ -21,7 +21,7 @@ lists:
     - { BOARD: radxa-zero2, BRANCH: edge }
     #- { BOARD: radxa-zero2, BRANCH: current, RELEASE: bullseye }
     #- { BOARD: radxa-zero, BRANCH: edge }
-    #- { BOARD: odroidm1, BRANCH: edge } # @TODO: return this later
+    - { BOARD: odroidm1, BRANCH: edge }
     #- { BOARD: tinkerboard-2, BRANCH: edge }
     #- { BOARD: rpi4b, BRANCH: current, RELEASE: lunar } # rpi4b requires Ubuntu's flash-kernel
     #- { BOARD: rpi4b, BRANCH: edge, RELEASE: jammy } # rpi4b requires Ubuntu's flash-kernel
@@ -50,7 +50,7 @@ lists:
     #- { BOARD: bananapicm4io, BRANCH: edge }
     #- { BOARD: aml-s9xx-box, BRANCH: edge }
     #- { BOARD: helios64, BRANCH: edge }
-    - { BOARD: rock-5b, BRANCH: collabora, RELEASE: bookworm }
+    #- { BOARD: rock-5b, BRANCH: collabora, RELEASE: bookworm }
     - { BOARD: orangepi5, BRANCH: edge }
     #- { BOARD: tinkerboard, BRANCH: edge }
     # very distant from being mine
