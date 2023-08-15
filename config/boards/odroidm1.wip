@@ -1,12 +1,13 @@
 # Rockchip RK3568 quad core 4GB-8GB GBE PCIe USB3 SATA NVMe
 BOARD_NAME="ODROID M1"
-BOARDFAMILY="rockchip-rk3588"
+BOARDFAMILY="rk3568-odroid"                     # Separate kernel, has its own family. Uses rockchip64_common for most stuff.
 BOARD_MAINTAINER="rpardini"
 BOOT_SOC="rk3568"                               # This determined BOOT_SCENARIO et al.
 KERNEL_TARGET="edge"                            # Only mainline based kernel
 BOOT_FDT_FILE="rockchip/rk3568-odroid-m1.dtb"   # HK's DTB
 SRC_EXTLINUX="no"                               # NO EXTLINUX! Family defines a custom bootscript too.
 ASOUND_STATE="asound.state.station-m2"          # @TODO: probably should fix this later.
+IMAGE_PARTITION_TABLE="gpt"                     # HK's bootloader in SPI requires GPT partition table.
 DDR_BLOB="rk35/rk3568_ddr_1560MHz_v1.10.bin"    # Real blob, is actually used. in rkbin repository. HK uses 1.09, 1.10 seems to work just as well.
 BL31_BLOB="rk35/rk356x_usbplug_v1.10.bin--FAKE" # Not really used for anything, as the name proves.
 FULL_DESKTOP="yes"
@@ -15,17 +16,6 @@ BOOT_LOGO="desktop"
 # Include fw_setenv, configured to point to Petitboot's u-env mtd partition, so users can re-enable Petitboot
 # with `fw_setenv skip_spiboot false` in Armbian.
 PACKAGE_LIST_BOARD="libubootenv-tool" # libubootenv-tool provides fw_printenv and fw_setenv, for talking to U-Boot environment / Petitboot
-
-# Override stuff from family
-function post_family_config__config_odroidm1() {
-	display_alert "Disabling u-boot compile for" "${BOARD}" "warn"
-	# Disable uboot compilation; this board boots from HK stuff in SPI first.
-	# We apply a bootscript, and use GPT partitions, so HK-stuff-in-SPI loads our boot.scr.
-	unset BOOTSOURCE
-	IMAGE_PARTITION_TABLE="gpt" # HK's bootloader in SPI requires GPT partition table.
-	BOOTCONFIG="none"
-	BOOTSCRIPT='boot-rockchip64-vendor.cmd:boot.cmd' # Use ramaddr_r for loading fdt and armbianEnv; more flexible with overlays
-}
 
 function post_family_tweaks__config_odroidm1_fwenv() {
 	display_alert "Configuring fw_printenv and fw_setenv" "for Odroid M1" "info"
@@ -37,6 +27,6 @@ function post_family_tweaks__config_odroidm1_fwenv() {
 	cat <<- 'FW_ENV_CONFIG' > "${SDCARD}"/etc/fw_env.config
 		# MTD on the SPI for the Odroid-M1; this requires the MTD partition table in the board kernel DTS
 		# MTD device name Device offset Env. size Flash sector size Number of sectors
-		/dev/mtd1                       0x0000                      0x20000
+		/dev/mtd1                       0x0000                      0x20000 
 	FW_ENV_CONFIG
 }
