@@ -6,6 +6,9 @@ function extension_prepare_config__home_assistant() {
 
 	declare -g KEEP_ORIGINAL_OS_RELEASE="yes" # Keep original os-release file when installing bsp and preparing image
 
+	# HA supervised need systemd-resolved to be enabled and running; it will be enabled by post_debootstrap_tweaks() in core Armbian
+	add_packages_to_image "systemd-resolved"
+
 	case "${RELEASE}" in
 		bullseye | bookworm)
 			display_alert "Setting up Home Assistant Supervised on Debian ${RELEASE}" "${EXTENSION}" "info"
