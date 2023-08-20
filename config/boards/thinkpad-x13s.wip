@@ -14,8 +14,8 @@ enable_extension "grub-with-dtb" # important, puts the whole DTB handling in pla
 # The 6.4 branch is incompatible with x13s Concept's alsa-ucm-conf package, so keep it at 6.3.y for now.
 function post_family_config_branch_sc8280xp__steevs_63y_kernel() {
 	display_alert "Setting up steev's kernel for" "${BOARD}" "warn"
-	declare -g KERNEL_MAJOR_MINOR="6.3" # Major and minor versions of this kernel.
-	declare -g KERNELBRANCH='branch:lenovo-x13s-linux-6.3.y'
+	declare -g KERNEL_MAJOR_MINOR="6.5" # Major and minor versions of this kernel.
+	declare -g KERNELBRANCH='branch:lenovo-x13s-v6.5-rc5-clover'
 	declare -g KERNELSOURCE='https://github.com/steev/linux.git'
 }
 
