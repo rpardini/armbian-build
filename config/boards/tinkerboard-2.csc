@@ -3,7 +3,7 @@ BOARD_NAME="Tinker Board 2"
 BOARDFAMILY="rockchip64"
 BOARD_MAINTAINER=""
 BOOTCONFIG="tinker-2-rk3399_defconfig"
-KERNEL_TARGET="current,edge"
+KERNEL_TARGET="current,edge,legacy"
 KERNEL_TEST_TARGET="current"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
@@ -14,3 +14,15 @@ BOARD_FIRMWARE_INSTALL="-full"              # Install full firmware, for rtl8822
 BOOTBRANCH="tag:v2021.07"                   # v2021.07 ...
 BOOTPATCHDIR='legacy/u-boot-tinkerboard2'   # ...  with _only_ the patches we need for TB2, not the default rockchip64
 DDR_BLOB="rk33/rk3399_ddr_800MHz_v1.27.bin" # Different blob for TB2
+
+# This is a mess.
+function post_family_config_branch_legacy__use_rk35xx_legacy_for_tb2_legacy() {
+	# Use the rk35xx legacy kernel as 3588's and rock3
+	KERNELDIR='linux-rockchip64'
+	KERNELSOURCE='https://github.com/armbian/linux-rockchip.git'
+	declare -g KERNEL_MAJOR_MINOR="5.10" # Major and minor versions of this kernel.
+	KERNELBRANCH='branch:rk-5.10-rkr6'
+	KERNELPATCHDIR='rk35xx-legacy'
+	LINUXFAMILY=rk35xx
+	LINUXCONFIG='linux-rk35xx-legacy'
+}
