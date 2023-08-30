@@ -23,6 +23,7 @@ function early_prepare_pip3_dependencies_for_python_tools() {
 		"Jinja2==3.1.2"       # for templating
 		"rich==13.4.1"        # for rich text formatting
 		"b4==0.12.3"          # b4: patch/mailing list workhorse from kernel.org
+		"berkeleydb==18.1.6"  # berkeleydb: for reading reprepro's 'db' files directly
 	)
 	return 0
 }
@@ -119,6 +120,9 @@ function prepare_python_and_pip() {
 		"PYTHONUSERBASE=${PYTHON3_INFO[USERBASE]}"
 		"PYTHONUNBUFFERED=yes"
 		"PYTHONPYCACHEPREFIX=${PYTHON3_INFO[PYCACHEPREFIX]}"
+		"PATH=${PATH}"
+		"BERKELEYDB_DIR=/usr/lib/$(arch)-linux-gnu" # arch-dependent
+		"BERKELEYDB_INCDIR=/usr/include"            # Always
 	)
 
 	# If the hash file exists, we're done.
@@ -152,4 +156,7 @@ function host_deps_add_extra_python() {
 	else
 		display_alert "Using Python3 for" "hostdeps: '${host_release}' has python3 >= 3.9" "debug"
 	fi
+
+	host_dependencies+=("libdb-dev") # For Python's berkeleydb package to build correctly
+	return 0
 }
