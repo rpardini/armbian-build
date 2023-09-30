@@ -1,0 +1,26 @@
+cli:
+  commands:
+    # @TODO: describe all commands here, and _generate_ lib/functions/cli/commands.sh
+    "build":
+      preferred: build
+      aliases: [ "image" ]
+      description: "Build a complete Armbian image"
+      default: true # this is the default CLI command run when no command is specified
+    "kernel":
+      description: "Build a kernel into .deb packages"
+    "kernel-config":
+      description: "Interactively modify kernel configuration via menuconfig; does *not* build the kernel"
+    "uboot":
+      description: "Build u-boot"
+      aliases: [ "u-boot" ]
+      bash-handler: "artifact"
+    "uboot-config":
+      description: "Interactively modify u-boot configuration via menuconfig; does *not* build u-boot"
+      bash-handler: "artifact"
+      bash-handler-envs: { "WHAT": "uboot", "UBOOT_CONFIGURE": "yes" } # @TODO force to use references to the actual parameters instead of stringifying them
+  parameters:
+    "WHAT":
+      description: "What artifact to build"
+      default: null # there is no default
+      required: { handlers: [ "artifact" ] }
+
