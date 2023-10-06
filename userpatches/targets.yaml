@@ -20,7 +20,8 @@ lists:
     #- { BOARD: odroidhc4, BRANCH: edge }
     - { BOARD: odroidn2l, BRANCH: edge }
     - { BOARD: radxa-zero2, BRANCH: edge }
-    #- { BOARD: radxa-zero2, BRANCH: current, RELEASE: bullseye }
+    - { BOARD: radxa-zero2, BRANCH: current }
+    - { BOARD: radxa-zero2, BRANCH: current, RELEASE: bullseye }
     #- { BOARD: radxa-zero, BRANCH: edge }
     - { BOARD: orangepi3b, BRANCH: legacy }
     - { BOARD: orangepi3b, BRANCH: edge }
@@ -69,6 +70,7 @@ lists:
 
   desktop-boards: &desktop-boards # Gotta define RELEASE here
     - { BOARD: thinkpad-x13s, BRANCH: sc8280xp, RELEASE: lunar, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
+    - { BOARD: thinkpad-x13s, BRANCH: sc8280xp, RELEASE: trixie, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
     #- { BOARD: thinkpad-x13s, BRANCH: jhovoldsc8280xp, RELEASE: lunar, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
     #- { BOARD: khadas-vim3, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
     #- { BOARD: khadas-vim3l, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
