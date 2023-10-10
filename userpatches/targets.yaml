@@ -39,6 +39,7 @@ lists:
     - { BOARD: khadas-vim3, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-oowow" }
     - { BOARD: khadas-vim4, BRANCH: legacy, ENABLE_EXTENSIONS: "image-output-oowow" }
     - { BOARD: khadas-vim1s, BRANCH: legacy, ENABLE_EXTENSIONS: "image-output-oowow" }
+    - { BOARD: mixtile-blade3, BRANCH: jriek66, RELEASE: trixie }
 
   my-virtual-boards: &my-virtual-boards
     # UTM images, virtual
