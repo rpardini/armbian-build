@@ -27,11 +27,11 @@ enable_extension "grub-with-dtb" # important, puts the whole DTB handling in pla
 declare -g BOARD_FIRMWARE_INSTALL="-full"
 
 # The 6.4 branch is incompatible with x13s Concept's alsa-ucm-conf package, so keep it at 6.3.y for now. @TODO what about 6.6
-function post_family_config_branch_sc8280xp__steevs_66y_kernel() {
-	display_alert "Setting up steev's kernel for" "${BOARD}" "warn"
+function post_family_config_branch_sc8280xp__jhovold_66y_kernel() {
+	display_alert "Setting up jhovolds's WiP branches kernel for" "${BOARD}" "info"
 	declare -g KERNEL_MAJOR_MINOR="6.6" # Major and minor versions of this kernel.
-	declare -g KERNELBRANCH='branch:lenovo-x13s-v6.6.0-rc4'
-	declare -g KERNELSOURCE='https://github.com/steev/linux.git'
+	declare -g KERNELBRANCH='branch:wip/sc8280xp-v6.6-rc4'
+	declare -g KERNELSOURCE='https://github.com/jhovold/linux.git'
 }
 
 function x13s_is_userspace_supported() {
