@@ -83,6 +83,7 @@ lists:
     - { BOARD: orangepi5-plus, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     #- { BOARD: mekotronics-r58x, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     - { BOARD: mekotronics-r58x-4g, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
+    - { BOARD: mekotronics-r58x-pro, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "amazingfated-rk3588,nicod-armbian-gaming" }
     #- { BOARD: mekotronics-r58-minipc, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     #- { BOARD: nanopi-r6s, BRANCH: legacy, RELEASE: jammy, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588,nicod-armbian-gaming" }
     - { BOARD: uefi-x86, BRANCH: edge, RELEASE: jammy, ENABLE_EXTENSIONS: vmware-vm, DESKTOP_APPGROUPS_SELECTED: "none" }
