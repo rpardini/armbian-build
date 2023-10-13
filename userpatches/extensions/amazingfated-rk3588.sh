@@ -39,7 +39,10 @@ function post_install_kernel_debs__amazingfated_rk358() {
 	if [[ "${BUILD_DESKTOP}" == "yes" ]]; then
 		pkgs+=(chromium-browser libwidevinecdm rockchip-multimedia-config)
 	fi
-	pkgs+=(lightdm-gtk-greeter) # hack, since the slick-greeter refuses to understand wayland sessions
+
+	# DISABLED, needs handling in core armbian
+	# pkgs+=(lightdm-gtk-greeter) # hack, since the slick-greeter refuses to understand wayland sessions
+
 	display_alert "Installing amazingfated's rk3588 packages" "${EXTENSION} :: ${pkgs[*]}" "info"
 	do_with_retries 3 chroot_sdcard_apt_get_install "${pkgs[@]}"
 
@@ -51,7 +54,8 @@ function post_install_kernel_debs__amazingfated_rk358() {
 	return 0
 }
 
-function pre_customize_image__amazingfated_prefer_wayland_session() {
+# @TODO: DISABLED, this needs handling in core armbian
+function DISABLED_pre_customize_image_amazingfated_prefer_wayland_session() {
 	display_alert "Setting up amazingfated's rk3588 for Wayland" "${EXTENSION}" "info"
 
 	# If not BUILD_DESKTOP="yes", then we don't need to do anything.
