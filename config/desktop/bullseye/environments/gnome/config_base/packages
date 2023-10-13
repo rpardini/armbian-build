@@ -2,7 +2,6 @@ anacron
 apt-xapian-index
 at-spi2-core
 colord
-cups
 dbus-x11
 dconf-cli
 dmz-cursor-theme
@@ -10,7 +9,6 @@ eject
 fonts-noto-cjk
 fonts-ubuntu
 fonts-ubuntu-console
-foomatic-db-compressed-ppds
 gdebi
 gnome-calculator
 gnome-control-center
@@ -37,14 +35,12 @@ nautilus
 network-manager-gnome
 network-manager-openvpn-gnome
 pavucontrol
-printer-driver-all
 profile-sync-daemon
 pulseaudio
 pulseaudio-module-bluetooth
 slick-greeter
 software-properties-gtk
 synaptic
-system-config-printer
 terminator
 tracker
 tracker-extract
