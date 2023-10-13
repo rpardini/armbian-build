@@ -10,6 +10,7 @@ fonts-noto-cjk
 fonts-ubuntu
 fonts-ubuntu-console
 gdebi
+gdm3
 gnome-calculator
 gnome-control-center
 gnome-desktop3-data
@@ -29,7 +30,6 @@ libasound2
 libasound2-plugins
 libnotify-bin
 libpulsedsp
-lightdm
 lm-sensors
 nautilus
 network-manager-gnome
@@ -38,7 +38,6 @@ pavucontrol
 profile-sync-daemon
 pulseaudio
 pulseaudio-module-bluetooth
-slick-greeter
 software-properties-gtk
 synaptic
 terminator
