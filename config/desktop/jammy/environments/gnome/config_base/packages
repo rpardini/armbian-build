@@ -29,7 +29,6 @@ libasound2
 libasound2-plugins
 libnotify-bin
 libpulsedsp
-lightdm
 lm-sensors
 nautilus
 network-manager-gnome
@@ -37,7 +36,6 @@ network-manager-openvpn-gnome
 pavucontrol
 pulseaudio
 pulseaudio-module-bluetooth
-slick-greeter
 software-properties-gtk
 synaptic
 terminator
