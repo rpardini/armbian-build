@@ -40,9 +40,6 @@ function post_install_kernel_debs__amazingfated_rk358() {
 		pkgs+=(chromium-browser libwidevinecdm rockchip-multimedia-config)
 	fi
 
-	# DISABLED, needs handling in core armbian
-	# pkgs+=(lightdm-gtk-greeter) # hack, since the slick-greeter refuses to understand wayland sessions
-
 	display_alert "Installing amazingfated's rk3588 packages" "${EXTENSION} :: ${pkgs[*]}" "info"
 	do_with_retries 3 chroot_sdcard_apt_get_install "${pkgs[@]}"
 
@@ -54,67 +51,3 @@ function post_install_kernel_debs__amazingfated_rk358() {
 	return 0
 }
 
-# @TODO: DISABLED, this needs handling in core armbian
-function DISABLED_pre_customize_image_amazingfated_prefer_wayland_session() {
-	display_alert "Setting up amazingfated's rk3588 for Wayland" "${EXTENSION}" "info"
-
-	# If not BUILD_DESKTOP="yes", then we don't need to do anything.
-	if [[ "${BUILD_DESKTOP}" != "yes" ]]; then
-		display_alert "Not building desktop, skipping amazingfated's rk3588 Wayland setup" "${EXTENSION}" "info"
-		return 0
-	fi
-
-	declare sessions_dir="${SDCARD}/usr/share/wayland-sessions"
-	declare lightdm_conf_dir="${SDCARD}/etc/lightdm/lightdm.conf.d"
-
-	if [[ ! -d "${sessions_dir}" ]]; then
-		display_alert "Wayland sessions directory '${sessions_dir}' not found" "${EXTENSION}" "warn"
-		return 0
-	fi
-
-	if [[ ! -d "${lightdm_conf_dir}" ]]; then
-		display_alert "LightDM configuration directory '${lightdm_conf_dir}' not found" "${EXTENSION}" "warn"
-		return 0
-	fi
-
-	declare -a sessions_in_order=("plasmawayland" "gnome-wayland" "ubuntu-wayland")
-	declare chosen_session=""
-	for session in "${sessions_in_order[@]}"; do
-		if [[ -f "${sessions_dir}/${session}.desktop" ]]; then
-			chosen_session="${session}"
-			break
-		fi
-	done
-
-	display_alert "Setting up amazingfated's rk3588 for Wayland, chosen session '${chosen_session}'" "${EXTENSION}" "info"
-
-	declare chosen_session_file="${sessions_dir}/${chosen_session}.desktop"
-	if [[ ! -f "${chosen_session_file}" ]]; then
-		display_alert "Wayland session '${chosen_session}' not found" "${EXTENSION}" "warn"
-		return 0
-	fi
-
-	# HACK: Those lightdm greeters get really confused when there's multiple sessions available.
-	# This hack is only for first boot, those things can get replaced by upgrades of packages.
-	# Delete all files from the (X11) sessions directory, so only the Wayland session is available.
-	run_host_command_logged rm -f "${SDCARD}/usr/share/xsessions/"*.desktop
-	# Delete files from the (Wayland) sessions directory except the chosen_session_file
-	run_host_command_logged find "${sessions_dir}" -type f -not -name "$(basename "${chosen_session_file}")" -delete
-
-	# List the final contents of the sessions directory
-	run_host_command_logged ls -la "${sessions_dir}"
-
-	# Now lets configure lightdm to use the chosen session & the gtk greeter.
-	# Armbian's armbian-firstlogin will do all kinds of weird stuff to 11-armbian.conf and 22-?.conf
-	# Let's use 50-use-wayland.conf so it hopefully overrides all of that.
-	declare lightdm_conf="${lightdm_conf_dir}/50-use-wayland.conf"
-	cat <<- EOD > "${lightdm_conf}"
-		[Seat:*]
-		user-session=${chosen_session}
-		greeter-session=lightdm-gtk-greeter
-	EOD
-
-	display_alert "Setting up amazingfated's rk3588 for Wayland, session configured '${chosen_session}' OK" "${EXTENSION}" "info"
-
-	return 0
-}
