@@ -10,6 +10,7 @@ fonts-noto-cjk
 fonts-ubuntu
 fonts-ubuntu-console
 gdebi
+gdm3
 gnome-calculator
 gnome-control-center
 gnome-desktop3-data
