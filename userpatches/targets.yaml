@@ -120,9 +120,9 @@ targets:
     items-from-inventory:
       userspace: # creates items from userspace inventory automatically... 'eos' distributions are always skipped.
         #skip-releases: [ "sid" ] # do NOT include these releases
-        only-releases: [ "bookworm", "jammy", "lunar", "trixie", "mantic" ] # ONLY include these releases
+        only-releases: [ "bookworm", "jammy", "trixie", "mantic" ] # ONLY include these releases
         # skip-desktops: [ "lxde" ] # do NOT include these desktops
-        only-desktops: [ "gnome" ] # ONLY include these desktops
+        only-desktops: [ "gnome", "xfce", "kde-plasma" ] # ONLY include these desktops
         cli: yes # include normal CLI userspace
         minimal: no # include minimal CLI userspace
         cloud: yes # include cloud CLI userspace (rpardini's stuff, default is no)
