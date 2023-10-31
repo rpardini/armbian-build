@@ -1,6 +1,5 @@
 # Armbian build train JSON pipeline
 
-
 ```graphviz
 digraph hierarchy {
 nodesep = 1.0 // Increases the separation between nodes
@@ -17,7 +16,7 @@ subgraph cluster_wf_template {
 	gha_template_number_of_chunks [shape = egg label = "Number of Chunks\n- Artifact chunks\n-Image Chunks"];
 	gha_template_user_dir [shape = egg label = "Files in git\n- userpatches/gha\n- userpatches/gha/chunked"];
 	gha_template_tool [shape = component label = "GHA Template\nProcessor\ngha-templates"];
-	gha_workflow_from_templated [shape = doubleoctagon label = "Chunked workflow\nGitHub Actions"];
+	gha_workflow_from_templated [shape = doubleoctagon label = "Chunked workflow\nGitHub Actions\n(needs human to commit/push)"];
 	gha_template_number_of_chunks -> gha_template_tool;
 	gha_template_user_dir -> gha_template_tool;
 	gha_template_tool -> gha_workflow_from_templated;
