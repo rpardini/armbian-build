@@ -1,5 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jianfeng Liu <liujianfeng1994@gmail.com>
+Date: Sat, 2 Apr 2022 09:57:24 -0700
+Subject: [ARCHEOLOGY] add rk809 codec sound support to radxa rock3a (#3621)
+
+> X-Git-Archeology: - Revision be9b5156a4bdcb3850fbe0e7ada0f4421acde174: https://github.com/armbian/build/commit/be9b5156a4bdcb3850fbe0e7ada0f4421acde174
+> X-Git-Archeology:   Date: Sat, 02 Apr 2022 09:57:24 -0700
+> X-Git-Archeology:   From: Jianfeng Liu <liujianfeng1994@gmail.com>
+> X-Git-Archeology:   Subject: add rk809 codec sound support to radxa rock3a (#3621)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision eb54a13b05996777789f5e9b8f8058eca65fb6c9: https://github.com/armbian/build/commit/eb54a13b05996777789f5e9b8f8058eca65fb6c9
+> X-Git-Archeology:   Date: Tue, 05 Apr 2022 16:18:38 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: update kernel 5.17.1 station-p2-edge (#3637)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 57428044ec6ee099f6d67eebbcb9ce94c439b017: https://github.com/armbian/build/commit/57428044ec6ee099f6d67eebbcb9ce94c439b017
+> X-Git-Archeology:   Date: Mon, 02 May 2022 11:36:59 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.17 and media-edge to 5.18 (#3726)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 3ff351cc52aed68e80949576f43d2fdf08ab8b5f: https://github.com/armbian/build/commit/3ff351cc52aed68e80949576f43d2fdf08ab8b5f
+> X-Git-Archeology:   Date: Thu, 06 Oct 2022 18:07:36 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move media current 5.19 and edge 6.0 (#4262)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision c29e51c70828145785c3167d984e6857e342c96e: https://github.com/armbian/build/commit/c29e51c70828145785c3167d984e6857e342c96e
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:51:25 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-edge to 6.0.7 (#4405)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ drivers/clk/rockchip/clk-rk3568.c      | 35 ++++++++--
+ include/dt-bindings/clock/rk3568-cru.h |  6 ++
+ 2 files changed, 34 insertions(+), 7 deletions(-)
+
 diff --git a/drivers/clk/rockchip/clk-rk3568.c b/drivers/clk/rockchip/clk-rk3568.c
-index 606ae6cd918b..ee8924ac0093 100644
+index f85902e2590c..04f9901c1ff0 100644
 --- a/drivers/clk/rockchip/clk-rk3568.c
 +++ b/drivers/clk/rockchip/clk-rk3568.c
 @@ -13,6 +13,8 @@
@@ -82,3 +127,6 @@ index d29890865150..251445cf7632 100644
  
  #define PCLK_CORE_PVTM		450
  
+-- 
+Armbian
+

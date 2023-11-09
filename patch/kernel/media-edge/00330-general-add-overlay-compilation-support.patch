@@ -1,19 +1,137 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: zador-blood-stained <zador-blood-stained@users.noreply.github.com>
+Date: Sat, 11 Feb 2017 20:32:53 +0300
+Subject: [ARCHEOLOGY] Rename, split and improve H3 DT overlays
+
+> X-Git-Archeology: > recovered message: > Fix OPi Zero DT
+> X-Git-Archeology: > recovered message: > Improve DT loading reliability
+> X-Git-Archeology: - Revision bacf56710491e3307e0fb2bc1c828dad828c9f23: https://github.com/armbian/build/commit/bacf56710491e3307e0fb2bc1c828dad828c9f23
+> X-Git-Archeology:   Date: Sat, 11 Feb 2017 20:32:53 +0300
+> X-Git-Archeology:   From: zador-blood-stained <zador-blood-stained@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Rename, split and improve H3 DT overlays
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision c7bbc3257e8dcbf75398301602150fe9f1666c86: https://github.com/armbian/build/commit/c7bbc3257e8dcbf75398301602150fe9f1666c86
+> X-Git-Archeology:   Date: Sun, 26 Feb 2017 19:46:15 +0300
+> X-Git-Archeology:   From: zador-blood-stained <zador-blood-stained@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Initial A20 overlays support for sunxi-next kernel
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision caf4b1b037e7510cae7edd1b5f75482eed41b547: https://github.com/armbian/build/commit/caf4b1b037e7510cae7edd1b5f75482eed41b547
+> X-Git-Archeology:   Date: Mon, 13 Mar 2017 20:32:37 +0300
+> X-Git-Archeology:   From: zador-blood-stained <zador-blood-stained@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Add new A20 overlays
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision b30fcea3f95804175199bc1865a7e39cdf07cf73: https://github.com/armbian/build/commit/b30fcea3f95804175199bc1865a7e39cdf07cf73
+> X-Git-Archeology:   Date: Sun, 14 May 2017 17:59:35 +0300
+> X-Git-Archeology:   From: zador-blood-stained <zador-blood-stained@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Update sunxi-next branch to 4.11
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 20240e9669055030076e69452cf6a1ccb368cc2e: https://github.com/armbian/build/commit/20240e9669055030076e69452cf6a1ccb368cc2e
+> X-Git-Archeology:   Date: Tue, 30 May 2017 21:30:38 -0400
+> X-Git-Archeology:   From: Martin Ayotte <martinayotte@yahoo.ca>
+> X-Git-Archeology:   Subject: add overlays to sunxi-dev
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision b0fcb64aaca589359338a500e7bc07eb7ca1cb71: https://github.com/armbian/build/commit/b0fcb64aaca589359338a500e7bc07eb7ca1cb71
+> X-Git-Archeology:   Date: Thu, 07 Dec 2017 07:09:10 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igor.pecovnik@gmail.com>
+> X-Git-Archeology:   Subject: Temporally disabling broken patches on sunxi DEV branch
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2123e539ed288e3355ef3d3adc79788a187f62df: https://github.com/armbian/build/commit/2123e539ed288e3355ef3d3adc79788a187f62df
+> X-Git-Archeology:   Date: Thu, 15 Feb 2018 11:21:51 +0200
+> X-Git-Archeology:   From: Stefan Mavrodiev <stefan@olimex.com>
+> X-Git-Archeology:   Subject: Add overlays support for upstream kernel
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2c08ec8f5a210de35f9482f482ac01ea15381792: https://github.com/armbian/build/commit/2c08ec8f5a210de35f9482f482ac01ea15381792
+> X-Git-Archeology:   Date: Thu, 24 May 2018 13:32:29 +0200
+> X-Git-Archeology:   From: Igor Pecovnik <igor.pecovnik@gmail.com>
+> X-Git-Archeology:   Subject: Merge sunxi family into stable
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 1a12994e79b6ef173dc58efe4df8919cb6cc7781: https://github.com/armbian/build/commit/1a12994e79b6ef173dc58efe4df8919cb6cc7781
+> X-Git-Archeology:   Date: Tue, 17 Jul 2018 15:53:30 +0200
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Moving sunxi-next to 4.17.y (#1049)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision a57ce78b37f8dd2eb94a3836f4a7f6969f2ffd72: https://github.com/armbian/build/commit/a57ce78b37f8dd2eb94a3836f4a7f6969f2ffd72
+> X-Git-Archeology:   Date: Tue, 21 Aug 2018 10:41:10 +0200
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Reverting sunxi/sunxi64 NEXT to 4.14. (#1087)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 871bed1a24e21952f7aeb1981c26ad5fc573be9d: https://github.com/armbian/build/commit/871bed1a24e21952f7aeb1981c26ad5fc573be9d
+> X-Git-Archeology:   Date: Tue, 04 Dec 2018 16:25:53 -0500
+> X-Git-Archeology:   From: Martin Ayotte <martinayotte@yahoo.ca>
+> X-Git-Archeology:   Subject: add overlay-compilation-support to meson64-dev
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2fa7c680c29a144214706dda35c2a6afdd708858: https://github.com/armbian/build/commit/2fa7c680c29a144214706dda35c2a6afdd708858
+> X-Git-Archeology:   Date: Thu, 21 Mar 2019 14:57:07 -0400
+> X-Git-Archeology:   From: Martin Ayotte <martinayotte@yahoo.ca>
+> X-Git-Archeology:   Subject: fix overlay patch
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 150ac0c2afa147d9e3b036c8ecd8238fe5648cf3: https://github.com/armbian/build/commit/150ac0c2afa147d9e3b036c8ecd8238fe5648cf3
+> X-Git-Archeology:   Date: Tue, 19 Nov 2019 23:25:39 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Remove K<4, change branches, new features (#1586)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 812245def37a695bce9e7ece148b2920d82c8b37: https://github.com/armbian/build/commit/812245def37a695bce9e7ece148b2920d82c8b37
+> X-Git-Archeology:   Date: Sat, 18 Jul 2020 23:07:01 +0200
+> X-Git-Archeology:   From: Werner <EvilOlaf@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Move rockchip/64 current to 5.7.y (#2099)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0cdffb29b07305209efb12cf3b5ac6032d3a1153: https://github.com/armbian/build/commit/0cdffb29b07305209efb12cf3b5ac6032d3a1153
+> X-Git-Archeology:   Date: Wed, 24 Mar 2021 19:01:53 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Renaming DEV branch to EDGE (#2704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 6b490e16944b30ff69bf9c13678905187df0d9d4: https://github.com/armbian/build/commit/6b490e16944b30ff69bf9c13678905187df0d9d4
+> X-Git-Archeology:   Date: Tue, 11 Jan 2022 15:26:11 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel edge to 5.16 (#3387)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision f52a4193d02ef88333ba117c68d49486dfd7ff41: https://github.com/armbian/build/commit/f52a4193d02ef88333ba117c68d49486dfd7ff41
+> X-Git-Archeology:   Date: Sun, 20 Mar 2022 22:58:21 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: Adding Pine64 Quartz64a as WIP target (#3539)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0afe24c95729044910e0b3f84dc5500bcdc6524c: https://github.com/armbian/build/commit/0afe24c95729044910e0b3f84dc5500bcdc6524c
+> X-Git-Archeology:   Date: Sun, 24 Apr 2022 22:33:47 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media edge to 5.17 (#3704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ arch/arm/boot/.gitignore |  2 +
+ scripts/Makefile.dtbinst | 14 ++++++-
+ scripts/Makefile.lib     | 20 ++++++++++
+ 3 files changed, 35 insertions(+), 1 deletion(-)
+
 diff --git a/arch/arm/boot/.gitignore b/arch/arm/boot/.gitignore
-index 3c79f859..4e5c1d59 100644
+index 8c759326baf4..e6ce8f6ad4b1 100644
 --- a/arch/arm/boot/.gitignore
 +++ b/arch/arm/boot/.gitignore
-@@ -3,3 +3,5 @@ zImage
+@@ -4,3 +4,5 @@ zImage
  xipImage
  bootpImage
  uImage
 +*.dtb*
 +*.scr
 diff --git a/scripts/Makefile.dtbinst b/scripts/Makefile.dtbinst
-index 50d580d77..94bd15617 100644
+index 2ab936e4179d..39a199e5e9b4 100644
 --- a/scripts/Makefile.dtbinst
 +++ b/scripts/Makefile.dtbinst
-@@ -18,9 +18,12 @@ include scripts/Kbuild.include
- include $(src)/Makefile
+@@ -18,9 +18,12 @@ include $(srctree)/scripts/Kbuild.include
+ include $(kbuild-file)
  
  dtbs    := $(addprefix $(dst)/, $(dtb-y) $(if $(CONFIG_OF_ALL_DTBS),$(dtb-)))
 +dtbos   := $(addprefix $(dst)/, $(dtbo-y))
@@ -26,8 +144,8 @@ index 50d580d77..94bd15617 100644
  	@:
  
  quiet_cmd_dtb_install = INSTALL $@
-@@ -29,6 +32,15 @@ quiet_cmd_dtb_install = INSTALL $@
- $(dst)/%.dtb: $(obj)/%.dtb
+@@ -32,6 +35,15 @@ $(dst)/%.dtb: $(obj)/%.dtb
+ $(dst)/%.dtbo: $(obj)/%.dtbo
  	$(call cmd,dtb_install)
  
 +$(dst)/%.dtbo: $(obj)/%.dtbo
@@ -43,23 +161,23 @@ index 50d580d77..94bd15617 100644
  $(subdirs):
  	$(Q)$(MAKE) $(dtbinst)=$@ dst=$(patsubst $(obj)/%,$(dst)/%,$@)
 diff --git a/scripts/Makefile.lib b/scripts/Makefile.lib
-index 58c05e5d..2b95dda9 100644
+index 4a4a5f67c1a6..f6844387b77b 100644
 --- a/scripts/Makefile.lib
 +++ b/scripts/Makefile.lib
-@@ -278,6 +278,9 @@ cmd_gzip = (cat $(filter-out FORCE,$^) | gzip -n -f -9 > $@) || \
- # ---------------------------------------------------------------------------
- DTC ?= $(objtree)/scripts/dtc/dtc
-
+@@ -343,6 +343,9 @@ DTC ?= $(objtree)/scripts/dtc/dtc
+ DTC_FLAGS += -Wno-interrupt_provider \
+ 	-Wno-unique_unit_address
+ 
 +# Overlay support
 +DTC_FLAGS += -@ -Wno-unit_address_format -Wno-simple_bus_reg
 +
  # Disable noisy checks by default
- ifeq ($(KBUILD_ENABLE_EXTRA_GCC_CHECKS),)
+ ifeq ($(findstring 1,$(KBUILD_EXTRA_WARN)),)
  DTC_FLAGS += -Wno-unit_address_vs_reg \
-@@ -324,6 +327,23 @@ cmd_dtc = mkdir -p $(dir ${dtc-tmp}) ; \
- $(obj)/%.dtb: $(src)/%.dts FORCE
+@@ -439,6 +442,23 @@ $(obj)/%.dtbo: $(src)/%.dts $(DTC) FORCE
+ $(obj)/%.dtbo: $(src)/%.dtso $(DTC) FORCE
  	$(call if_changed_dep,dtc)
-
+ 
 +quiet_cmd_dtco = DTCO    $@
 +cmd_dtco = mkdir -p $(dir ${dtc-tmp}) ; \
 +	$(CPP) $(dtc_cpp_flags) -x assembler-with-cpp -o $(dtc-tmp) $< ; \
@@ -78,5 +196,8 @@ index 58c05e5d..2b95dda9 100644
 +	$(call if_changed,scr)
 +
  dtc-tmp = $(subst $(comma),_,$(dot-target).dts.tmp)
-
+ 
  # Bzip2
+-- 
+Armbian
+

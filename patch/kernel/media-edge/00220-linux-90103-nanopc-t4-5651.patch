@@ -1,6 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleg <balbes-150@yandex.ru>
+Date: Tue, 11 Jan 2022 15:26:11 +0100
+Subject: [ARCHEOLOGY] move kernel edge to 5.16 (#3387)
+
+> X-Git-Archeology: - Revision 6b490e16944b30ff69bf9c13678905187df0d9d4: https://github.com/armbian/build/commit/6b490e16944b30ff69bf9c13678905187df0d9d4
+> X-Git-Archeology:   Date: Tue, 11 Jan 2022 15:26:11 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel edge to 5.16 (#3387)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision f52a4193d02ef88333ba117c68d49486dfd7ff41: https://github.com/armbian/build/commit/f52a4193d02ef88333ba117c68d49486dfd7ff41
+> X-Git-Archeology:   Date: Sun, 20 Mar 2022 22:58:21 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: Adding Pine64 Quartz64a as WIP target (#3539)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0afe24c95729044910e0b3f84dc5500bcdc6524c: https://github.com/armbian/build/commit/0afe24c95729044910e0b3f84dc5500bcdc6524c
+> X-Git-Archeology:   Date: Sun, 24 Apr 2022 22:33:47 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media edge to 5.17 (#3704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 235d246fa10a9637d59d8cc27107137ee2b005db: https://github.com/armbian/build/commit/235d246fa10a9637d59d8cc27107137ee2b005db
+> X-Git-Archeology:   Date: Sat, 24 Dec 2022 09:44:07 +0100
+> X-Git-Archeology:   From: simple <991605149@qq.com>
+> X-Git-Archeology:   Subject: Fix nanopct4 rt5651 sound&clean wireless,bluetooth&add general-add-panel-simple-dsi.patch (#4608)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 20ee08325fa79b02c124c6c3093153643a9622fd: https://github.com/armbian/build/commit/20ee08325fa79b02c124c6c3093153643a9622fd
+> X-Git-Archeology:   Date: Wed, 01 Feb 2023 20:24:20 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media current 6.1 and edge 6.2 (#4781)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 50a1ecd2f673f55017318c44d5fb1d1b8a51a5d9: https://github.com/armbian/build/commit/50a1ecd2f673f55017318c44d5fb1d1b8a51a5d9
+> X-Git-Archeology:   Date: Thu, 02 Feb 2023 14:08:11 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: fix Station P1 (#4796)
+> X-Git-Archeology:
+---
+ arch/arm64/boot/dts/rockchip/rk3399-nanopi4.dtsi | 117 +++++++++-
+ 1 file changed, 108 insertions(+), 9 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3399-nanopi4.dtsi b/arch/arm64/boot/dts/rockchip/rk3399-nanopi4.dtsi
+index b6e082f1f6d9..e8933807c3c3 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3399-nanopi4.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-nanopi4.dtsi
-@@ -21,6 +21,10 @@
+@@ -27,6 +27,10 @@ chosen {
  		stdout-path = "serial2:1500000n8";
  	};
  
@@ -11,11 +67,10 @@
  	clkin_gmac: external-gmac-clock {
  		compatible = "fixed-clock";
  		clock-frequency = <125000000>;
-@@ -133,6 +137,46 @@
- 		pinctrl-names = "default";
+@@ -140,6 +144,46 @@ sdio_pwrseq: sdio-pwrseq {
  		pinctrl-0 = <&wifi_reg_on_h>;
  		reset-gpios = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
-+	};
+ 	};
 +
 +	rt5651-sound {
 +		compatible = "simple-audio-card";
@@ -55,10 +110,11 @@
 +		compatible = "linux,spdif-dit";
 +		#sound-dai-cells = <0>;
 +		status = "okay";
- 	};
++	};
  };
  
-@@ -453,10 +522,19 @@
+ &cpu_b0 {
+@@ -460,10 +504,19 @@ regulator-state-mem {
  };
  
  &i2c1 {
@@ -79,7 +135,7 @@
  };
  
  &i2c2 {
-@@ -484,7 +562,23 @@
+@@ -491,7 +544,23 @@ &i2c7 {
  	status = "okay";
  };
  
@@ -103,7 +159,7 @@
  	status = "okay";
  };
  
-@@ -496,6 +590,11 @@
+@@ -503,6 +572,11 @@ &io_domains {
  	status = "okay";
  };
  
@@ -115,7 +171,7 @@
  &pcie_phy {
  	assigned-clock-parents = <&cru SCLK_PCIEPHY_REF100M>;
  	assigned-clock-rates = <100000000>;
-@@ -535,6 +634,39 @@
+@@ -540,6 +614,39 @@ phy_rstb: phy-rstb {
  		};
  	};
  
@@ -155,7 +211,7 @@
  	pmic {
  		cpu_b_sleep: cpu-b-sleep {
  			rockchip,pins = <1 RK_PC1 RK_FUNC_GPIO &pcfg_pull_down>;
-@@ -747,11 +892,3 @@
+@@ -752,11 +859,3 @@ &vopb {
  &vopb_mmu {
  	status = "okay";
  };
@@ -167,3 +223,6 @@
 -&vopl_mmu {
 -	status = "okay";
 -};
+-- 
+Armbian
+
