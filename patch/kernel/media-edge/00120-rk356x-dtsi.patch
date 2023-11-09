@@ -1,6 +1,39 @@
---- v6.0-rc3/arch/arm64/boot/dts/rockchip/rk356x.dtsi
-+++ v6.0-rc3/arch/arm64/boot/dts/rockchip/rk356x.dtsi
-@@ -287,7 +287,7 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleg <balbes-150@yandex.ru>
+Date: Thu, 6 Oct 2022 18:07:36 +0200
+Subject: [ARCHEOLOGY] move media current 5.19 and edge 6.0 (#4262)
+
+> X-Git-Archeology: > recovered message: > * move media current 5.19 and edge 6.0
+> X-Git-Archeology: > recovered message: > * del old patch
+> X-Git-Archeology: - Revision 3ff351cc52aed68e80949576f43d2fdf08ab8b5f: https://github.com/armbian/build/commit/3ff351cc52aed68e80949576f43d2fdf08ab8b5f
+> X-Git-Archeology:   Date: Thu, 06 Oct 2022 18:07:36 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move media current 5.19 and edge 6.0 (#4262)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision c29e51c70828145785c3167d984e6857e342c96e: https://github.com/armbian/build/commit/c29e51c70828145785c3167d984e6857e342c96e
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:51:25 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-edge to 6.0.7 (#4405)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 20ee08325fa79b02c124c6c3093153643a9622fd: https://github.com/armbian/build/commit/20ee08325fa79b02c124c6c3093153643a9622fd
+> X-Git-Archeology:   Date: Wed, 01 Feb 2023 20:24:20 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media current 6.1 and edge 6.2 (#4781)
+> X-Git-Archeology:
+---
+ arch/arm64/boot/dts/rockchip/rk356x.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk356x.dtsi b/arch/arm64/boot/dts/rockchip/rk356x.dtsi
+index c27f1c7f072d..3b103facf2a3 100644
+--- a/arch/arm64/boot/dts/rockchip/rk356x.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk356x.dtsi
+@@ -287,7 +287,7 @@ usb_host0_xhci: usb@fcc00000 {
  			 <&cru ACLK_USB3OTG0>;
  		clock-names = "ref_clk", "suspend_clk",
  			      "bus_clk";
@@ -9,3 +42,6 @@
  		phy_type = "utmi_wide";
  		power-domains = <&power RK3568_PD_PIPE>;
  		resets = <&cru SRST_USB3OTG0>;
+-- 
+Armbian
+

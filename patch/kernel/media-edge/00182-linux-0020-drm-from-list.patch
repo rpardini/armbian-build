@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 6 Jul 2020 22:30:13 +0000
-Subject: [PATCH] drm: drm_fourcc: add NV20 and NV30 YUV formats
+Subject: drm: drm_fourcc: add NV20 and NV30 YUV formats
 
 DRM_FORMAT_NV20 and DRM_FORMAT_NV30 formats is the 2x1 and non-subsampled
 variant of NV15, a 10-bit 2-plane YUV format that has no padding between
@@ -24,10 +24,10 @@ Reviewed-by: Sandy Huang <hjc@rock-chips.com>
  2 files changed, 10 insertions(+)
 
 diff --git a/drivers/gpu/drm/drm_fourcc.c b/drivers/gpu/drm/drm_fourcc.c
-index 07741b678798..5ec38456dc5d 100644
+index 0f17dfa8702b..193cf8ed7912 100644
 --- a/drivers/gpu/drm/drm_fourcc.c
 +++ b/drivers/gpu/drm/drm_fourcc.c
-@@ -261,6 +261,14 @@ const struct drm_format_info *__drm_format_info(u32 format)
+@@ -299,6 +299,14 @@ const struct drm_format_info *__drm_format_info(u32 format)
  		  .num_planes = 2, .char_per_block = { 5, 5, 0 },
  		  .block_w = { 4, 2, 0 }, .block_h = { 1, 1, 0 }, .hsub = 2,
  		  .vsub = 2, .is_yuv = true },
@@ -41,12 +41,12 @@ index 07741b678798..5ec38456dc5d 100644
 +		  .vsub = 1, .is_yuv = true },
  		{ .format = DRM_FORMAT_Q410,		.depth = 0,
  		  .num_planes = 3, .char_per_block = { 2, 2, 2 },
- 		  .block_w = { 1, 1, 1 }, .block_h = { 1, 1, 1 }, .hsub = 0,
+ 		  .block_w = { 1, 1, 1 }, .block_h = { 1, 1, 1 }, .hsub = 1,
 diff --git a/include/uapi/drm/drm_fourcc.h b/include/uapi/drm/drm_fourcc.h
-index 0206f812c569..fa49ee98f275 100644
+index bc056f2d537d..cc1d04cd8b6b 100644
 --- a/include/uapi/drm/drm_fourcc.h
 +++ b/include/uapi/drm/drm_fourcc.h
-@@ -285,6 +285,8 @@ extern "C" {
+@@ -311,6 +311,8 @@ extern "C" {
   * index 1 = Cr:Cb plane, [39:0] Cr1:Cb1:Cr0:Cb0 little endian
   */
  #define DRM_FORMAT_NV15		fourcc_code('N', 'V', '1', '5') /* 2x2 subsampled Cr:Cb plane */
@@ -55,11 +55,13 @@ index 0206f812c569..fa49ee98f275 100644
  
  /*
   * 2 plane YCbCr MSB aligned
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 6 Jul 2020 22:30:13 +0000
-Subject: [PATCH] drm: rockchip: add NV15, NV20 and NV30 support
+Subject: drm: rockchip: add NV15, NV20 and NV30 support
 
 Add support for displaying 10-bit 4:2:0 and 4:2:2 formats produced by the
 Rockchip Video Decoder on RK322X, RK3288, RK3328, RK3368 and RK3399.
@@ -70,16 +72,16 @@ V2: Added NV30 support
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 Reviewed-by: Sandy Huang <hjc@rock-chips.com>
 ---
- drivers/gpu/drm/rockchip/rockchip_drm_vop.c | 29 +++++++++++++++++--
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.c | 29 ++++++++-
  drivers/gpu/drm/rockchip/rockchip_drm_vop.h |  1 +
- drivers/gpu/drm/rockchip/rockchip_vop_reg.c | 32 +++++++++++++++++----
+ drivers/gpu/drm/rockchip/rockchip_vop_reg.c | 32 ++++++++--
  3 files changed, 54 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop.c b/drivers/gpu/drm/rockchip/rockchip_drm_vop.c
-index d32117633efe..9e71263ac770 100644
+index fa1f4ee6d195..950c89d9ac70 100644
 --- a/drivers/gpu/drm/rockchip/rockchip_drm_vop.c
 +++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop.c
-@@ -280,6 +280,18 @@ static bool has_uv_swapped(uint32_t format)
+@@ -273,6 +273,18 @@ static bool has_uv_swapped(uint32_t format)
  	}
  }
  
@@ -98,7 +100,7 @@ index d32117633efe..9e71263ac770 100644
  static enum vop_data_format vop_convert_format(uint32_t format)
  {
  	switch (format) {
-@@ -295,12 +307,15 @@ static enum vop_data_format vop_convert_format(uint32_t format)
+@@ -288,12 +300,15 @@ static enum vop_data_format vop_convert_format(uint32_t format)
  	case DRM_FORMAT_BGR565:
  		return VOP_FMT_RGB565;
  	case DRM_FORMAT_NV12:
@@ -114,7 +116,7 @@ index d32117633efe..9e71263ac770 100644
  	case DRM_FORMAT_NV42:
  		return VOP_FMT_YUV444SP;
  	default:
-@@ -954,7 +969,12 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
+@@ -947,7 +962,12 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
  	dsp_sty = dest->y1 + crtc->mode.vtotal - crtc->mode.vsync_start;
  	dsp_st = dsp_sty << 16 | (dsp_stx & 0xffff);
  
@@ -128,7 +130,7 @@ index d32117633efe..9e71263ac770 100644
  	offset += (src->y1 >> 16) * fb->pitches[0];
  	dma_addr = rk_obj->dma_addr + offset + fb->offsets[0];
  
-@@ -980,6 +1000,7 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
+@@ -973,6 +993,7 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
  	}
  
  	VOP_WIN_SET(vop, win, format, format);
@@ -136,7 +138,7 @@ index d32117633efe..9e71263ac770 100644
  	VOP_WIN_SET(vop, win, yrgb_vir, DIV_ROUND_UP(fb->pitches[0], 4));
  	VOP_WIN_SET(vop, win, yrgb_mst, dma_addr);
  	VOP_WIN_YUV2YUV_SET(vop, win_yuv2yuv, y2r_en, is_yuv);
-@@ -996,7 +1017,11 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
+@@ -989,7 +1010,11 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
  		uv_obj = fb->obj[1];
  		rk_uv_obj = to_rockchip_obj(uv_obj);
  
@@ -234,3 +236,6 @@ index 014f99e8928e..16e6aa01e400 100644
  	.rb_swap = VOP_REG(RK3288_WIN0_CTRL0, 0x1, 12),
  	.uv_swap = VOP_REG(RK3288_WIN0_CTRL0, 0x1, 15),
  	.x_mir_en = VOP_REG(RK3288_WIN0_CTRL0, 0x1, 21),
+-- 
+Armbian
+

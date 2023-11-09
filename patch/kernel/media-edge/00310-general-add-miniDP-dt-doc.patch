@@ -1,3 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tony <tonymckahan@gmail.com>
+Date: Wed, 3 Mar 2021 07:59:25 +0100
+Subject: [ARCHEOLOGY] RK3399 Typec DP (#2676)
+
+> X-Git-Archeology: > recovered message: > * RK3399 NanoPC-T4 Add Type-C alt mode DP
+> X-Git-Archeology: > recovered message: > * rk3399 rockpi 4C add mini-DP (WIP)
+> X-Git-Archeology: > recovered message: > * [ rockchip64 ] revert rockPi 4C DP patch
+> X-Git-Archeology: > recovered message: > Add an extension to disable it, but leave for future work.
+> X-Git-Archeology: - Revision 4971535c774a1f49a811baebc083ea028ced0300: https://github.com/armbian/build/commit/4971535c774a1f49a811baebc083ea028ced0300
+> X-Git-Archeology:   Date: Wed, 03 Mar 2021 07:59:25 +0100
+> X-Git-Archeology:   From: Tony <tonymckahan@gmail.com>
+> X-Git-Archeology:   Subject: RK3399 Typec DP (#2676)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0cdffb29b07305209efb12cf3b5ac6032d3a1153: https://github.com/armbian/build/commit/0cdffb29b07305209efb12cf3b5ac6032d3a1153
+> X-Git-Archeology:   Date: Wed, 24 Mar 2021 19:01:53 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Renaming DEV branch to EDGE (#2704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ Documentation/devicetree/bindings/extcon/extcon-usbc-virtual-pd.yaml | 66 ++++++++++
+ 1 file changed, 66 insertions(+)
+
 diff --git a/Documentation/devicetree/bindings/extcon/extcon-usbc-virtual-pd.yaml b/Documentation/devicetree/bindings/extcon/extcon-usbc-virtual-pd.yaml
 new file mode 100644
 index 000000000000..8110fbe2ddc2
@@ -70,4 +108,6 @@ index 000000000000..8110fbe2ddc2
 +        vpd-data-role = "display-port";
 +        vpd-super-speed;
 +    };
+-- 
+Armbian
 

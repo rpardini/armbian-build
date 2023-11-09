@@ -1,10 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tony <tonymckahan@gmail.com>
+Date: Wed, 3 Mar 2021 07:59:25 +0100
+Subject: [ARCHEOLOGY] RK3399 Typec DP (#2676)
+
+> X-Git-Archeology: > recovered message: > * RK3399 NanoPC-T4 Add Type-C alt mode DP
+> X-Git-Archeology: > recovered message: > * rk3399 rockpi 4C add mini-DP (WIP)
+> X-Git-Archeology: > recovered message: > * [ rockchip64 ] revert rockPi 4C DP patch
+> X-Git-Archeology: > recovered message: > Add an extension to disable it, but leave for future work.
+> X-Git-Archeology: - Revision 4971535c774a1f49a811baebc083ea028ced0300: https://github.com/armbian/build/commit/4971535c774a1f49a811baebc083ea028ced0300
+> X-Git-Archeology:   Date: Wed, 03 Mar 2021 07:59:25 +0100
+> X-Git-Archeology:   From: Tony <tonymckahan@gmail.com>
+> X-Git-Archeology:   Subject: RK3399 Typec DP (#2676)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0cdffb29b07305209efb12cf3b5ac6032d3a1153: https://github.com/armbian/build/commit/0cdffb29b07305209efb12cf3b5ac6032d3a1153
+> X-Git-Archeology:   Date: Wed, 24 Mar 2021 19:01:53 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Renaming DEV branch to EDGE (#2704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision ac8fc4385594d59257ee9dffd9efa85e3497fa7d: https://github.com/armbian/build/commit/ac8fc4385594d59257ee9dffd9efa85e3497fa7d
+> X-Git-Archeology:   Date: Sat, 26 Feb 2022 07:46:44 +0100
+> X-Git-Archeology:   From: Piotr Szczepanik <piter75@gmail.com>
+> X-Git-Archeology:   Subject: Switch rockchip64 current to linux 5.15.y (#3489)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ MAINTAINERS                             |   6 +
+ drivers/extcon/Kconfig                  |  10 +
+ drivers/extcon/Makefile                 |   1 +
+ drivers/extcon/extcon-usbc-virtual-pd.c | 285 ++++++++++
+ 4 files changed, 302 insertions(+)
+
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 68f21d46614c..aeb161b19dae 100644
+index f77188f30210..51deb9095f33 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -6466,6 +6466,12 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/tytso/ext4.git
- F:	Documentation/filesystems/ext4/
+@@ -7862,6 +7862,12 @@ F:	Documentation/filesystems/ext4/
  F:	fs/ext4/
+ F:	include/trace/events/ext4.h
  
 +EXTCON DRIVER FOR TYPE-C VIRTUAL PD
 +M:	Jagan Teki <jagan@amarulasolutions.com>
@@ -16,12 +62,12 @@ index 68f21d46614c..aeb161b19dae 100644
  M:	Mimi Zohar <zohar@linux.ibm.com>
  L:	linux-integrity@vger.kernel.org
 diff --git a/drivers/extcon/Kconfig b/drivers/extcon/Kconfig
-index aac507bff135..edd6c3c52699 100644
+index 290186e44e6b..ac0b6164d88e 100644
 --- a/drivers/extcon/Kconfig
 +++ b/drivers/extcon/Kconfig
-@@ -186,4 +186,14 @@ config EXTCON_USBC_CROS_EC
- 	  Say Y here to enable USB Type C cable detection extcon support when
- 	  using Chrome OS EC based USB Type-C ports.
+@@ -189,4 +189,14 @@ config EXTCON_USBC_TUSB320
+ 	  Say Y here to enable support for USB Type C cable detection extcon
+ 	  support using a TUSB320.
  
 +config EXTCON_USBC_VIRTUAL_PD
 +	tristate "Virtual Type-C PD EXTCON support"
@@ -35,10 +81,10 @@ index aac507bff135..edd6c3c52699 100644
 +
  endif
 diff --git a/drivers/extcon/Makefile b/drivers/extcon/Makefile
-index 52096fd8a216..c35191eef0e1 100644
+index 1b390d934ca9..57c1e65bfcfd 100644
 --- a/drivers/extcon/Makefile
 +++ b/drivers/extcon/Makefile
-@@ -25,3 +25,4 @@ obj-$(CONFIG_EXTCON_RT8973A)	+= extcon-rt8973a.o
+@@ -25,3 +25,4 @@ obj-$(CONFIG_EXTCON_SM5502)	+= extcon-sm5502.o
  obj-$(CONFIG_EXTCON_USB_GPIO)	+= extcon-usb-gpio.o
  obj-$(CONFIG_EXTCON_USBC_CROS_EC) += extcon-usbc-cros-ec.o
  obj-$(CONFIG_EXTCON_USBC_TUSB320) += extcon-usbc-tusb320.o
@@ -334,4 +380,6 @@ index 000000000000..e0713670e33d
 +MODULE_AUTHOR("Jagan Teki <jagan@amarulasolutions.com>");
 +MODULE_DESCRIPTION("Type-C Virtual PD extcon driver");
 +MODULE_LICENSE("GPL v2");
+-- 
+Armbian
 

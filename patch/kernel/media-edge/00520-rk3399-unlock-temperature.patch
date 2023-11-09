@@ -1,8 +1,72 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: ThomasKaiser <github@kaiser-edv.de>
+Date: Sat, 13 Oct 2018 16:35:07 +0200
+Subject: [ARCHEOLOGY] Increase performance with rk3399-dev
+
+> X-Git-Archeology: - Revision b28fa47aa8b9864ccae8b90ebb3d46ae55103d6e: https://github.com/armbian/build/commit/b28fa47aa8b9864ccae8b90ebb3d46ae55103d6e
+> X-Git-Archeology:   Date: Sat, 13 Oct 2018 16:35:07 +0200
+> X-Git-Archeology:   From: ThomasKaiser <github@kaiser-edv.de>
+> X-Git-Archeology:   Subject: Increase performance with rk3399-dev
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision f18360d1ef5d6487392ff4079301bca97945e704: https://github.com/armbian/build/commit/f18360d1ef5d6487392ff4079301bca97945e704
+> X-Git-Archeology:   Date: Wed, 24 Oct 2018 17:03:35 +0200
+> X-Git-Archeology:   From: Igor Pecovnik <igor.pecovnik@gmail.com>
+> X-Git-Archeology:   Subject: [rk3399-dev] Merging rk3399-DEV with rockchip64-DEV on sources, patches and config level. Leave family intact, add 1.5 OPP for RK3328, add upstream patch for rk3399-default
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 150ac0c2afa147d9e3b036c8ecd8238fe5648cf3: https://github.com/armbian/build/commit/150ac0c2afa147d9e3b036c8ecd8238fe5648cf3
+> X-Git-Archeology:   Date: Tue, 19 Nov 2019 23:25:39 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Remove K<4, change branches, new features (#1586)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision dfd5cf9692e97774f7f0bfd72227144e36f58070: https://github.com/armbian/build/commit/dfd5cf9692e97774f7f0bfd72227144e36f58070
+> X-Git-Archeology:   Date: Sun, 13 Dec 2020 22:13:03 -0500
+> X-Git-Archeology:   From: tonymac32 <tonymckahan@gmail.com>
+> X-Git-Archeology:   Subject: [ rockchip64 ] Clean up patchset
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0cdffb29b07305209efb12cf3b5ac6032d3a1153: https://github.com/armbian/build/commit/0cdffb29b07305209efb12cf3b5ac6032d3a1153
+> X-Git-Archeology:   Date: Wed, 24 Mar 2021 19:01:53 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Renaming DEV branch to EDGE (#2704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 6b490e16944b30ff69bf9c13678905187df0d9d4: https://github.com/armbian/build/commit/6b490e16944b30ff69bf9c13678905187df0d9d4
+> X-Git-Archeology:   Date: Tue, 11 Jan 2022 15:26:11 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel edge to 5.16 (#3387)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision f52a4193d02ef88333ba117c68d49486dfd7ff41: https://github.com/armbian/build/commit/f52a4193d02ef88333ba117c68d49486dfd7ff41
+> X-Git-Archeology:   Date: Sun, 20 Mar 2022 22:58:21 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: Adding Pine64 Quartz64a as WIP target (#3539)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0afe24c95729044910e0b3f84dc5500bcdc6524c: https://github.com/armbian/build/commit/0afe24c95729044910e0b3f84dc5500bcdc6524c
+> X-Git-Archeology:   Date: Sun, 24 Apr 2022 22:33:47 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media edge to 5.17 (#3704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ arch/arm64/boot/dts/rockchip/rk3399.dtsi | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
 diff --git a/arch/arm64/boot/dts/rockchip/rk3399.dtsi b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
-index 8a8cf0e..6cef1e3 100644
+index 684cdcc0a4b5..68a884716c1e 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3399.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
-@@ -722,17 +722,17 @@
+@@ -831,17 +831,17 @@ cpu_thermal: cpu-thermal {
  
  			trips {
  				cpu_alert0: cpu_alert0 {
@@ -23,3 +87,6 @@ index 8a8cf0e..6cef1e3 100644
  					hysteresis = <2000>;
  					type = "critical";
  				};
+-- 
+Armbian
+

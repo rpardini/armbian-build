@@ -1,7 +1,57 @@
-index c654b6b02f3..f73f792eb44 100644
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleg <balbes-150@yandex.ru>
+Date: Mon, 12 Apr 2021 22:23:15 +0200
+Subject: [ARCHEOLOGY] fix firefly-rk3399 (#2758)
+
+> X-Git-Archeology: - Revision 4ab06060a38df516dfc08fb155f447ed4449145d: https://github.com/armbian/build/commit/4ab06060a38df516dfc08fb155f447ed4449145d
+> X-Git-Archeology:   Date: Mon, 12 Apr 2021 22:23:15 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: fix firefly-rk3399 (#2758)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision a00fabe6c30d273fed9696a3b8d718ae9a4e9ee2: https://github.com/armbian/build/commit/a00fabe6c30d273fed9696a3b8d718ae9a4e9ee2
+> X-Git-Archeology:   Date: Mon, 28 Jun 2021 01:15:24 -0400
+> X-Git-Archeology:   From: tonymac32 <tonymckahan@gmail.com>
+> X-Git-Archeology:   Subject: [ Rockchip64 ] correct patch names
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision c67b70aa3dfac552ae9b9adcfe857040d4fb523f: https://github.com/armbian/build/commit/c67b70aa3dfac552ae9b9adcfe857040d4fb523f
+> X-Git-Archeology:   Date: Sat, 20 Nov 2021 19:49:42 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: fix SD for firefly-rk3399 (#3268)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 3b1812c002463c6b473b699d755e59ae9c64249f: https://github.com/armbian/build/commit/3b1812c002463c6b473b699d755e59ae9c64249f
+> X-Git-Archeology:   Date: Sat, 20 Nov 2021 22:38:34 +0100
+> X-Git-Archeology:   From: Piotr Szczepanik <piter75@gmail.com>
+> X-Git-Archeology:   Subject: Fixed rockchip64 current compilation - broken since c67b70aa3dfac552ae9b9adcfe857040d4fb523f
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 9204ef6f81f4b5d4938c0e30937d6c0ed07cba5c: https://github.com/armbian/build/commit/9204ef6f81f4b5d4938c0e30937d6c0ed07cba5c
+> X-Git-Archeology:   Date: Tue, 23 Nov 2021 23:10:17 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: fix dts firefly-rk3399 for edge (#3287)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 4c3ad68a25d616248c7d3ffaa0819e576c3606aa: https://github.com/armbian/build/commit/4c3ad68a25d616248c7d3ffaa0819e576c3606aa
+> X-Git-Archeology:   Date: Thu, 03 Nov 2022 09:19:09 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: fix dts for rk3399-firefly
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ arch/arm64/boot/dts/rockchip/rk3399-firefly.dts | 791 +---------
+ 1 file changed, 60 insertions(+), 731 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3399-firefly.dts b/arch/arm64/boot/dts/rockchip/rk3399-firefly.dts
+index c5db64f3e124..3cd6c7a378ba 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3399-firefly.dts
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-firefly.dts
-@@ -1,85 +1,14 @@
+@@ -1,86 +1,15 @@
  // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  /*
 - * Copyright (c) 2017 Fuzhou Rockchip Electronics Co., Ltd.
@@ -20,7 +70,7 @@ index c654b6b02f3..f73f792eb44 100644
  / {
  	model = "Firefly-RK3399 Board";
  	compatible = "firefly,firefly-rk3399", "rockchip,rk3399";
--
+ 
 -	aliases {
 -		mmc0 = &sdio0;
 -		mmc1 = &sdmmc;
@@ -86,10 +136,11 @@ index c654b6b02f3..f73f792eb44 100644
 -		regulator-min-microvolt = <12000000>;
 -		regulator-max-microvolt = <12000000>;
 -	};
- 
+-
  	gpio-keys {
  		compatible = "gpio-keys";
-@@ -144,394 +73,26 @@
+ 		autorepeat;
+@@ -144,394 +73,26 @@ simple-audio-card,codec {
  		};
  	};
  
@@ -218,8 +269,8 @@ index c654b6b02f3..f73f792eb44 100644
 -
 -&cpu_l3 {
 -	cpu-supply = <&vdd_cpu_l>;
--};
--
+ };
+ 
 -&cpu_b0 {
 -	cpu-supply = <&vdd_cpu_b>;
 -};
@@ -258,8 +309,6 @@ index c654b6b02f3..f73f792eb44 100644
 -	pinctrl-names = "default";
 -	pinctrl-0 = <&hdmi_cec>;
 -	status = "okay";
-+};
-+
 +&rk808{
 +	rtc {
 +		compatible = "rk808-rtc";	
@@ -271,7 +320,7 @@ index c654b6b02f3..f73f792eb44 100644
 -	clock-frequency = <400000>;
 -	i2c-scl-rising-time-ns = <168>;
 -	i2c-scl-falling-time-ns = <4>;
--	status = "okay";
+ 	status = "okay";
 -
 -	rk808: pmic@1b {
 -		compatible = "rockchip,rk808";
@@ -280,7 +329,12 @@ index c654b6b02f3..f73f792eb44 100644
 -		interrupts = <21 IRQ_TYPE_LEVEL_LOW>;
 -		#clock-cells = <1>;
 -		clock-output-names = "xin32k", "rk808-clkout2";
--		pinctrl-names = "default";
++	hym8563: hym8563@51 {
++		compatible = "haoyu,hym8563";
++		reg = <0x51>;
++		interrupt-parent = <&gpio0>;
++		interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
+ 		pinctrl-names = "default";
 -		pinctrl-0 = <&pmic_int_l>;
 -		rockchip,system-power-controller;
 -		wakeup-source;
@@ -488,20 +542,13 @@ index c654b6b02f3..f73f792eb44 100644
 -		regulator-state-mem {
 -			regulator-off-in-suspend;
 -		};
-+	status = "okay";
-+	hym8563: hym8563@51 {
-+		compatible = "haoyu,hym8563";
-+		reg = <0x51>;
-+		interrupt-parent = <&gpio0>;
-+		interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
-+		pinctrl-names = "default";
 +		#clock-cells = <0>;
 +		clock-frequency = <32768>;
 +		clock-output-names = "xin32k";
  	};
  };
  
-@@ -552,63 +113,10 @@
+@@ -552,64 +113,11 @@ rt5640: rt5640@1c {
  	};
  };
  
@@ -515,7 +562,7 @@ index c654b6b02f3..f73f792eb44 100644
  	i2c-scl-rising-time-ns = <600>;
  	i2c-scl-falling-time-ns = <20>;
  	status = "okay";
--
+ 
 -	fusb0: typec-portc@22 {
 -		compatible = "fcs,fusb302";
 -		reg = <0x22>;
@@ -562,10 +609,11 @@ index c654b6b02f3..f73f792eb44 100644
 -			};
 -		};
 -	};
- 
+-
  	accelerometer@68 {
  		compatible = "invensense,mpu6500";
-@@ -618,61 +126,27 @@
+ 		reg = <0x68>;
+@@ -618,61 +126,27 @@ accelerometer@68 {
  	};
  };
  
@@ -597,7 +645,12 @@ index c654b6b02f3..f73f792eb44 100644
 -&pcie_phy {
 -	status = "okay";
 -};
--
++&pinctrl {
++	bt {
++		bt_host_wake_l: bt-host-wake-l {
++			rockchip,pins = <0 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
+ 
 -&pcie0 {
 -	ep-gpios = <&gpio4 RK_PD1 GPIO_ACTIVE_HIGH>;
 -	num-lanes = <4>;
@@ -605,27 +658,20 @@ index c654b6b02f3..f73f792eb44 100644
 -	pinctrl-0 = <&pcie_clkreqn_cpm>;
 -	status = "okay";
 -};
--
++		bt_reg_on_h: bt-reg-on-h {
++			rockchip,pins = <0 RK_PB1 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
+ 
 -&pmu_io_domains {
 -	pmu1830-supply = <&vcc_3v0>;
 -	status = "okay";
 -};
--
- &pinctrl {
-+	bt {
-+		bt_host_wake_l: bt-host-wake-l {
-+			rockchip,pins = <0 RK_PA4 RK_FUNC_GPIO &pcfg_pull_none>;
-+		};
-+
-+		bt_reg_on_h: bt-reg-on-h {
-+			rockchip,pins = <0 RK_PB1 RK_FUNC_GPIO &pcfg_pull_none>;
-+		};
-+
 +		bt_wake_l: bt-wake-l {
 +			rockchip,pins = <2 RK_PD2 RK_FUNC_GPIO &pcfg_pull_none>;
 +		};
 +	};
-+
+ 
+-&pinctrl {
  	buttons {
  		pwrbtn: pwrbtn {
  			rockchip,pins = <0 RK_PA5 RK_FUNC_GPIO &pcfg_pull_up>;
@@ -641,36 +687,53 @@ index c654b6b02f3..f73f792eb44 100644
  	ir {
  		ir_int: ir-int {
  			rockchip,pins = <0 RK_PA6 RK_FUNC_GPIO &pcfg_pull_none>;
-@@ -685,6 +159,56 @@
+@@ -685,16 +159,6 @@ lcd_panel_reset: lcd-panel-reset {
  		};
  	};
  
-+	pcie {
-+		pcie_pwr_en: pcie-pwr-en {
-+			rockchip,pins = <1 RK_PC1 RK_FUNC_GPIO &pcfg_pull_none>;
-+		};
-+
-+		pcie_3g_drv: pcie-3g-drv {
-+			rockchip,pins = <0 RK_PA2 RK_FUNC_GPIO &pcfg_pull_up>;
-+		};
-+	};
-+
-+	pmic {
-+		vsel1_pin: vsel1-pin {
-+			rockchip,pins = <1 RK_PC2 RK_FUNC_GPIO &pcfg_pull_down>;
-+		};
-+
-+		vsel2_pin: vsel2-pin {
-+			rockchip,pins = <1 RK_PB6 RK_FUNC_GPIO &pcfg_pull_down>;
-+		};
-+	};
-+
-+	sdio-pwrseq {
-+		wifi_enable_h: wifi-enable-h {
-+			rockchip,pins = <0 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
-+		};
-+	};
-+
+-	leds {
+-		work_led_pin: work-led-pin {
+-			rockchip,pins = <2 RK_PD3 RK_FUNC_GPIO &pcfg_pull_none>;
+-		};
+-
+-		diy_led_pin: diy-led-pin {
+-			rockchip,pins = <0 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
+-		};
+-	};
+-
+ 	pcie {
+ 		pcie_pwr_en: pcie-pwr-en {
+ 			rockchip,pins = <1 RK_PC1 RK_FUNC_GPIO &pcfg_pull_none>;
+@@ -706,10 +170,6 @@ pcie_3g_drv: pcie-3g-drv {
+ 	};
+ 
+ 	pmic {
+-		pmic_int_l: pmic-int-l {
+-			rockchip,pins = <1 RK_PC5 RK_FUNC_GPIO &pcfg_pull_up>;
+-		};
+-
+ 		vsel1_pin: vsel1-pin {
+ 			rockchip,pins = <1 RK_PC2 RK_FUNC_GPIO &pcfg_pull_down>;
+ 		};
+@@ -719,21 +179,21 @@ vsel2_pin: vsel2-pin {
+ 		};
+ 	};
+ 
+-	rt5640 {
+-		rt5640_hpcon: rt5640-hpcon {
+-			rockchip,pins = <4 RK_PC5 RK_FUNC_GPIO &pcfg_pull_none>;
+-		};
+-	};
+-
+ 	sdio-pwrseq {
+ 		wifi_enable_h: wifi-enable-h {
+ 			rockchip,pins = <0 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
+ 		};
+ 	};
+ 
+-	usb-typec {
+-		vcc5v0_typec_en: vcc5v0_typec_en {
+-			rockchip,pins = <1 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
 +	rt5640 {
 +		rt5640_hpcon: rt5640-hpcon {
 +			rockchip,pins = <4 RK_PC5 RK_FUNC_GPIO &pcfg_pull_none>;
@@ -680,102 +743,39 @@ index c654b6b02f3..f73f792eb44 100644
 +	pmic {
 +		pmic_int_l: pmic-int-l {
 +			rockchip,pins = <1 RK_PC5 RK_FUNC_GPIO &pcfg_pull_up>;
-+		};
-+	};
-+
-+	usb2 {
-+		vcc5v0_host_en: vcc5v0-host-en {
-+			rockchip,pins = <1 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
-+		};
-+	};
-+
-+	wifi {
-+		wifi_host_wake_l: wifi-host-wake-l {
-+			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_none>;
-+		};
-+	};
-+
- 	leds {
- 		work_led_pin: work-led-pin {
- 			rockchip,pins = <2 RK_PD3 RK_FUNC_GPIO &pcfg_pull_none>;
-@@ -694,74 +218,8 @@
- 			rockchip,pins = <0 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
  		};
  	};
--
--	pcie {
--		pcie_pwr_en: pcie-pwr-en {
--			rockchip,pins = <1 RK_PC1 RK_FUNC_GPIO &pcfg_pull_none>;
--		};
--
--		pcie_3g_drv: pcie-3g-drv {
--			rockchip,pins = <0 RK_PA2 RK_FUNC_GPIO &pcfg_pull_up>;
--		};
--	};
--
--	pmic {
--		pmic_int_l: pmic-int-l {
--			rockchip,pins = <1 RK_PC5 RK_FUNC_GPIO &pcfg_pull_up>;
--		};
--
--		vsel1_pin: vsel1-pin {
--			rockchip,pins = <1 RK_PC2 RK_FUNC_GPIO &pcfg_pull_down>;
--		};
--
--		vsel2_pin: vsel2-pin {
--			rockchip,pins = <1 RK_PB6 RK_FUNC_GPIO &pcfg_pull_down>;
--		};
--	};
--
--	rt5640 {
--		rt5640_hpcon: rt5640-hpcon {
--			rockchip,pins = <4 RK_PC5 RK_FUNC_GPIO &pcfg_pull_none>;
--		};
--	};
--
--	sdio-pwrseq {
--		wifi_enable_h: wifi-enable-h {
--			rockchip,pins = <0 RK_PB2 RK_FUNC_GPIO &pcfg_pull_none>;
--		};
--	};
--
--	usb-typec {
--		vcc5v0_typec_en: vcc5v0_typec_en {
--			rockchip,pins = <1 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
--		};
--	};
--
--	usb2 {
--		vcc5v0_host_en: vcc5v0-host-en {
--			rockchip,pins = <1 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
--		};
--	};
--
--	wifi {
--		wifi_host_wake_l: wifi-host-wake-l {
--			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_none>;
--		};
--	};
+ 
+@@ -748,20 +208,18 @@ wifi_host_wake_l: wifi-host-wake-l {
+ 			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_none>;
+ 		};
+ 	};
 -};
--
+ 
 -&pwm0 {
 -	status = "okay";
 -};
--
++	leds {
++		work_led_pin: work-led-pin {
++			rockchip,pins = <2 RK_PD3 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
+ 
 -&pwm2 {
 -	status = "okay";
--};
--
++		diy_led_pin: diy-led-pin {
++			rockchip,pins = <0 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
++	};
+ };
+ 
 -&saradc {
 -	vref-supply = <&vcca1v8_s3>;
 -	status = "okay";
 -};
-+};
-+
  
  &sdio0 {
  	/* WiFi & BT combo module Ampak AP6356S */
-@@ -771,6 +229,7 @@
+@@ -771,6 +229,7 @@ &sdio0 {
  	keep-power-in-suspend;
  	mmc-pwrseq = <&sdio_pwrseq>;
  	non-removable;
@@ -783,7 +783,7 @@ index c654b6b02f3..f73f792eb44 100644
  	pinctrl-names = "default";
  	pinctrl-0 = <&sdio0_bus4 &sdio0_cmd &sdio0_clk>;
  	sd-uhs-sdr104;
-@@ -779,15 +238,12 @@
+@@ -779,15 +238,12 @@ &sdio0 {
  	vqmmc-supply = <&vcc1v8_s3>;	/* IO line */
  	vmmc-supply = <&vcc_sdio>;	/* card's power */
  
@@ -800,7 +800,7 @@ index c654b6b02f3..f73f792eb44 100644
  		interrupt-names = "host-wake";
  		brcm,drive-strength = <5>;
  		pinctrl-names = "default";
-@@ -795,149 +251,22 @@
+@@ -795,149 +251,22 @@ brcmf: wifi@1 {
  	};
  };
  
@@ -936,23 +936,20 @@ index c654b6b02f3..f73f792eb44 100644
 -};
 -
 -&vopb {
--	status = "okay";
++	pinctrl-0 = <&uart0_xfer &uart0_rts &uart0_cts>;
+ 	status = "okay";
 -};
 -
 -&vopb_mmu {
 -	status = "okay";
 -};
--
+ 
 -&vopl {
 -	status = "okay";
 -};
 -
 -&vopl_mmu {
 -	status = "okay";
--};
-+	pinctrl-0 = <&uart0_xfer &uart0_rts &uart0_cts>;
-+	status = "okay";
-+
 +	bluetooth {
 +		compatible = "brcm,bcm43438-bt";
 +		clocks = <&rk808 1>;
@@ -966,5 +963,7 @@ index c654b6b02f3..f73f792eb44 100644
 +		vbat-supply = <&vcc3v3_sys>;
 +		vddio-supply = <&vcc_1v8>;
 +	};
-+};
+ };
+-- 
+Armbian
 

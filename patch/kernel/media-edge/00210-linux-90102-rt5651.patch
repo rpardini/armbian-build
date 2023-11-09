@@ -1,5 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Piotr Szczepanik <piter75@gmail.com>
+Date: Sun, 5 Apr 2020 18:15:06 +0200
+Subject: [ARCHEOLOGY] Fixed sound from rt5651 on OrangePi 4 (#1870)
+
+> X-Git-Archeology: - Revision e14a61c229db1216fedc397e351c4bed15df820e: https://github.com/armbian/build/commit/e14a61c229db1216fedc397e351c4bed15df820e
+> X-Git-Archeology:   Date: Sun, 05 Apr 2020 18:15:06 +0200
+> X-Git-Archeology:   From: Piotr Szczepanik <piter75@gmail.com>
+> X-Git-Archeology:   Subject: Fixed sound from rt5651 on OrangePi 4 (#1870)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0cdffb29b07305209efb12cf3b5ac6032d3a1153: https://github.com/armbian/build/commit/0cdffb29b07305209efb12cf3b5ac6032d3a1153
+> X-Git-Archeology:   Date: Wed, 24 Mar 2021 19:01:53 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Renaming DEV branch to EDGE (#2704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0afe24c95729044910e0b3f84dc5500bcdc6524c: https://github.com/armbian/build/commit/0afe24c95729044910e0b3f84dc5500bcdc6524c
+> X-Git-Archeology:   Date: Sun, 24 Apr 2022 22:33:47 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media edge to 5.17 (#3704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ sound/soc/codecs/rt5651.c | 16 ++++++++++
+ sound/soc/codecs/rt5651.h |  1 +
+ 2 files changed, 17 insertions(+)
+
 diff --git a/sound/soc/codecs/rt5651.c b/sound/soc/codecs/rt5651.c
-index c506c9305..41a08b320 100644
+index df90af906563..28e5b6fb9d8f 100644
 --- a/sound/soc/codecs/rt5651.c
 +++ b/sound/soc/codecs/rt5651.c
 @@ -24,6 +24,7 @@
@@ -47,7 +87,7 @@ index c506c9305..41a08b320 100644
  
  	snd_soc_component_update_bits(component, RT5651_PWR_ANLG1,
 diff --git a/sound/soc/codecs/rt5651.h b/sound/soc/codecs/rt5651.h
-index 20c33a3ec..17524fa9f 100644
+index 20c33a3ece37..17524fa9fdfc 100644
 --- a/sound/soc/codecs/rt5651.h
 +++ b/sound/soc/codecs/rt5651.h
 @@ -2097,6 +2097,7 @@ struct rt5651_priv {
@@ -58,3 +98,6 @@ index 20c33a3ec..17524fa9f 100644
  };
  
  #endif /* __RT5651_H__ */
+-- 
+Armbian
+
