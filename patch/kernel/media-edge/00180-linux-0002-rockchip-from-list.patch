@@ -1,8 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 10 Oct 2020 15:32:18 +0000
-Subject: [PATCH] phy/rockchip: inno-hdmi: use correct vco_div_5 macro on
- rk3328
+Subject: phy/rockchip: inno-hdmi: use correct vco_div_5 macro on rk3328
 
 inno_hdmi_phy_rk3328_clk_set_rate() is using the RK3228 macro
 when configuring vco_div_5 on RK3328.
@@ -30,12 +29,13 @@ index 80acca4e9e14..15339338aae3 100644
  	inno_write(inno, 0xa1, RK3328_PRE_PLL_PRE_DIV(cfg->prediv));
  
  	val = RK3328_SPREAD_SPECTRUM_MOD_DISABLE;
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Zheng Yang <zhengyang@rock-chips.com>
 Date: Sat, 10 Oct 2020 15:32:18 +0000
-Subject: [PATCH] phy/rockchip: inno-hdmi: round fractal pixclock in rk3328
- recalc_rate
+Subject: phy/rockchip: inno-hdmi: round fractal pixclock in rk3328 recalc_rate
 
 inno_hdmi_phy_rk3328_clk_recalc_rate() is returning a rate not found
 in the pre pll config table when the fractal divider is used.
@@ -72,12 +72,13 @@ index 15339338aae3..15a008a1ac7b 100644
  }
  
  static long inno_hdmi_phy_rk3328_clk_round_rate(struct clk_hw *hw,
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 10 Oct 2020 15:32:19 +0000
-Subject: [PATCH] phy/rockchip: inno-hdmi: remove unused no_c from rk3328
- recalc_rate
+Subject: phy/rockchip: inno-hdmi: remove unused no_c from rk3328 recalc_rate
 
 no_c is not used in any calculation, lets remove it.
 
@@ -109,12 +110,13 @@ index 15a008a1ac7b..4b936ca19920 100644
  		no_d = inno_read(inno, 0xa6) & RK3328_PRE_PLL_PCLK_DIV_D_MASK;
  
  		do_div(vco, (nd * (no_a == 1 ? no_b : no_a) * no_d * 2));
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 10 Oct 2020 15:32:19 +0000
-Subject: [PATCH] phy/rockchip: inno-hdmi: do not power on rk3328 post pll on
- reg write
+Subject: phy/rockchip: inno-hdmi: do not power on rk3328 post pll on reg write
 
 inno_write is used to configure 0xaa reg, that also hold the
 POST_PLL_POWER_DOWN bit.
@@ -156,11 +158,13 @@ index 4b936ca19920..620961fcfc1d 100644
  	}
  
  	for (v = 0; v < 14; v++)
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Huicong Xu <xhc@rock-chips.com>
 Date: Sat, 10 Oct 2020 15:32:20 +0000
-Subject: [PATCH] phy/rockchip: inno-hdmi: force set_rate on power_on
+Subject: phy/rockchip: inno-hdmi: force set_rate on power_on
 
 Regular 8-bit and Deep Color video formats mainly differ in TMDS rate and
 not in pixel clock rate.
@@ -175,7 +179,7 @@ Fix this by calling set_rate in power_on to force pre pll re-configuration.
 Signed-off-by: Huicong Xu <xhc@rock-chips.com>
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 ---
- drivers/phy/rockchip/phy-rockchip-inno-hdmi.c | 13 +++++++++++++
+ drivers/phy/rockchip/phy-rockchip-inno-hdmi.c | 13 ++++++++++
  1 file changed, 13 insertions(+)
 
 diff --git a/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c b/drivers/phy/rockchip/phy-rockchip-inno-hdmi.c
@@ -244,11 +248,13 @@ index 620961fcfc1d..2f01259823ea 100644
  
  	return 0;
  }
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 17 Feb 2019 22:14:38 +0000
-Subject: [PATCH] mmc: core: set initial signal voltage on power off
+Subject: mmc: core: set initial signal voltage on power off
 
 Some boards have SD card connectors where the power rail cannot be switched
 off by the driver. If the card has not been power cycled, it may still be
@@ -270,10 +276,10 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  1 file changed, 8 insertions(+)
 
 diff --git a/drivers/mmc/core/core.c b/drivers/mmc/core/core.c
-index ef53a2578824..d4c53074154a 100644
+index 426c7f66b349..5f491c67e2c9 100644
 --- a/drivers/mmc/core/core.c
 +++ b/drivers/mmc/core/core.c
-@@ -1358,6 +1358,14 @@ void mmc_power_off(struct mmc_host *host)
+@@ -1363,6 +1363,14 @@ void mmc_power_off(struct mmc_host *host)
  	if (host->ios.power_mode == MMC_POWER_OFF)
  		return;
  
@@ -288,11 +294,13 @@ index ef53a2578824..d4c53074154a 100644
  	mmc_pwrseq_power_off(host);
  
  	host->ios.clock = 0;
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Wed, 23 Jun 2021 16:59:18 +0200
-Subject: [PATCH] arm64: dts: rockchip: Add sdmmc_ext for RK3328
+Subject: arm64: dts: rockchip: Add sdmmc_ext for RK3328
 
 RK3328 SoC has a fourth mmc controller called SDMMC_EXT. Some
 boards have sdio wifi connected to it. In order to use it
@@ -301,14 +309,14 @@ is done on board level.
 
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
- arch/arm64/boot/dts/rockchip/rk3328.dtsi | 14 ++++++++++++++
+ arch/arm64/boot/dts/rockchip/rk3328.dtsi | 14 ++++++++++
  1 file changed, 14 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3328.dtsi b/arch/arm64/boot/dts/rockchip/rk3328.dtsi
-index 49ae15708a0b..60348d517efb 100644
+index 6d7a7bf72ac7..2678833c0468 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3328.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3328.dtsi
-@@ -993,6 +993,20 @@ usb_host0_ohci: usb@ff5d0000 {
+@@ -994,6 +994,20 @@ usb_host0_ohci: usb@ff5d0000 {
  		status = "disabled";
  	};
  
@@ -329,12 +337,13 @@ index 49ae15708a0b..60348d517efb 100644
  	usbdrd3: usb@ff600000 {
  		compatible = "rockchip,rk3328-dwc3", "snps,dwc3";
  		reg = <0x0 0xff600000 0x0 0x100000>;
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Wed, 23 Jun 2021 17:02:08 +0200
-Subject: [PATCH] arm64: dts: rockchip: Add sdmmc/sdio/emmc reset controls for
- RK3328
+Subject: arm64: dts: rockchip: Add sdmmc/sdio/emmc reset controls for RK3328
 
 The DW MCI controller driver will use them to reset the IP block before
 initialisation.
@@ -346,10 +355,10 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
  1 file changed, 6 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3328.dtsi b/arch/arm64/boot/dts/rockchip/rk3328.dtsi
-index 60348d517efb..d7e44d174d7b 100644
+index 2678833c0468..f26b5e03d5d3 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3328.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3328.dtsi
-@@ -871,6 +871,8 @@ sdmmc: mmc@ff500000 {
+@@ -872,6 +872,8 @@ sdmmc: mmc@ff500000 {
  		clock-names = "biu", "ciu", "ciu-drive", "ciu-sample";
  		fifo-depth = <0x100>;
  		max-frequency = <150000000>;
@@ -358,7 +367,7 @@ index 60348d517efb..d7e44d174d7b 100644
  		status = "disabled";
  	};
  
-@@ -883,6 +885,8 @@ sdio: mmc@ff510000 {
+@@ -884,6 +886,8 @@ sdio: mmc@ff510000 {
  		clock-names = "biu", "ciu", "ciu-drive", "ciu-sample";
  		fifo-depth = <0x100>;
  		max-frequency = <150000000>;
@@ -367,7 +376,7 @@ index 60348d517efb..d7e44d174d7b 100644
  		status = "disabled";
  	};
  
-@@ -895,6 +899,8 @@ emmc: mmc@ff520000 {
+@@ -896,6 +900,8 @@ emmc: mmc@ff520000 {
  		clock-names = "biu", "ciu", "ciu-drive", "ciu-sample";
  		fifo-depth = <0x100>;
  		max-frequency = <150000000>;
@@ -376,3 +385,6 @@ index 60348d517efb..d7e44d174d7b 100644
  		status = "disabled";
  	};
  
+-- 
+Armbian
+

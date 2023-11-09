@@ -1,3 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleg <balbes-150@yandex.ru>
+Date: Wed, 4 May 2022 16:16:40 +0200
+Subject: [ARCHEOLOGY] move 5.18-rc5 support jetson-nano (#3754)
+
+> X-Git-Archeology: - Revision 0f7606e653c607da7b40e855098b5fd23fe9eaec: https://github.com/armbian/build/commit/0f7606e653c607da7b40e855098b5fd23fe9eaec
+> X-Git-Archeology:   Date: Wed, 04 May 2022 16:16:40 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move 5.18-rc5 support jetson-nano (#3754)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision ba7912c0c9f5267aa19438117c265c6f7f635ef2: https://github.com/armbian/build/commit/ba7912c0c9f5267aa19438117c265c6f7f635ef2
+> X-Git-Archeology:   Date: Mon, 23 May 2022 16:17:09 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media 5.17.9 and 5.18-rc7 (#3792)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 3ff351cc52aed68e80949576f43d2fdf08ab8b5f: https://github.com/armbian/build/commit/3ff351cc52aed68e80949576f43d2fdf08ab8b5f
+> X-Git-Archeology:   Date: Thu, 06 Oct 2022 18:07:36 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move media current 5.19 and edge 6.0 (#4262)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision c29e51c70828145785c3167d984e6857e342c96e: https://github.com/armbian/build/commit/c29e51c70828145785c3167d984e6857e342c96e
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:51:25 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-edge to 6.0.7 (#4405)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 462b3befec60cfe998b67de82dc62836c0376ef2: https://github.com/armbian/build/commit/462b3befec60cfe998b67de82dc62836c0376ef2
+> X-Git-Archeology:   Date: Thu, 26 Jan 2023 19:08:48 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: correction of bpir2pro frequency control and changing the composition of images (#4753)
+> X-Git-Archeology:
+---
+ arch/arm64/boot/dts/rockchip/rk3568-bpi-r2-pro.dts | 124 +++++++++-
+ 1 file changed, 122 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3568-bpi-r2-pro.dts b/arch/arm64/boot/dts/rockchip/rk3568-bpi-r2-pro.dts
+index 26d7fda275ed..5ff9898b5fec 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3568-bpi-r2-pro.dts
 +++ b/arch/arm64/boot/dts/rockchip/rk3568-bpi-r2-pro.dts
 @@ -6,6 +6,7 @@
@@ -8,22 +54,22 @@
  #include <dt-bindings/leds/common.h>
  #include <dt-bindings/pinctrl/rockchip.h>
  #include <dt-bindings/soc/rockchip,vop2.h>
-@@ -53,6 +54,14 @@
- 		regulator-boot-on;
- 		regulator-min-microvolt = <12000000>;
+@@ -55,6 +56,14 @@ dc_12v: dc-12v-regulator {
  		regulator-max-microvolt = <12000000>;
-+	};
-+
+ 	};
+ 
 +	fan: gpio_fan {
 +		compatible = "gpio-fan";
 +		gpios = <&gpio0 RK_PD5 GPIO_ACTIVE_HIGH>;
 +		gpio-fan,speed-map = <0    0
 +				      4500 1>;
 +		#cooling-cells = <2>;
- 	};
- 
++	};
++
  	hdmi-con {
-@@ -119,6 +128,28 @@
+ 		compatible = "hdmi-connector";
+ 		type = "a";
+@@ -179,6 +188,28 @@ vcc5v0_usb_otg: vcc5v0-usb-otg-regulator {
  		regulator-max-microvolt = <5000000>;
  		vin-supply = <&vcc5v0_usb>;
  	};
@@ -52,7 +98,7 @@
  };
  
  &combphy0 {
-@@ -134,6 +165,39 @@
+@@ -194,6 +225,39 @@ &combphy1 {
  &combphy2 {
  	/* used for SATA */
  	status = "okay";
@@ -92,7 +138,7 @@
  };
  
  &gmac0 {
-@@ -216,15 +280,49 @@
+@@ -276,15 +340,49 @@ &hdmi_sound {
  &i2c0 {
  	status = "okay";
  
@@ -144,18 +190,18 @@
  		vcc1-supply = <&vcc3v3_sys>;
  		vcc2-supply = <&vcc3v3_sys>;
  		vcc3-supply = <&vcc3v3_sys>;
-@@ -427,6 +525,10 @@
- 					regulator-off-in-suspend;
+@@ -488,6 +586,10 @@ regulator-state-mem {
  				};
  			};
-+		};
+ 		};
 +
 +		codec {
 +			mic-in-differential;
- 		};
++		};
  	};
  };
-@@ -458,6 +560,18 @@
+ 
+@@ -517,6 +619,18 @@ &i2s0_8ch {
  	status = "okay";
  };
  
@@ -174,17 +220,19 @@
  &mdio0 {
  	#address-cells = <1>;
  	#size-cells = <0>;
-@@ -543,6 +657,12 @@
- 
- 		vcc5v0_usb_otg_en: vcc5v0_usb_otg_en {
+@@ -648,6 +762,12 @@ vcc5v0_usb_otg_en: vcc5v0_usb_otg_en {
  			rockchip,pins = <0 RK_PA5 RK_FUNC_GPIO &pcfg_pull_none>;
-+		};
-+	};
+ 		};
+ 	};
 +
 +	headphone {
 +		hp_det: hp-det {
 +			rockchip,pins = <3 RK_PC2 RK_FUNC_GPIO &pcfg_pull_up>;
- 		};
- 	};
++		};
++	};
  };
+ 
+ &pmu_io_domains {
+-- 
+Armbian
 

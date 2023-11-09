@@ -1,3 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleg <balbes-150@yandex.ru>
+Date: Sun, 20 Mar 2022 22:58:21 +0100
+Subject: [ARCHEOLOGY] Adding Pine64 Quartz64a as WIP target (#3539)
+
+> X-Git-Archeology: > recovered message: > * add Quartz64a
+> X-Git-Archeology: > recovered message: > * quartz64 to wip
+> X-Git-Archeology: > recovered message: > * add m2\p2 current
+> X-Git-Archeology: > recovered message: > * move patch archive
+> X-Git-Archeology: - Revision f52a4193d02ef88333ba117c68d49486dfd7ff41: https://github.com/armbian/build/commit/f52a4193d02ef88333ba117c68d49486dfd7ff41
+> X-Git-Archeology:   Date: Sun, 20 Mar 2022 22:58:21 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: Adding Pine64 Quartz64a as WIP target (#3539)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 57428044ec6ee099f6d67eebbcb9ce94c439b017: https://github.com/armbian/build/commit/57428044ec6ee099f6d67eebbcb9ce94c439b017
+> X-Git-Archeology:   Date: Mon, 02 May 2022 11:36:59 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.17 and media-edge to 5.18 (#3726)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 3ff351cc52aed68e80949576f43d2fdf08ab8b5f: https://github.com/armbian/build/commit/3ff351cc52aed68e80949576f43d2fdf08ab8b5f
+> X-Git-Archeology:   Date: Thu, 06 Oct 2022 18:07:36 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move media current 5.19 and edge 6.0 (#4262)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision c29e51c70828145785c3167d984e6857e342c96e: https://github.com/armbian/build/commit/c29e51c70828145785c3167d984e6857e342c96e
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:51:25 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-edge to 6.0.7 (#4405)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ arch/arm64/boot/dts/rockchip/Makefile | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/rockchip/Makefile b/arch/arm64/boot/dts/rockchip/Makefile
+index 0a76a2ebb5f6..087b192189a0 100644
 --- a/arch/arm64/boot/dts/rockchip/Makefile
 +++ b/arch/arm64/boot/dts/rockchip/Makefile
 @@ -1,4 +1,6 @@
@@ -7,3 +52,6 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += px30-evb.dtb
  dtb-$(CONFIG_ARCH_ROCKCHIP) += px30-engicam-px30-core-ctouch2.dtb
  dtb-$(CONFIG_ARCH_ROCKCHIP) += px30-engicam-px30-core-ctouch2-of10.dtb
+-- 
+Armbian
+

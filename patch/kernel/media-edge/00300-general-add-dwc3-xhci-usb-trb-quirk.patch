@@ -1,8 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Aditya Prayoga <aprayoga@users.noreply.github.com>
+Date: Fri, 22 Jan 2021 13:12:09 +0100
+Subject: [ARCHEOLOGY] Fix 2.5G Ethernet on Helios64 Mainline kernel (#2567)
+
+> X-Git-Archeology: > recovered message: > * rockchip64: Added XHCI HCD USB TRB ENT quirk
+> X-Git-Archeology: > recovered message: > On some xHCI controllers (e.g. Rockchip RK3399/RK3328/RK1808), they need
+> X-Git-Archeology: > recovered message: > to enable the ENT flag in the TRB data structure to force xHC to
+> X-Git-Archeology: > recovered message: > prefetch the next TRB of a TD.
+> X-Git-Archeology: > recovered message: > Enable the quirk on RK3399 through device tree node properties.
+> X-Git-Archeology: > recovered message: > Ported from Rockchip Linux 4.19
+> X-Git-Archeology: > recovered message: > * add to dev branch
+> X-Git-Archeology: - Revision 568d8472b3c2ab406fd3897e6b952c7a71a8165b: https://github.com/armbian/build/commit/568d8472b3c2ab406fd3897e6b952c7a71a8165b
+> X-Git-Archeology:   Date: Fri, 22 Jan 2021 13:12:09 +0100
+> X-Git-Archeology:   From: Aditya Prayoga <aprayoga@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Fix 2.5G Ethernet on Helios64 Mainline kernel (#2567)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 3c96df8d2577176cb483591f1a9092b5e90901c8: https://github.com/armbian/build/commit/3c96df8d2577176cb483591f1a9092b5e90901c8
+> X-Git-Archeology:   Date: Wed, 17 Mar 2021 21:27:32 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igor.pecovnik@gmail.com>
+> X-Git-Archeology:   Subject: Disable broken patch
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 08dca8c6aba6b45486e868b5e565d34edf7fb152: https://github.com/armbian/build/commit/08dca8c6aba6b45486e868b5e565d34edf7fb152
+> X-Git-Archeology:   Date: Tue, 23 Mar 2021 07:57:05 +0100
+> X-Git-Archeology:   From: Piotr Szczepanik <piter75@gmail.com>
+> X-Git-Archeology:   Subject: Fix trb ent quirk patch for rockchip64 (current/dev) and make it more resilient (#2728)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0cdffb29b07305209efb12cf3b5ac6032d3a1153: https://github.com/armbian/build/commit/0cdffb29b07305209efb12cf3b5ac6032d3a1153
+> X-Git-Archeology:   Date: Wed, 24 Mar 2021 19:01:53 +0100
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Renaming DEV branch to EDGE (#2704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 8eece74eb581367625e6ebcc12ee5c6f4f44617c: https://github.com/armbian/build/commit/8eece74eb581367625e6ebcc12ee5c6f4f44617c
+> X-Git-Archeology:   Date: Sun, 16 May 2021 13:35:47 +0200
+> X-Git-Archeology:   From: Piotr Szczepanik <piter75@gmail.com>
+> X-Git-Archeology:   Subject: Re-enabled accidentally disabled xhci trb quirk in rockchip64-current
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 6b490e16944b30ff69bf9c13678905187df0d9d4: https://github.com/armbian/build/commit/6b490e16944b30ff69bf9c13678905187df0d9d4
+> X-Git-Archeology:   Date: Tue, 11 Jan 2022 15:26:11 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel edge to 5.16 (#3387)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision f52a4193d02ef88333ba117c68d49486dfd7ff41: https://github.com/armbian/build/commit/f52a4193d02ef88333ba117c68d49486dfd7ff41
+> X-Git-Archeology:   Date: Sun, 20 Mar 2022 22:58:21 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: Adding Pine64 Quartz64a as WIP target (#3539)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0afe24c95729044910e0b3f84dc5500bcdc6524c: https://github.com/armbian/build/commit/0afe24c95729044910e0b3f84dc5500bcdc6524c
+> X-Git-Archeology:   Date: Sun, 24 Apr 2022 22:33:47 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media edge to 5.17 (#3704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 85977f1091aa8f2f861616b94853e05b512359eb: https://github.com/armbian/build/commit/85977f1091aa8f2f861616b94853e05b512359eb
+> X-Git-Archeology:   Date: Tue, 25 Oct 2022 21:50:42 +0200
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Fixes for Media CURRENT and XU4 edge (#4346)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ drivers/usb/dwc3/core.c      |  2 ++
+ drivers/usb/dwc3/core.h      |  4 +++
+ drivers/usb/dwc3/host.c      |  5 ++-
+ drivers/usb/host/xhci-plat.c |  3 ++
+ drivers/usb/host/xhci-ring.c | 17 ++++++++++
+ drivers/usb/host/xhci.h      |  5 +++
+ 6 files changed, 35 insertions(+), 1 deletion(-)
+
 diff --git a/drivers/usb/dwc3/core.c b/drivers/usb/dwc3/core.c
-index 841daec70..48825b870 100644
+index 9f8c988c25cb..40ed151d9420 100644
 --- a/drivers/usb/dwc3/core.c
 +++ b/drivers/usb/dwc3/core.c
-@@ -1340,6 +1340,8 @@ static void dwc3_get_properties(struct dwc3 *dwc)
+@@ -1551,6 +1551,8 @@ static void dwc3_get_properties(struct dwc3 *dwc)
  				"snps,dis-del-phy-power-chg-quirk");
  	dwc->dis_tx_ipgap_linecheck_quirk = device_property_read_bool(dev,
  				"snps,dis-tx-ipgap-linecheck-quirk");
@@ -10,12 +91,12 @@ index 841daec70..48825b870 100644
 +				"snps,xhci-trb-ent-quirk");
  	dwc->resume_hs_terminations = device_property_read_bool(dev,
  				"snps,resume-hs-terminations");
- 
+ 	dwc->parkmode_disable_ss_quirk = device_property_read_bool(dev,
 diff --git a/drivers/usb/dwc3/core.h b/drivers/usb/dwc3/core.h
-index 1b241f937..e1ded14fd 100644
+index 582ebd9cf9c2..1828c8b5218c 100644
 --- a/drivers/usb/dwc3/core.h
 +++ b/drivers/usb/dwc3/core.h
-@@ -1049,6 +1049,9 @@ struct dwc3_scratchpad_array {
+@@ -1098,6 +1098,9 @@ struct dwc3_scratchpad_array {
   *			change quirk.
   * @dis_tx_ipgap_linecheck_quirk: set if we disable u2mac linestate
   *			check during HS transmit.
@@ -23,21 +104,21 @@ index 1b241f937..e1ded14fd 100644
 + *			flag in the TRB data structure to force xHC to
 + *			pre-fetch the next TRB of a TD.
   * @resume-hs-terminations: Set if we enable quirk for fixing improper crc
-  *                      generation after resume from suspend.
+  *			generation after resume from suspend.
   * @parkmode_disable_ss_quirk: set if we need to disable all SuperSpeed
-@@ -1245,6 +1248,7 @@ struct dwc3 {
+@@ -1317,6 +1320,7 @@ struct dwc3 {
+ 	unsigned		dis_del_phy_power_chg_quirk:1;
  	unsigned		dis_tx_ipgap_linecheck_quirk:1;
  	unsigned		resume_hs_terminations:1;
 +	unsigned		xhci_trb_ent_quirk:1;
  	unsigned		parkmode_disable_ss_quirk:1;
  	unsigned		gfladj_refclk_lpm_sel:1;
  
- 	unsigned		tx_de_emphasis_quirk:1;
 diff --git a/drivers/usb/dwc3/host.c b/drivers/usb/dwc3/host.c
-index e19517658..19d48703d 100644
+index f6f13e7f1ba1..08a52869328d 100644
 --- a/drivers/usb/dwc3/host.c
 +++ b/drivers/usb/dwc3/host.c
-@@ -44,7 +44,7 @@ static int dwc3_host_get_irq(struct dwc3 *dwc)
+@@ -66,7 +66,7 @@ static int dwc3_host_get_irq(struct dwc3 *dwc)
  
  int dwc3_host_init(struct dwc3 *dwc)
  {
@@ -45,8 +126,8 @@ index e19517658..19d48703d 100644
 +	struct property_entry	props[5];
  	struct platform_device	*xhci;
  	int			ret, irq;
- 	struct resource		*res;
-@@ -92,6 +92,9 @@ int dwc3_host_init(struct dwc3 *dwc)
+ 	int			prop_idx = 0;
+@@ -97,6 +97,9 @@ int dwc3_host_init(struct dwc3 *dwc)
  	if (dwc->usb3_lpm_capable)
  		props[prop_idx++] = PROPERTY_ENTRY_BOOL("usb3-lpm-capable");
  
@@ -57,10 +138,10 @@ index e19517658..19d48703d 100644
  		props[prop_idx++] = PROPERTY_ENTRY_BOOL("usb2-lpm-disable");
  
 diff --git a/drivers/usb/host/xhci-plat.c b/drivers/usb/host/xhci-plat.c
-index 4d34f6005..6972cb5b2 100644
+index 5fb55bf19493..44e3c87d23a7 100644
 --- a/drivers/usb/host/xhci-plat.c
 +++ b/drivers/usb/host/xhci-plat.c
-@@ -312,6 +312,9 @@ static int xhci_plat_probe(struct platform_device *pdev)
+@@ -301,6 +301,9 @@ static int xhci_plat_probe(struct platform_device *pdev)
  		if (device_property_read_bool(tmpdev, "quirk-broken-port-ped"))
  			xhci->quirks |= XHCI_BROKEN_PORT_PED;
  
@@ -71,10 +152,10 @@ index 4d34f6005..6972cb5b2 100644
  					 &xhci->imod_interval);
  	}
 diff --git a/drivers/usb/host/xhci-ring.c b/drivers/usb/host/xhci-ring.c
-index 167dae117..b1bc3bd03 100644
+index f5b0e1ce22af..b80df4212fdd 100644
 --- a/drivers/usb/host/xhci-ring.c
 +++ b/drivers/usb/host/xhci-ring.c
-@@ -3312,6 +3312,7 @@ int xhci_queue_bulk_tx(struct xhci_hcd *xhci, gfp_t mem_flags,
+@@ -3527,6 +3527,7 @@ int xhci_queue_bulk_tx(struct xhci_hcd *xhci, gfp_t mem_flags,
  	bool more_trbs_coming = true;
  	bool need_zero_pkt = false;
  	bool first_trb = true;
@@ -82,7 +163,7 @@ index 167dae117..b1bc3bd03 100644
  	unsigned int num_trbs;
  	unsigned int start_cycle, num_sgs = 0;
  	unsigned int enqd_len, block_len, trb_buff_len, full_len;
-@@ -3348,6 +3349,13 @@ int xhci_queue_bulk_tx(struct xhci_hcd *xhci, gfp_t mem_flags,
+@@ -3563,6 +3564,13 @@ int xhci_queue_bulk_tx(struct xhci_hcd *xhci, gfp_t mem_flags,
  	if (urb->transfer_flags & URB_ZERO_PACKET && urb_priv->num_tds > 1)
  		need_zero_pkt = true;
  
@@ -96,7 +177,7 @@ index 167dae117..b1bc3bd03 100644
  	td = &urb_priv->td[0];
  
  	/*
-@@ -3376,6 +3384,13 @@ int xhci_queue_bulk_tx(struct xhci_hcd *xhci, gfp_t mem_flags,
+@@ -3591,6 +3599,13 @@ int xhci_queue_bulk_tx(struct xhci_hcd *xhci, gfp_t mem_flags,
  			first_trb = false;
  			if (start_cycle == 0)
  				field |= TRB_CYCLE;
@@ -110,7 +191,7 @@ index 167dae117..b1bc3bd03 100644
  		} else
  			field |= ring->cycle_state;
  
-@@ -3384,6 +3399,8 @@ int xhci_queue_bulk_tx(struct xhci_hcd *xhci, gfp_t mem_flags,
+@@ -3599,6 +3614,8 @@ int xhci_queue_bulk_tx(struct xhci_hcd *xhci, gfp_t mem_flags,
  		 */
  		if (enqd_len + trb_buff_len < full_len) {
  			field |= TRB_CHAIN;
@@ -120,10 +201,10 @@ index 167dae117..b1bc3bd03 100644
  				if (xhci_align_td(xhci, urb, enqd_len,
  						  &trb_buff_len,
 diff --git a/drivers/usb/host/xhci.h b/drivers/usb/host/xhci.h
-index d01241f1d..357217751 100644
+index dcee7f3207ad..60ab8c8a1c3b 100644
 --- a/drivers/usb/host/xhci.h
 +++ b/drivers/usb/host/xhci.h
-@@ -1512,7 +1512,11 @@ static inline const char *xhci_trb_type_string(u8 type)
+@@ -1525,7 +1525,11 @@ static inline const char *xhci_trb_type_string(u8 type)
  #define TRB_SEGMENT_SIZE	(TRBS_PER_SEGMENT*16)
  #define TRB_SEGMENT_SHIFT	(ilog2(TRB_SEGMENT_SIZE))
  /* TRB buffer pointers can't cross 64KB boundaries */
@@ -135,11 +216,14 @@ index d01241f1d..357217751 100644
  #define TRB_MAX_BUFF_SIZE	(1 << TRB_MAX_BUFF_SHIFT)
  /* How much data is left before the 64KB boundary? */
  #define TRB_BUFF_LEN_UP_TO_BOUNDARY(addr)	(TRB_MAX_BUFF_SIZE - \
-@@ -1828,6 +1832,7 @@ struct xhci_hcd {
+@@ -1843,6 +1847,7 @@ struct xhci_hcd {
  #define XHCI_STATE_HALTED	(1 << 1)
  #define XHCI_STATE_REMOVING	(1 << 2)
  	unsigned long long	quirks;
 +#define XHCI_TRB_ENT_QUIRK	BIT_ULL(63)
  #define	XHCI_LINK_TRB_QUIRK	BIT_ULL(0)
- #define XHCI_RESET_EP_QUIRK	BIT_ULL(1)
+ #define XHCI_RESET_EP_QUIRK	BIT_ULL(1) /* Deprecated */
  #define XHCI_NEC_HOST		BIT_ULL(2)
+-- 
+Armbian
+

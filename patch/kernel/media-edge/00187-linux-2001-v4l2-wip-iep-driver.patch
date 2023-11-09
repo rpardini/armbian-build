@@ -1,13 +1,12 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Sun, 11 Oct 2020 17:03:12 +0200
-Subject: [PATCH] dt-bindings: media: Add Rockchip IEP binding
+Subject: dt-bindings: media: Add Rockchip IEP binding
 
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
- .../bindings/media/rockchip-iep.yaml          | 73 +++++++++++++++++++
+ Documentation/devicetree/bindings/media/rockchip-iep.yaml | 73 ++++++++++
  1 file changed, 73 insertions(+)
- create mode 100644 Documentation/devicetree/bindings/media/rockchip-iep.yaml
 
 diff --git a/Documentation/devicetree/bindings/media/rockchip-iep.yaml b/Documentation/devicetree/bindings/media/rockchip-iep.yaml
 new file mode 100644
@@ -88,27 +87,24 @@ index 000000000000..a9efcda13fc1
 +      iommus = <&iep_mmu>;
 +      power-domains = <&power RK3228_PD_VIO>;
 +    };
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Sun, 11 Oct 2020 21:24:10 +0200
-Subject: [PATCH] media: rockchip: Add Rockchip IEP driver
+Subject: media: rockchip: Add Rockchip IEP driver
 
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
- drivers/media/platform/rockchip/Kconfig       |    1 +
- drivers/media/platform/rockchip/Makefile      |    1 +
- drivers/media/platform/rockchip/iep/Kconfig   |   16 +
- drivers/media/platform/rockchip/iep/Makefile  |    5 +
- .../media/platform/rockchip/iep/iep-regs.h    |  291 +++++
- drivers/media/platform/rockchip/iep/iep.c     | 1089 +++++++++++++++++
- drivers/media/platform/rockchip/iep/iep.h     |  112 ++
+ drivers/media/platform/rockchip/Kconfig        |    1 +
+ drivers/media/platform/rockchip/Makefile       |    1 +
+ drivers/media/platform/rockchip/iep/Kconfig    |   16 +
+ drivers/media/platform/rockchip/iep/Makefile   |    5 +
+ drivers/media/platform/rockchip/iep/iep-regs.h |  291 +++
+ drivers/media/platform/rockchip/iep/iep.c      | 1089 ++++++++++
+ drivers/media/platform/rockchip/iep/iep.h      |  112 +
  7 files changed, 1515 insertions(+)
- create mode 100644 drivers/media/platform/rockchip/iep/Kconfig
- create mode 100644 drivers/media/platform/rockchip/iep/Makefile
- create mode 100644 drivers/media/platform/rockchip/iep/iep-regs.h
- create mode 100644 drivers/media/platform/rockchip/iep/iep.c
- create mode 100644 drivers/media/platform/rockchip/iep/iep.h
 
 diff --git a/drivers/media/platform/rockchip/Kconfig b/drivers/media/platform/rockchip/Kconfig
 index b41d3960c1b4..9ff362805ded 100644
@@ -1673,24 +1669,26 @@ index 000000000000..7d9fc61624b6
 +};
 +
 +#endif
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Wed, 14 Oct 2020 20:22:38 +0200
-Subject: [PATCH] ARM64: dts: rockchip: Add IEP node for RK3328
+Subject: ARM64: dts: rockchip: Add IEP node for RK3328
 
 while at that also add the mmu required
 
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
- arch/arm64/boot/dts/rockchip/rk3328.dtsi | 22 ++++++++++++++++++++++
+ arch/arm64/boot/dts/rockchip/rk3328.dtsi | 22 ++++++++++
  1 file changed, 22 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3328.dtsi b/arch/arm64/boot/dts/rockchip/rk3328.dtsi
-index eec03adf0902..5455a46c9a6b 100644
+index 1ade6f4b7ad5..cf7f154b76a0 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3328.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3328.dtsi
-@@ -760,6 +760,28 @@ vop_mmu: iommu@ff373f00 {
+@@ -761,6 +761,28 @@ vop_mmu: iommu@ff373f00 {
  		status = "disabled";
  	};
  
@@ -1719,22 +1717,24 @@ index eec03adf0902..5455a46c9a6b 100644
  	hdmi: hdmi@ff3c0000 {
  		compatible = "rockchip,rk3328-dw-hdmi";
  		reg = <0x0 0xff3c0000 0x0 0x20000>;
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Wed, 14 Oct 2020 20:43:12 +0200
-Subject: [PATCH] ARM64: dts: rockchip: Add IEP node for RK3399
+Subject: ARM64: dts: rockchip: Add IEP node for RK3399
 
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
- arch/arm64/boot/dts/rockchip/rk3399.dtsi | 13 ++++++++++++-
+ arch/arm64/boot/dts/rockchip/rk3399.dtsi | 13 +++++++++-
  1 file changed, 12 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3399.dtsi b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
-index dbe6a9cb98a5..f0629b7a81c6 100644
+index cc6449560d2b..873e695b4a8c 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3399.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
-@@ -1365,14 +1365,25 @@ vdec_mmu: iommu@ff660480 {
+@@ -1385,14 +1385,25 @@ vdec_mmu: iommu@ff660480 {
  		#iommu-cells = <0>;
  	};
  
@@ -1761,19 +1761,21 @@ index dbe6a9cb98a5..f0629b7a81c6 100644
  	};
  
  	rga: rga@ff680000 {
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Wed, 14 Oct 2020 20:53:56 +0200
-Subject: [PATCH] ARM: dts: rockchip: Add IEP node for RK3288
+Subject: ARM: dts: rockchip: Add IEP node for RK3288
 
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
- arch/arm/boot/dts/rk3288.dtsi | 13 ++++++++++++-
+ arch/arm/boot/dts/rk3288.dtsi | 13 +++++++++-
  1 file changed, 12 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm/boot/dts/rk3288.dtsi b/arch/arm/boot/dts/rk3288.dtsi
-index 59fba3ac6aae..06545f423de2 100644
+index 1f05098e5930..35595af7064c 100644
 --- a/arch/arm/boot/dts/rk3288.dtsi
 +++ b/arch/arm/boot/dts/rk3288.dtsi
 @@ -984,14 +984,25 @@ crypto: crypto@ff8a0000 {
@@ -1803,3 +1805,6 @@ index 59fba3ac6aae..06545f423de2 100644
  	};
  
  	isp_mmu: iommu@ff914000 {
+-- 
+Armbian
+

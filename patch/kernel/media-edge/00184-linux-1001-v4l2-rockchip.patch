@@ -1,8 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 23 May 2020 10:16:01 +0000
-Subject: [PATCH] WIP: media: rkvdec: pm runtime dont use autosuspend before
- disable and cleanup
+Subject: WIP: media: rkvdec: pm runtime dont use autosuspend before disable
+ and cleanup
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 ---
@@ -10,12 +10,12 @@ Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/staging/media/rkvdec/rkvdec.c b/drivers/staging/media/rkvdec/rkvdec.c
-index 4f5436c89e08..eaf2f133a264 100644
+index 09b823492847..3d6cb76a9578 100644
 --- a/drivers/staging/media/rkvdec/rkvdec.c
 +++ b/drivers/staging/media/rkvdec/rkvdec.c
-@@ -1125,9 +1125,9 @@ static int rkvdec_remove(struct platform_device *pdev)
- {
- 	struct rkvdec_dev *rkvdec = platform_get_drvdata(pdev);
+@@ -1127,9 +1127,9 @@ static int rkvdec_remove(struct platform_device *pdev)
+ 
+ 	cancel_delayed_work_sync(&rkvdec->watchdog_work);
  
 -	rkvdec_v4l2_cleanup(rkvdec);
 -	pm_runtime_disable(&pdev->dev);
@@ -25,11 +25,13 @@ index 4f5436c89e08..eaf2f133a264 100644
  	return 0;
  }
  
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Randy Li <ayaka@soulik.info>
 Date: Sun, 6 Jan 2019 01:48:37 +0800
-Subject: [PATCH] soc: rockchip: power-domain: export idle request
+Subject: soc: rockchip: power-domain: export idle request
 
 We need to put the power status of HEVC IP into IDLE unless
 we can't reset that IP or the SoC would crash down.
@@ -40,17 +42,16 @@ Signed-off-by: Caesar Wang <wxt@rock-chips.com>
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
 Signed-off-by: Randy Li <ayaka@soulik.info>
 ---
- drivers/soc/rockchip/pm_domains.c | 23 +++++++++++++++++++++++
- include/linux/rockchip_pmu.h      | 15 +++++++++++++++
- include/soc/rockchip/pm_domains.h |  6 ++++++
+ drivers/soc/rockchip/pm_domains.c | 23 ++++++++++
+ include/linux/rockchip_pmu.h      | 15 ++++++
+ include/soc/rockchip/pm_domains.h |  6 +++
  3 files changed, 44 insertions(+)
- create mode 100644 include/linux/rockchip_pmu.h
 
 diff --git a/drivers/soc/rockchip/pm_domains.c b/drivers/soc/rockchip/pm_domains.c
-index 89795abac951..ffb5d62c9d52 100644
+index 84bc022f9e5b..c2013f07174f 100644
 --- a/drivers/soc/rockchip/pm_domains.c
 +++ b/drivers/soc/rockchip/pm_domains.c
-@@ -309,6 +309,29 @@ static int rockchip_pmu_set_idle_request(struct rockchip_pm_domain *pd,
+@@ -338,6 +338,29 @@ static int rockchip_pmu_set_idle_request(struct rockchip_pm_domain *pd,
  	return 0;
  }
  
@@ -125,21 +126,23 @@ index 7dbd941fc937..c5a59dd71754 100644
  #endif /* CONFIG_ROCKCHIP_PM_DOMAINS */
  
  #endif /* __SOC_ROCKCHIP_PM_DOMAINS_H__ */
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Wed, 20 May 2020 17:04:47 +0200
-Subject: [PATCH] WIP: media: rkvdec: implement reset controls
+Subject: WIP: media: rkvdec: implement reset controls
 
 ---
- .../bindings/media/rockchip,vdec.yaml         | 19 +++++++
- drivers/staging/media/rkvdec/rkvdec-regs.h    |  5 ++
- drivers/staging/media/rkvdec/rkvdec.c         | 53 +++++++++++++++++++
- drivers/staging/media/rkvdec/rkvdec.h         | 11 +++-
+ Documentation/devicetree/bindings/media/rockchip,vdec.yaml | 19 ++++
+ drivers/staging/media/rkvdec/rkvdec-regs.h                 |  5 +
+ drivers/staging/media/rkvdec/rkvdec.c                      | 53 ++++++++++
+ drivers/staging/media/rkvdec/rkvdec.h                      | 11 +-
  4 files changed, 87 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/devicetree/bindings/media/rockchip,vdec.yaml b/Documentation/devicetree/bindings/media/rockchip,vdec.yaml
-index 3bcfb8e12333..dd6958df1de8 100644
+index 08b02ec16755..828d085b0ad3 100644
 --- a/Documentation/devicetree/bindings/media/rockchip,vdec.yaml
 +++ b/Documentation/devicetree/bindings/media/rockchip,vdec.yaml
 @@ -53,6 +53,18 @@ properties:
@@ -199,7 +202,7 @@ index 15b9bee92016..3acc914888f6 100644
  #define RKVDEC_REG_SYSCTRL				0x008
  #define RKVDEC_IN_ENDIAN				BIT(0)
 diff --git a/drivers/staging/media/rkvdec/rkvdec.c b/drivers/staging/media/rkvdec/rkvdec.c
-index eaf2f133a264..f55abb7c377f 100644
+index 3d6cb76a9578..f57a4825fa18 100644
 --- a/drivers/staging/media/rkvdec/rkvdec.c
 +++ b/drivers/staging/media/rkvdec/rkvdec.c
 @@ -10,12 +10,15 @@
@@ -342,21 +345,23 @@ index b9e219438bc9..f02f79c405f0 100644
  };
  
  struct rkvdec_ctx {
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Tue, 18 Aug 2020 11:38:04 +0200
-Subject: [PATCH] WIP: arm64: dts: add resets to vdec for RK3399
+Subject: WIP: arm64: dts: add resets to vdec for RK3399
 
 ---
  arch/arm64/boot/dts/rockchip/rk3399.dtsi | 10 +++++++++-
  1 file changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3399.dtsi b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
-index 980b12cb0a49..6e3149e587c5 100644
+index c544df9a6224..cc46594401e8 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3399.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
-@@ -1062,7 +1062,10 @@ power-domain@RK3399_PD_VCODEC {
+@@ -1082,7 +1082,10 @@ power-domain@RK3399_PD_VCODEC {
  			power-domain@RK3399_PD_VDU {
  				reg = <RK3399_PD_VDU>;
  				clocks = <&cru ACLK_VDU>,
@@ -368,7 +373,7 @@ index 980b12cb0a49..6e3149e587c5 100644
  				pm_qos = <&qos_video_m1_r>,
  					 <&qos_video_m1_w>;
  				#power-domain-cells = <0>;
-@@ -1345,6 +1348,11 @@ vdec: video-codec@ff660000 {
+@@ -1365,6 +1368,11 @@ vdec: video-codec@ff660000 {
  		clock-names = "axi", "ahb", "cabac", "core";
  		iommus = <&vdec_mmu>;
  		power-domains = <&power RK3399_PD_VDU>;
@@ -380,11 +385,13 @@ index 980b12cb0a49..6e3149e587c5 100644
  	};
  
  	vdec_mmu: iommu@ff660480 {
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Fri, 1 Jan 2021 12:11:12 +0200
-Subject: [PATCH] arm64: dts: rockchip: fix RK3399 vdec register witdh
+Subject: arm64: dts: rockchip: fix RK3399 vdec register witdh
 
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
@@ -392,10 +399,10 @@ Signed-off-by: Alex Bee <knaerzche@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3399.dtsi b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
-index 6e3149e587c5..093ebe070775 100644
+index cc46594401e8..d758bc1df818 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3399.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
-@@ -1341,7 +1341,7 @@ vpu_mmu: iommu@ff650800 {
+@@ -1361,7 +1361,7 @@ vpu_mmu: iommu@ff650800 {
  
  	vdec: video-codec@ff660000 {
  		compatible = "rockchip,rk3399-vdec";
@@ -404,17 +411,19 @@ index 6e3149e587c5..093ebe070775 100644
  		interrupts = <GIC_SPI 116 IRQ_TYPE_LEVEL_HIGH 0>;
  		clocks = <&cru ACLK_VDU>, <&cru HCLK_VDU>,
  			 <&cru SCLK_VDU_CA>, <&cru SCLK_VDU_CORE>;
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Sat, 21 Aug 2021 16:12:36 +0200
-Subject: [PATCH] media: hantro: rockchip: Increase RK3288's max ACLK
+Subject: media: hantro: rockchip: Increase RK3288's max ACLK
 
 Required to proper decode H.264@4K
 
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
- drivers/media/platform/verisilicon/rockchip_vpu_hw.c | 14 +++++++++++---
+ drivers/media/platform/verisilicon/rockchip_vpu_hw.c | 14 ++++++++--
  1 file changed, 11 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/media/platform/verisilicon/rockchip_vpu_hw.c b/drivers/media/platform/verisilicon/rockchip_vpu_hw.c
@@ -462,12 +471,13 @@ index 8de6fd2e8eef..002b1a600f93 100644
  	.clk_names = rockchip_vpu_clk_names,
  	.num_clocks = ARRAY_SIZE(rockchip_vpu_clk_names)
  };
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Sun, 4 Jul 2021 15:19:44 +0200
-Subject: [PATCH] media: rkvdec: disable QoS for VP9 (corruptions on RK3328
- otherwise)
+Subject: media: rkvdec: disable QoS for VP9 (corruptions on RK3328 otherwise)
 
 Signed-off-by: Alex Bee <knaerzche@gmail.com>
 ---
@@ -489,10 +499,10 @@ index 3acc914888f6..265f5234f4eb 100644
  #define RKVDEC_REG_PREF_CHR_CACHE_COMMAND		0x450
  
 diff --git a/drivers/staging/media/rkvdec/rkvdec-vp9.c b/drivers/staging/media/rkvdec/rkvdec-vp9.c
-index d8c1c0db15c7..a289bc968e91 100644
+index cfae99b40ccb..6741b731ad12 100644
 --- a/drivers/staging/media/rkvdec/rkvdec-vp9.c
 +++ b/drivers/staging/media/rkvdec/rkvdec-vp9.c
-@@ -802,6 +802,7 @@ static int rkvdec_vp9_run(struct rkvdec_ctx *ctx)
+@@ -804,6 +804,7 @@ static int rkvdec_vp9_run(struct rkvdec_ctx *ctx)
  	struct rkvdec_dev *rkvdec = ctx->dev;
  	struct rkvdec_vp9_run run = { };
  	int ret;
@@ -500,7 +510,7 @@ index d8c1c0db15c7..a289bc968e91 100644
  
  	ret = rkvdec_vp9_run_preamble(ctx, &run);
  	if (ret) {
-@@ -823,6 +824,13 @@ static int rkvdec_vp9_run(struct rkvdec_ctx *ctx)
+@@ -825,6 +826,13 @@ static int rkvdec_vp9_run(struct rkvdec_ctx *ctx)
  	writel(1, rkvdec->regs + RKVDEC_REG_PREF_CHR_CACHE_COMMAND);
  
  	writel(0xe, rkvdec->regs + RKVDEC_REG_STRMD_ERR_EN);
@@ -514,21 +524,23 @@ index d8c1c0db15c7..a289bc968e91 100644
  	/* Start decoding! */
  	writel(RKVDEC_INTERRUPT_DEC_E | RKVDEC_CONFIG_DEC_CLK_GATE_E |
  	       RKVDEC_TIMEOUT_E | RKVDEC_BUF_EMPTY_E,
+-- 
+Armbian
 
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Alex Bee <knaerzche@gmail.com>
 Date: Thu, 16 Jun 2022 13:18:22 +0200
-Subject: [PATCH] WIP: arm64: dts: add resets to vdec for RK3328
+Subject: WIP: arm64: dts: add resets to vdec for RK3328
 
 ---
  arch/arm64/boot/dts/rockchip/rk3328.dtsi | 5 +++++
  1 file changed, 5 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3328.dtsi b/arch/arm64/boot/dts/rockchip/rk3328.dtsi
-index 5519347232f6..431c4ec198be 100644
+index ba46e14fd51d..83623be99df5 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3328.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3328.dtsi
-@@ -674,6 +674,11 @@ vdec: video-codec@ff360000 {
+@@ -675,6 +675,11 @@ vdec: video-codec@ff360000 {
  		assigned-clocks = <&cru ACLK_RKVDEC>, <&cru SCLK_VDEC_CABAC>,
  				  <&cru SCLK_VDEC_CORE>;
  		assigned-clock-rates = <400000000>, <400000000>, <300000000>;
@@ -540,3 +552,6 @@ index 5519347232f6..431c4ec198be 100644
  		iommus = <&vdec_mmu>;
  		power-domains = <&power RK3328_PD_VIDEO>;
  	};
+-- 
+Armbian
+

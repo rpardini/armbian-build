@@ -1,3 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleg <balbes-150@yandex.ru>
+Date: Thu, 7 Oct 2021 16:48:09 +0200
+Subject: [ARCHEOLOGY] fix analog sound station-p1 (#3166)
+
+> X-Git-Archeology: - Revision b2d54059f75ae69b71a6a422c178ceef271336f1: https://github.com/armbian/build/commit/b2d54059f75ae69b71a6a422c178ceef271336f1
+> X-Git-Archeology:   Date: Thu, 07 Oct 2021 16:48:09 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: fix analog sound station-p1 (#3166)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 6b490e16944b30ff69bf9c13678905187df0d9d4: https://github.com/armbian/build/commit/6b490e16944b30ff69bf9c13678905187df0d9d4
+> X-Git-Archeology:   Date: Tue, 11 Jan 2022 15:26:11 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel edge to 5.16 (#3387)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision f52a4193d02ef88333ba117c68d49486dfd7ff41: https://github.com/armbian/build/commit/f52a4193d02ef88333ba117c68d49486dfd7ff41
+> X-Git-Archeology:   Date: Sun, 20 Mar 2022 22:58:21 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: Adding Pine64 Quartz64a as WIP target (#3539)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 0afe24c95729044910e0b3f84dc5500bcdc6524c: https://github.com/armbian/build/commit/0afe24c95729044910e0b3f84dc5500bcdc6524c
+> X-Git-Archeology:   Date: Sun, 24 Apr 2022 22:33:47 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media edge to 5.17 (#3704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ sound/soc/codecs/es8328.c | 114 ++++++++++
+ 1 file changed, 114 insertions(+)
+
+diff --git a/sound/soc/codecs/es8328.c b/sound/soc/codecs/es8328.c
+index 160adc706cc6..c0dbda696e9b 100644
 --- a/sound/soc/codecs/es8328.c
 +++ b/sound/soc/codecs/es8328.c
 @@ -21,8 +21,13 @@
@@ -16,7 +62,7 @@
  };
 @@ -86,8 +91,18 @@ struct es8328_priv {
  	const int *mclk_ratios;
- 	bool master;
+ 	bool provider;
  	struct regulator_bulk_data supplies[ES8328_SUPPLY_NUM];
 +
 +    int hp_ctl_gpio;
@@ -76,7 +122,7 @@
  static int es8328_set_deemph(struct snd_soc_component *component)
  {
  	struct es8328_priv *es8328 = snd_soc_component_get_drvdata(component);
-@@ -451,6 +502,14 @@ static const struct snd_soc_dapm_route es8328_dapm_routes[] = {
+@@ -454,6 +505,14 @@ static const struct snd_soc_dapm_route es8328_dapm_routes[] = {
  
  static int es8328_mute(struct snd_soc_dai *dai, int mute, int direction)
  {
@@ -91,7 +137,7 @@
  	return snd_soc_component_update_bits(dai->component, ES8328_DACCONTROL3,
  			ES8328_DACCONTROL3_DACMUTE,
  			mute ? ES8328_DACCONTROL3_DACMUTE : 0);
-@@ -795,6 +854,21 @@ static int es8328_component_probe(struct snd_soc_component *component)
+@@ -798,6 +857,21 @@ static int es8328_component_probe(struct snd_soc_component *component)
  		goto clk_fail;
  	}
  
@@ -113,7 +159,7 @@
  	return 0;
  
  clk_fail:
-@@ -850,6 +924,8 @@ int es8328_probe(struct device *dev, struct regmap *regmap)
+@@ -851,6 +925,8 @@ int es8328_probe(struct device *dev, struct regmap *regmap)
  	struct es8328_priv *es8328;
  	int ret;
  	int i;
@@ -122,7 +168,7 @@
  
  	if (IS_ERR(regmap))
  		return PTR_ERR(regmap);
-@@ -859,6 +935,7 @@ int es8328_probe(struct device *dev, struct regmap *regmap)
+@@ -860,6 +936,7 @@ int es8328_probe(struct device *dev, struct regmap *regmap)
  		return -ENOMEM;
  
  	es8328->regmap = regmap;
@@ -130,7 +176,7 @@
  
  	for (i = 0; i < ARRAY_SIZE(es8328->supplies); i++)
  		es8328->supplies[i].supply = supply_names[i];
-@@ -870,6 +947,43 @@ int es8328_probe(struct device *dev, struct regmap *regmap)
+@@ -871,6 +948,43 @@ int es8328_probe(struct device *dev, struct regmap *regmap)
  		return ret;
  	}
  
@@ -174,3 +220,6 @@
  	dev_set_drvdata(dev, es8328);
  
  	return devm_snd_soc_register_component(dev,
+-- 
+Armbian
+
