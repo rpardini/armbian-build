@@ -1,5 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: simple <991605149@qq.com>
+Date: Sun, 12 Sep 2021 20:06:02 +0200
+Subject: [ARCHEOLOGY] general add panel simple dsi (#3140)
+
+> X-Git-Archeology: > recovered message: > * Backporting patch to 5.10 kernel makes sense. Lets do it.
+> X-Git-Archeology: > recovered message: > Co-authored-by: iamdrq <iamdrq@qq.com>
+> X-Git-Archeology: > recovered message: > Co-authored-by: Igor Pecovnik <igor.pecovnik@gmail.com>
+> X-Git-Archeology: - Revision 15819f00e21238e36ca70f6d8445efd6157fbe66: https://github.com/armbian/build/commit/15819f00e21238e36ca70f6d8445efd6157fbe66
+> X-Git-Archeology:   Date: Sun, 12 Sep 2021 20:06:02 +0200
+> X-Git-Archeology:   From: simple <991605149@qq.com>
+> X-Git-Archeology:   Subject: general add panel simple dsi (#3140)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 6b490e16944b30ff69bf9c13678905187df0d9d4: https://github.com/armbian/build/commit/6b490e16944b30ff69bf9c13678905187df0d9d4
+> X-Git-Archeology:   Date: Tue, 11 Jan 2022 15:26:11 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel edge to 5.16 (#3387)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision ac8fc4385594d59257ee9dffd9efa85e3497fa7d: https://github.com/armbian/build/commit/ac8fc4385594d59257ee9dffd9efa85e3497fa7d
+> X-Git-Archeology:   Date: Sat, 26 Feb 2022 07:46:44 +0100
+> X-Git-Archeology:   From: Piotr Szczepanik <piter75@gmail.com>
+> X-Git-Archeology:   Subject: Switch rockchip64 current to linux 5.15.y (#3489)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 897674aa74bce0326ed7fe06f5336bf4709a8a1f: https://github.com/armbian/build/commit/897674aa74bce0326ed7fe06f5336bf4709a8a1f
+> X-Git-Archeology:   Date: Tue, 03 May 2022 08:27:32 +0200
+> X-Git-Archeology:   From: Igor Pecovnik <igorpecovnik@users.noreply.github.com>
+> X-Git-Archeology:   Subject: Bump and freeze kernel at last known working versions (#3736)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 3b78b57fe367e60ad874d9e16ff1cd67957f8382: https://github.com/armbian/build/commit/3b78b57fe367e60ad874d9e16ff1cd67957f8382
+> X-Git-Archeology:   Date: Sat, 24 Dec 2022 09:43:51 +0100
+> X-Git-Archeology:   From: simple <991605149@qq.com>
+> X-Git-Archeology:   Subject: Fix general-add-panel-simple-dsi.patch on linux6.1 (#4607)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 235d246fa10a9637d59d8cc27107137ee2b005db: https://github.com/armbian/build/commit/235d246fa10a9637d59d8cc27107137ee2b005db
+> X-Git-Archeology:   Date: Sat, 24 Dec 2022 09:44:07 +0100
+> X-Git-Archeology:   From: simple <991605149@qq.com>
+> X-Git-Archeology:   Subject: Fix nanopct4 rt5651 sound&clean wireless,bluetooth&add general-add-panel-simple-dsi.patch (#4608)
+> X-Git-Archeology:
+---
+ drivers/gpu/drm/panel/Makefile           |   1 +
+ drivers/gpu/drm/panel/panel-simple-dsi.c | 772 ++++++++++
+ 2 files changed, 773 insertions(+)
+
 diff --git a/drivers/gpu/drm/panel/Makefile b/drivers/gpu/drm/panel/Makefile
-index 42a7ab542..822999710 100644
+index f8f9d9f6a307..39382a081dc9 100644
 --- a/drivers/gpu/drm/panel/Makefile
 +++ b/drivers/gpu/drm/panel/Makefile
 @@ -8,6 +8,7 @@ obj-$(CONFIG_DRM_PANEL_BOE_TV101WUM_NL6) += panel-boe-tv101wum-nl6.o
@@ -8,11 +51,11 @@ index 42a7ab542..822999710 100644
  obj-$(CONFIG_DRM_PANEL_SIMPLE) += panel-simple.o
 +obj-$(CONFIG_DRM_PANEL_SIMPLE) += panel-simple-dsi.o
  obj-$(CONFIG_DRM_PANEL_EDP) += panel-edp.o
+ obj-$(CONFIG_DRM_PANEL_EBBG_FT8719) += panel-ebbg-ft8719.o
  obj-$(CONFIG_DRM_PANEL_ELIDA_KD35T133) += panel-elida-kd35t133.o
- obj-$(CONFIG_DRM_PANEL_FEIXIN_K101_IM2BA02) += panel-feixin-k101-im2ba02.o
 diff --git a/drivers/gpu/drm/panel/panel-simple-dsi.c b/drivers/gpu/drm/panel/panel-simple-dsi.c
 new file mode 100644
-index 000000000..906d40ebe
+index 000000000000..e3c8dcf8cb5e
 --- /dev/null
 +++ b/drivers/gpu/drm/panel/panel-simple-dsi.c
 @@ -0,0 +1,772 @@
@@ -788,3 +831,6 @@ index 000000000..906d40ebe
 +MODULE_AUTHOR("iamdrq <iamdrq@qq.com>");
 +MODULE_DESCRIPTION("DRM Driver for DSI Simple Panels");
 +MODULE_LICENSE("GPL");
+-- 
+Armbian
+

@@ -1,7 +1,7 @@
-From 9de42a7ce7b821596a151cfaa0aca79d53c2170f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Igor Pecovnik <igor.pecovnik@gmail.com>
 Date: Sun, 7 Mar 2021 15:24:02 +0100
-Subject: [PATCH] oo
+Subject: oo
 
 Signed-off-by: Aditya Prayoga <aditya@kobol.io>
 Changed by: Igor Pecovnik <igor.pecovnik@gmail.com>
@@ -10,7 +10,7 @@ Changed by: Igor Pecovnik <igor.pecovnik@gmail.com>
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/drivers/pci/controller/pcie-rockchip.c b/drivers/pci/controller/pcie-rockchip.c
-index 990a00e08..193d26562 100644
+index 990a00e08bc5..193d26562aa6 100644
 --- a/drivers/pci/controller/pcie-rockchip.c
 +++ b/drivers/pci/controller/pcie-rockchip.c
 @@ -118,8 +118,7 @@ int rockchip_pcie_parse_dt(struct rockchip_pcie *rockchip)
@@ -24,5 +24,5 @@ index 990a00e08..193d26562 100644
  			return dev_err_probe(dev, PTR_ERR(rockchip->ep_gpio),
  					     "failed to get ep GPIO\n");
 -- 
-Created with Armbian build tools https://github.com/armbian/build
+Armbian
 

@@ -1,6 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oleg <balbes-150@yandex.ru>
+Date: Sun, 24 Apr 2022 22:33:47 +0200
+Subject: [ARCHEOLOGY] move kernel media edge to 5.17 (#3704)
+
+> X-Git-Archeology: - Revision 0afe24c95729044910e0b3f84dc5500bcdc6524c: https://github.com/armbian/build/commit/0afe24c95729044910e0b3f84dc5500bcdc6524c
+> X-Git-Archeology:   Date: Sun, 24 Apr 2022 22:33:47 +0200
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media edge to 5.17 (#3704)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c: https://github.com/armbian/build/commit/2e1b4eed739d6ea81c3a7ba7e94d1bcab5cbbb6c
+> X-Git-Archeology:   Date: Mon, 04 Jul 2022 16:18:31 +0300
+> X-Git-Archeology:   From: balbes150 <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 5.18 and edge 5.19
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 738c1613073bfd504aebc223a0d110cc6afefbe5: https://github.com/armbian/build/commit/738c1613073bfd504aebc223a0d110cc6afefbe5
+> X-Git-Archeology:   Date: Sat, 12 Nov 2022 10:11:22 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media-current to 5.19.17 (#4406)
+> X-Git-Archeology:
+> X-Git-Archeology: - Revision 276f346ee9c21cdcd627e54676334f4d5a9292b6: https://github.com/armbian/build/commit/276f346ee9c21cdcd627e54676334f4d5a9292b6
+> X-Git-Archeology:   Date: Wed, 14 Dec 2022 10:17:09 +0100
+> X-Git-Archeology:   From: Oleg <balbes-150@yandex.ru>
+> X-Git-Archeology:   Subject: move kernel media to current 6.0 and edge 6.1 (#4566)
+> X-Git-Archeology:
+---
+ sound/soc/rockchip/Kconfig | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/sound/soc/rockchip/Kconfig b/sound/soc/rockchip/Kconfig
+index 42f76bc0fb02..e9a616aa9b98 100644
 --- a/sound/soc/rockchip/Kconfig
 +++ b/sound/soc/rockchip/Kconfig
-@@ -54,6 +54,15 @@
+@@ -65,6 +65,15 @@ config SND_SOC_ROCKCHIP_RT5645
  	  Say Y or M here if you want to add support for SoC audio on Rockchip
  	  boards using the RT5645/RT5650 codec, such as Veyron.
  
@@ -15,5 +46,7 @@
 +
  config SND_SOC_RK3288_HDMI_ANALOG
  	tristate "ASoC support multiple codecs for Rockchip RK3288 boards"
- 	depends on SND_SOC_ROCKCHIP && I2C && GPIOLIB && CLKDEV_LOOKUP
+ 	depends on SND_SOC_ROCKCHIP && I2C && GPIOLIB && HAVE_CLK
+-- 
+Armbian
 
