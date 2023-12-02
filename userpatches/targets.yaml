@@ -69,11 +69,11 @@ lists:
     # Plain UEFI's, for physical machines
     - { BOARD: uefi-arm64, BRANCH: edge }
     - { BOARD: uefi-x86, BRANCH: edge }
-    # WSL2 UEFI's, for Windows WSL2 (mostly just interested in the kernel for those)
-    - { BOARD: wsl2-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-vhd" }
-    - { BOARD: wsl2-x86, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-vhd" }
-    - { BOARD: wsl2-arm64, BRANCH: current, ENABLE_EXTENSIONS: "image-output-vhd" }
-    - { BOARD: wsl2-x86, BRANCH: current, ENABLE_EXTENSIONS: "image-output-vhd" }
+    # WSL2 UEFI's, for Windows WSL2
+    - { BOARD: wsl2-arm64, BRANCH: edge }
+    - { BOARD: wsl2-x86, BRANCH: edge }
+    - { BOARD: wsl2-arm64, BRANCH: current }
+    - { BOARD: wsl2-x86, BRANCH: current }
 
 
   desktop-boards: &desktop-boards # Gotta define RELEASE here
