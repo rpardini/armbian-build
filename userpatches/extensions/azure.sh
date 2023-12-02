@@ -3,7 +3,7 @@
 # This file is a part of the Armbian Build Framework https://github.com/armbian/build/
 
 enable_extension "cloud-metadata"   # Use cloud-metadata
-enable_extension "image-output-vhd" # Use .vhd 1024x1024 output
+enable_extension "image-output-vhd-azure" # Use .vhd 1024x1024 output
 
 function user_config__700_azure_ami_config() {
 	EXTRA_IMAGE_SUFFIXES+=("-azure")                  # global array
