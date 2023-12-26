@@ -74,6 +74,9 @@ else
 	fi
 fi
 kaslrseed
+
+echo "Booting with bootargs: ${bootargs}"
+
 booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
 
 # Recompile with:
