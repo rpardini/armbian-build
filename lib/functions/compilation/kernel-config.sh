@@ -78,6 +78,9 @@ function kernel_config_initialize() {
 	# Call the extensions. This is _also_ done during the kernel artifact's prepare_version, for consistent caching.
 	call_extensions_kernel_config
 
+	# Run olddefconfig again, so changes made in the extensions take effect in other (possibly dependent) options
+	run_kernel_make olddefconfig
+
 	display_alert "Kernel configuration" "${LINUXCONFIG}" "info"
 }
 
