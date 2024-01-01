@@ -11,7 +11,7 @@
 
 # This is an internal/core extension.
 function armbian_kernel_config__disable_module_compression() {
-	kernel_config_modifying_hashes+=("CONFIG_MODULE_COMPRESS_NONE=y" "CONFIG_MODULE_SIG=n" "CONFIG_LOCALVERSION_AUTO=n" "DEBUG_INFO=n")
+	kernel_config_modifying_hashes+=("CONFIG_MODULE_COMPRESS_NONE=y" "CONFIG_MODULE_SIG=n" "CONFIG_LOCALVERSION_AUTO=n" "CONFIG_LOCALVERSION=")
 	if [[ -f .config ]]; then
 		display_alert "Disabling module compression and signing / debug / auto version" "armbian-kernel" "debug"
 		# DONE: Disable: signing, and compression of modules, for speed.
@@ -26,13 +26,6 @@ function armbian_kernel_config__disable_module_compression() {
 		# DONE: Disable: version shenanigans
 		kernel_config_set_n CONFIG_LOCALVERSION_AUTO      # This causes a mismatch between what Armbian wants and what make produces.
 		kernel_config_set_string CONFIG_LOCALVERSION '""' # Must be empty; make is later invoked with LOCALVERSION and it adds up
-
-		# DONE: Disable: debug option
-		kernel_config_set_n DEBUG_KERNEL # Armbian doesn't know how to package a debug kernel.
-		kernel_config_set_n DEBUG_INFO   # ditto
-		kernel_config_set_n GDB_SCRIPTS  # ditto
-
-		# @TODO: Enable the options for the extrawifi/drivers; so we don't need to worry about them when updating configs
 	fi
 }
 
@@ -54,9 +47,17 @@ function kernel_config_set_n() {
 	display_alert "Disabling kernel config/module" "${config}=n" "debug"
 	run_host_command_logged ./scripts/config --disable "${config}"
 }
+
 function kernel_config_set_string() {
 	declare config="$1"
 	declare value="${2}"
-	display_alert "Setting kernel config/module" "${config}=${value}" "debug"
+	display_alert "Setting kernel config/module string" "${config}=${value}" "debug"
 	run_host_command_logged ./scripts/config --set-str "${config}" "${value}"
+}
+
+function kernel_config_set_val() {
+	declare config="$1"
+	declare value="${2}"
+	display_alert "Setting kernel config/module value" "${config}=${value}" "debug"
+	run_host_command_logged ./scripts/config --set-val "${config}" "${value}"
 }
