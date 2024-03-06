@@ -19,7 +19,7 @@ function early_prepare_pip3_dependencies_for_python_tools() {
 		"unidecode==1.3.6"    # for converting strings to ascii
 		"coloredlogs==15.0.1" # for colored logging
 		"PyYAML==6.0.1"       # for parsing/writing YAML
-		"oras==0.1.17"        # for OCI stuff in mapper-oci-update
+		"oras==0.1.27"        # for OCI stuff in mapper-oci-update
 		"Jinja2==3.1.2"       # for templating
 		"rich==13.4.1"        # for rich text formatting
 		"b4==0.12.3"          # b4: patch/mailing list workhorse from kernel.org
