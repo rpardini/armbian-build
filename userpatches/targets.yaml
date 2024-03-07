@@ -71,9 +71,20 @@ lists:
     - { BOARD: mekotronics-r58x-4g, BRANCH: legacy }
     - { BOARD: mekotronics-r58x, BRANCH: legacy }
     - { BOARD: mekotronics-r58-minipc, BRANCH: legacy }
+    - { BOARD: mixtile-blade3, BRANCH: legacy }
     - { BOARD: odroidhc4, BRANCH: edge }
     - { BOARD: khadas-vim3l, BRANCH: edge }
-
+    - { BOARD: khadas-vim3, BRANCH: edge }
+    - { BOARD: tinkerboard-2, BRANCH: edge }
+    - { BOARD: rockpro64, BRANCH: edge }
+    - { BOARD: odroidm1, BRANCH: edge }
+    - { BOARD: nanopi-r5c, BRANCH: edge } # not mine, but related to odroidm1
+    - { BOARD: nanopi-r5s, BRANCH: edge } # not mine, but related to odroidm1
+    - { BOARD: orangepi3b, BRANCH: edge } # patches live in Kwiboo's tree, needs manual intervention
+    - { BOARD: radxa-zero, BRANCH: edge }
+    - { BOARD: radxa-zero2, BRANCH: edge }
+    # for ja in mekotronics-r58x-pro mixtile-blade3; do echo $ja; ./compile.sh rewrite-uboot-patches BRANCH=legacy BOARD=$ja; done
+    # for ja in orangepi3b qemu-uboot-x86 odroidhc4 khadas-vim3l khadas-vim3 tinkerboard-2 rockpro64 odroidm1 radxa-zero radxa-zero2; do echo $ja; ./compile.sh rewrite-uboot-patches BRANCH=edge BOARD=$ja; done
 
   my-virtual-boards: &my-virtual-boards
     # UTM images, virtual
