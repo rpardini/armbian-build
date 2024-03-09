@@ -179,7 +179,7 @@ targets:
         #skip-releases: [ "sid" ] # do NOT include these releases
         only-releases: [ "bookworm", "jammy", "noble", "trixie" ] # ONLY include these releases
         # skip-desktops: [ "lxde" ] # do NOT include these desktops
-        only-desktops: [ "gnome", "xfce" ] # ONLY include these desktops
+        only-desktops: [ "gnome", "xfce", "kde-neon" ] # ONLY include these desktops
         cli: yes # include normal CLI userspace
         minimal: no # include minimal CLI userspace
         cloud: yes # include cloud CLI userspace (rpardini's stuff, default is no)
@@ -297,6 +297,23 @@ targets:
       DESKTOP_ENVIRONMENT_CONFIG_NAME: "config_base"
       DESKTOP_APPGROUPS_SELECTED: "browsers" # space or comma separated
     items: *desktop-boards
+
+  kde-neon-jammy-desktop:
+    enabled: yes
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      RELEASE: "jammy" # kde-neon is only available for jammy/LTS releases
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "no"
+      DESKTOP_ENVIRONMENT: "kde-neon"
+      BUILD_DESKTOP: "yes"
+      DESKTOP_ENVIRONMENT_CONFIG_NAME: "config_base"
+      DESKTOP_APPGROUPS_SELECTED: "" # space or comma separated
+    items:
+      - { BOARD: uefi-x86, BRANCH: edge }
+      - { BOARD: mekotronics-r58x-pro, BRANCH: vendor, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588" }
 
   rk3588uefi:
     enabled: no
