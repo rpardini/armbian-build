@@ -13,7 +13,7 @@ IMAGE_PARTITION_TABLE="gpt"
 BOOTFS_TYPE="fat"
 DDR_BLOB='rk35/rk3588_ddr_lp4_2112MHz_lp5_2736MHz_v1.15.bin'
 BL31_BLOB='rk35/rk3588_bl31_v1.44.elf'
-declare -g UEFI_EDK2_BOARD_ID="nanopc-cm3588-nas" # This _only_ used for uefi-edk2-rk3588 extension
+declare -g UEFI_EDK2_BOARD_ID="nanopc-cm3588-nas" # This _only_ used for uefi-edk2-rk3588 extension @TODO this does not really exist at https://github.com/edk2-porting/edk2-rk3588
 
 function post_family_tweaks__nanopccm3588nas_udev_naming_audios() {
 	display_alert "$BOARD" "Renaming CM3588 audio interfaces to human-readable form" "info"
