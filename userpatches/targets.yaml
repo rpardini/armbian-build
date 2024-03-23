@@ -27,7 +27,7 @@ lists:
     - { BOARD: orangepi3b, BRANCH: edge }
     - { BOARD: odroidm1, BRANCH: edge }
     # - { BOARD: tinkerboard-2, BRANCH: legacy }
-    #- { BOARD: rpi4b, BRANCH: current, RELEASE: bookworm }
+    - { BOARD: rpi4b, BRANCH: current, RELEASE: bookworm }
     #- { BOARD: rpi4b, BRANCH: edge, RELEASE: bookworm }
     - { BOARD: rockpro64, BRANCH: edge }
     #- { BOARD: tinker-edge-r, BRANCH: edge }
@@ -64,7 +64,7 @@ lists:
     - { BOARD: mekotronics-r58x-pro, BRANCH: legacy }
     - { BOARD: mekotronics-r58x-pro, BRANCH: vendor }
     - { BOARD: mixtile-blade3, BRANCH: edge }
-    - { BOARD: licheepi-4a, BRANCH: current, RELEASE: noble } # riscv64 sid was broken last time I tried, was it debootstrap crap?
+    #- { BOARD: licheepi-4a, BRANCH: current, RELEASE: noble } # riscv64 sid was broken last time I tried, was it debootstrap crap?
 
   my-uboot-only-boards: &my-uboot-only-boards
     - { BOARD: mekotronics-r58x-pro, BRANCH: legacy }
@@ -283,7 +283,7 @@ targets:
     items: *desktop-boards
 
   kde-neon-jammy-desktop:
-    enabled: yes
+    enabled: no
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -300,7 +300,7 @@ targets:
       - { BOARD: mekotronics-r58x-pro, BRANCH: vendor, ENABLE_EXTENSIONS: "v4l2loopback-dkms,amazingfated-rk3588" }
 
   rk3588uefi:
-    enabled: yes
+    enabled: no
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
