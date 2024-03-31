@@ -331,3 +331,21 @@ targets:
       - { BOARD: "rock-5b" }
 
 
+  rk3588uefi-cloud:
+    enabled: yes
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BRANCH: "vendor"
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+      BUILD_DESKTOP: "no"
+      RELEASE: jammy
+      ENABLE_EXTENSIONS: "amazingfated-rk3588,uefi-edk2-rk3588"
+    items:
+      #- { BOARD: "mekotronics-r58x-4g" }
+      - { BOARD: "mekotronics-r58x-pro" }
+      #- { BOARD: "rock-5b" }
+
+
