@@ -236,8 +236,8 @@ targets:
         RELEASE: jammy
       debian-stable:
         RELEASE: bookworm
-      ubuntu-next-lts:
-        RELEASE: noble
+      #ubuntu-next-lts:
+      #  RELEASE: noble
       debian-testing:
         RELEASE: trixie
     items: *cloud-metadata
