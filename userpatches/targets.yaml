@@ -331,7 +331,7 @@ targets:
       - { BOARD: "rock-5b" }
 
   vendor-boogie-panthor:
-    enabled: yes
+    enabled: no
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
