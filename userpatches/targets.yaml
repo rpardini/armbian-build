@@ -331,10 +331,11 @@ targets:
       - { BOARD: "rock-5b" }
 
   vendor-boogie-panthor:
-    enabled: no
+    enabled: yes
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
+      build-image: no # don't build images for this target ("no" here is a boolean, not string)
     vars:
       BRANCH: "vendor-boogie-panthor"
       BUILD_MINIMAL: "no"
