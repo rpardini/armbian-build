@@ -38,7 +38,7 @@ function prepare_partitions() {
 	parttype[xfs]=xfs
 	# parttype[nfs] is empty
 
-	mkopts[ext4]="-q -m 2" # for a long time we had '-O ^64bit,^metadata_csum' here
+	mkopts[ext4]="-q -m 2 -O ^orphan_file" # for a long time we had '-O ^64bit,^metadata_csum' here
 	# mkopts[fat] is empty
 	mkopts[ext2]=''
 	# mkopts[f2fs] is empty
