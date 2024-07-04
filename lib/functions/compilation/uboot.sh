@@ -227,6 +227,7 @@ function compile_uboot_target() {
 
 	display_alert "${uboot_prefix}Compiling u-boot" "${version} ${target_make} with gcc '${gcc_version_main}'" "info"
 	declare -g if_error_detail_message="${uboot_prefix}Failed to build u-boot ${version} ${target_make}"
+	# 'env -i' is used to clear the environment so stuff doesn't "leak" into the compilation
 	do_with_ccache_statistics run_host_command_logged_long_running \
 		"env" "-i" "${uboot_make_envs[@]}" \
 		pipetty make "$target_make" "$CTHREADS" "${cross_compile}"
