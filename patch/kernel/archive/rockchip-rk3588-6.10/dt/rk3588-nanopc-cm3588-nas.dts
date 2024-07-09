@@ -81,8 +81,12 @@
 		compatible = "pwm-fan";
 		#cooling-cells = <2>;
 		cooling-levels = <0 50 100 150 200 255>;
-		pwms = <&pwm1 0 50000 0>;
-		status = "disabled";
+		pwms = <&pwm5 0 50000 0>; /* and NOT the original pwm1! */
+		fan-supply = <&vcc_5v0_sys>;
+		pulses-per-revolution = <2>;
+		interrupt-parent = <&gpio3>;  /* GPIO GPIO3_B0/PWM9_M0 */
+		interrupts = <RK_PB0 IRQ_TYPE_EDGE_FALLING>;
+		status = "okay";
 	};
 
 	gpio_keys: gpio-keys {
@@ -500,7 +504,7 @@
 		compatible = "fcs,fusb302";
 		reg = <0x22>;
 		interrupt-parent = <&gpio0>;
-		interrupts = <RK_PD3 IRQ_TYPE_LEVEL_LOW>;
+		interrupts = <RK_PD3 IRQ_TYPE_LEVEL_LOW>; /* GPIO0_D3 */
 		pinctrl-0 = <&usbc0_int>;
 		pinctrl-names = "default";
 		vbus-supply = <&vbus_5v0_typec>;
@@ -636,7 +640,7 @@
 	trips {
 		package_hot: package_hot {
 			hysteresis = <2000>;
-			temperature = <65000>;
+			temperature = <49000>;
 			type = "active";
 		};
 	};
@@ -872,7 +876,7 @@
 	pinctrl-0 = <&pwm2m1_pins>;
 };
 
-/* GPIO 40-pin Connector pin 32 */
+/* GPIO 40-pin Connector pin 32 - EXTFAN PWM Drive */
 &pwm5 {
 	pinctrl-0 = <&pwm5m1_pins>;
 	status = "okay";
@@ -884,10 +888,10 @@
 	status = "okay";
 };
 
-/* GPIO 40-pin Connector pin 33 */
+/* GPIO 40-pin Connector pin 33 - EXTFAN TACHO - used as interrupt source in pwm-fan - gpio GPIO3_B0/PWM9_M0 */
 &pwm9 {
 	pinctrl-0 = <&pwm9m0_pins>;
-	status = "okay";
+	status = "disabled"; /* unsure if this is enabled or disabled, as it is used as an interrupt source and not pwm output */
 };
 
 &saradc {
