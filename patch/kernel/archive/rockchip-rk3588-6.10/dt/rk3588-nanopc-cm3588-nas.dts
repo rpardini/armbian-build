@@ -861,7 +861,7 @@
 	};
 };
 
-/* Connected to 5V Fan */
+/* Connected to 5V 2-pin Fan */
 &pwm1 {
 	pinctrl-0 = <&pwm1m1_pins>;
 	status = "okay";
@@ -872,19 +872,19 @@
 	pinctrl-0 = <&pwm2m1_pins>;
 };
 
-/* GPIO Connector, connected to 40-pin GPIO header */
+/* GPIO 40-pin Connector pin 32 */
 &pwm5 {
 	pinctrl-0 = <&pwm5m1_pins>;
 	status = "okay";
 };
 
-/* GPIO Connector */
+/* Buzzer */
 &pwm8 {
 	pinctrl-0 = <&pwm8m0_pins>;
 	status = "okay";
 };
 
-/* GPIO Connector */
+/* GPIO 40-pin Connector pin 33 */
 &pwm9 {
 	pinctrl-0 = <&pwm9m0_pins>;
 	status = "okay";
