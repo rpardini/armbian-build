@@ -28,9 +28,10 @@ function extension_prepare_config__k8s() {
 	display_alert "Trimming down firmware" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
 	declare -g INSTALL_ARMBIAN_FIRMWARE="no" # Do not install full firmware for UEFI boards
 
-	# Also make the output qcow2 larger; KubeVirt does not resize/overlay qcow2's for container-disks
-	display_alert "Setting large sparse qcow2" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
-	declare -g QCOW2_RESIZE_AMOUNT="+10G" # resize the qcow2 image to be 50G bigger
+	## Also make the output qcow2 larger; KubeVirt does not resize/overlay qcow2's for container-disks
+	## No more: whatever's preparing the KubeVirt containers should do this instead.
+	#display_alert "Setting large sparse qcow2" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
+	#declare -g QCOW2_RESIZE_AMOUNT="+10G" # resize the qcow2 image to be 50G bigger
 
 	return 0
 }
@@ -177,11 +178,14 @@ function pre_customize_image__400_k8s_debfoster() {
 	install_pre_debfoster+=("debfoster") # we need to install it first
 
 	debfoster_keepers+=(
+		bash-completion
+		distro-info-data
 		cloud-init
 		cloud-initramfs-growroot
-		curl    # generally a good idea to have in the image
-		busybox # needed for growroot inside initrd, lest 'sed not found'
-		toilet  # armbian motd et al
+		eatmydata # used by cloud-init
+		curl      # generally a good idea to have in the image
+		busybox   # needed for growroot inside initrd, lest 'sed not found'
+		toilet    # armbian motd et al
 		netplan.io
 		nfs-common
 		openssh-server
@@ -202,16 +206,23 @@ function pre_customize_image__400_k8s_debfoster() {
 			;;
 	esac
 
-	case "${ARCH}" in
-		"arm64")
-			debfoster_keepers+=("armbian-bsp-cli-uefi-arm64-${BRANCH}-grub-mluc-cloud" "grub-efi-arm64")
-			[[ "${BRANCH}" != "ddk" ]] && debfoster_keepers+=("linux-dtb-${BRANCH}-arm64" "linux-image-${BRANCH}-arm64")
-			;;
-		"amd64")
-			debfoster_keepers+=("armbian-bsp-cli-uefi-x86-${BRANCH}-grub-mluc-cloud" "grub-pc" "grub-efi-amd64-bin")
-			[[ "${BRANCH}" != "ddk" ]] && debfoster_keepers+=("linux-image-${BRANCH}-x86")
-			;;
-	esac
+	# Preserve grub/bsp/kernel for UEFI builds
+	if [[ "${BOARDFAMILY}" == "uefi-"* ]]; then
+		display_alert "k8s: UEFI board" "preserving grub, bsp-cli and kernel" "info"
+		case "${ARCH}" in
+			"arm64")
+				debfoster_keepers+=("armbian-bsp-cli-uefi-arm64-${BRANCH}-grub-mluc-cloud" "grub-efi-arm64")
+				[[ "${BRANCH}" != "ddk" ]] && debfoster_keepers+=("linux-dtb-${BRANCH}-arm64" "linux-image-${BRANCH}-arm64")
+				;;
+			"amd64")
+				debfoster_keepers+=("armbian-bsp-cli-uefi-x86-${BRANCH}-grub-mluc-cloud" "grub-pc" "grub-efi-amd64-bin")
+				[[ "${BRANCH}" != "ddk" ]] && debfoster_keepers+=("linux-image-${BRANCH}-x86")
+				;;
+		esac
+	else
+		display_alert "k8s: non UEFI board" "preserving bsp-cli / kernel / dtb / u-boot" "info"
+		debfoster_keepers+=("armbian-bsp-cli-${BOARD}-${BRANCH}-mluc-cloud" "linux-image-${BRANCH}-${LINUXFAMILY}" "linux-dtb-${BRANCH}-${LINUXFAMILY}" "linux-u-boot-${BOARD}-${BRANCH}")
+	fi
 
 	display_alert "Debfoster: installing" "Installing '${install_pre_debfoster[*]}'" "info"
 	chroot_sdcard_apt_get_update
