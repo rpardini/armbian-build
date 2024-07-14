@@ -155,6 +155,16 @@ function pre_umount_final_image__300_prepare_cloud_init_startup() {
 		cp "${EXTENSION_DIR}"/config/network-configs/${CLOUD_INIT_NET_CONFIG_FILE}.yaml "${CI_TARGET}${CLOUD_INIT_CONFIG_LOCATION}"/network-config
 	fi
 
+	# fact is, that systemd-networkd-wait-online.service is not too smart (just google. it's.. sad).
+	# it will gag on conditions we don't care about (and hang "waiting" for 2 minutes).
+	# let it accept any interface online, and timeout after 15s; that should be plenty for the slowest DHCP to work.
+	display_alert "cloud-init: networking" "let systemd-networkd-wait-online wait for any interface online" "info"
+	mkdir -p "${CI_TARGET}"/etc/systemd/system/systemd-networkd-wait-online.service.d
+	cat <<- OVERRIDE_NETWORKD_WAIT_ANY > "${CI_TARGET}"/etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf
+		[Service]
+		ExecStart=/lib/systemd/systemd-networkd-wait-online --any --timeout=15
+	OVERRIDE_NETWORKD_WAIT_ANY
+
 	# Second chance; use a hook to overwrite the network-config file.
 	[[ $(type -t cloud_init_modify_network_config) == function ]] && cloud_init_modify_network_config # @TODO: should be a hook
 
