@@ -15,6 +15,12 @@ BOOT_SPI_RKSPI_LOADER="yes"
 IMAGE_PARTITION_TABLE="gpt"
 declare -g UEFI_EDK2_BOARD_ID="nanopc-t6" # This _only_ used for uefi-edk2-rk3588 extension
 
+# @todo: Hack, not here; split board?
+function post_family_config_branch_vendor__lts_dt_for_vendor() {
+	display_alert "$BOARD" "Using T6-LTS DT for $BOARD / $BRANCH" "info"
+	declare -g BOOT_FDT_FILE="rockchip/rk3588-nanopc-t6-lts.dtb"
+}
+
 function post_family_tweaks__nanopct6_naming_audios() {
 	display_alert "$BOARD" "Renaming nanopct6 audio" "info"
 
