@@ -125,6 +125,31 @@ function pre_umount_final_image__300_prepare_cloud_init_startup() {
 	if [[ ${CLOUD_INIT_NET_CONFIG_FILE} == *"eth0-dhcp"* ]]; then
 		display_alert "dhcp-variant (${CLOUD_INIT_NET_CONFIG_FILE})" "written as ${CLOUD_INIT_CONFIG_LOCATION}/network-config.sample" "info"
 		cp "${EXTENSION_DIR}"/config/network-configs/${CLOUD_INIT_NET_CONFIG_FILE}.yaml "${CI_TARGET}${CLOUD_INIT_CONFIG_LOCATION}"/network-config.sample
+
+		# We're not configuring network-config here; so
+		# 1) configure netplan static
+		# 2) tell cloud-init to not configure network
+		# This should allow for maximum flexibility
+		display_alert "cloud-init: networking" "no network-data specified, static all-ethernet config in netplan" "info"
+		cat <<- NETPLAN_CLOUDINIT_CONFIG > "${CI_TARGET}/etc/netplan/80-armbian-all-eths-cloud-init.yaml"
+			network:
+			  version: 2
+			  renderer: networkd
+			  ethernets:
+			    all-eth-interfaces:
+			      match:
+			        name: "e*"
+			      dhcp4: yes
+			      dhcp6: yes
+		NETPLAN_CLOUDINIT_CONFIG
+		chmod -v 600 "${CI_TARGET}"/etc/netplan/* # fix perms
+
+		display_alert "cloud-init: networking" "no network-data specified, disabling network config in c-i config" "info"
+		cat <<- CLOUD_INIT_DISABLE_NETWORK_CONFIG > "${CI_TARGET}"/etc/cloud/cloud.cfg.d/98-armbian-disable-net-config.cfg
+			# Disable network config, as Armbian seeds /etc/netplan/ with an all-Ethernet-dhcp config
+			network:
+			  config: disabled
+		CLOUD_INIT_DISABLE_NETWORK_CONFIG
 	else
 		display_alert "Using network-config" "network-configs/${CLOUD_INIT_NET_CONFIG_FILE}.yaml" "info"
 		cp "${EXTENSION_DIR}"/config/network-configs/${CLOUD_INIT_NET_CONFIG_FILE}.yaml "${CI_TARGET}${CLOUD_INIT_CONFIG_LOCATION}"/network-config
