@@ -67,6 +67,12 @@ jobs: # <TEMPLATE-IGNORE>
           rm -rfv output/info
           mkdir -pv output
 
+      - name: Clean old debs from previous runs # each run should touch each file it did so old files should be fine to delete
+        run: |
+          set -x
+          du -h -d 1 output
+          find output/packages-hashed output/debs output/debs-beta bla -type f -mtime +3 -delete || true
+
       # Download the artifacts (output/info) produced by the prepare-matrix job.
       - name: Download artifacts
         uses: actions/download-artifact@v4
