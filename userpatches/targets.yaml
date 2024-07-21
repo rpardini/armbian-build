@@ -309,7 +309,7 @@ targets:
     items: *desktop-boards
 
   kde-neon-jammy-desktop:
-    enabled: yes
+    enabled: no
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
