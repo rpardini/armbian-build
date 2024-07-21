@@ -188,7 +188,7 @@ targets:
           amd64: [ { BOARD: "uefi-x86", BRANCH: "current" } ]
 
   u-boot-only-for-some-boards:
-    enabled: yes
+    enabled: no # return soon
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -219,7 +219,7 @@ targets:
 
 
   cli-debian:
-    enabled: yes
+    enabled: no # return soon
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -232,7 +232,7 @@ targets:
       - *rpardini-virtual-boards
 
   cloud-rescues:
-    enabled: yes
+    enabled: no # return soon
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -249,7 +249,7 @@ targets:
     items: *cloud-rescues
 
   cloud-metadatas:
-    enabled: yes
+    enabled: yes # keep, cloud-container-disk
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -262,8 +262,8 @@ targets:
       #  RELEASE: jammy
       debian-stable:
         RELEASE: bookworm
-      ubuntu-next-lts:
-        RELEASE: noble
+      #ubuntu-next-lts:
+      #  RELEASE: noble
       #debian-testing:
       #  RELEASE: trixie
     items: *cloud-metadata
@@ -295,7 +295,7 @@ targets:
     items: *home-assistant-boards
 
   desktop:
-    enabled: yes
+    enabled: no # return soon
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -357,7 +357,7 @@ targets:
       - { BOARD: "rock-5b" }
 
   rk3588uefi-cloud-vendor:
-    enabled: yes
+    enabled: no
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -372,7 +372,7 @@ targets:
       - { BOARD: "mekotronics-r58x-pro" }
 
   k8s-cloud-edge-k8s-rawimg:
-    enabled: yes
+    enabled: yes # keep, for sbcs tinkerbell
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -384,15 +384,15 @@ targets:
       RELEASE: bookworm
       ENABLE_EXTENSIONS: "cloud-metadata,k8s"
     items:
-      - { BOARD: "aml-t95z-plus" }
-      - { BOARD: "odroidhc4" }
+      #- { BOARD: "aml-t95z-plus" }
+      #- { BOARD: "odroidhc4" }
       - { BOARD: "odroidm1" }
-      - { BOARD: "khadas-vim3l" }
-      - { BOARD: "nanopct6" }
-      - { BOARD: "nanopc-cm3588-nas" }
-      - { BOARD: "nanopct6", BRANCH: "current" }
-      - { BOARD: "nanopc-cm3588-nas", BRANCH: "current" }
-      - { BOARD: "rpi4b", BRANCH: "current" }
+      #- { BOARD: "khadas-vim3l" }
+      #- { BOARD: "nanopct6" }
+      #- { BOARD: "nanopc-cm3588-nas" }
+      #- { BOARD: "nanopct6", BRANCH: "current" }
+      #- { BOARD: "nanopc-cm3588-nas", BRANCH: "current" }
+      #- { BOARD: "rpi4b", BRANCH: "current" }
 
   rk3588uefi-trixie-edge:
     enabled: no
