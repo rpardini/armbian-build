@@ -219,9 +219,18 @@ function pre_customize_image__400_k8s_debfoster() {
 				[[ "${BRANCH}" != "ddk" ]] && debfoster_keepers+=("linux-image-${BRANCH}-x86")
 				;;
 		esac
+	elif [[ "${BOARDFAMILY}" == "bcm2711" ]]; then
+		display_alert "k8s: RPi4" "preserving bsp-cli / kernel / dtb" "info"
+		debfoster_keepers+=("armbian-bsp-cli-${BOARD}-${BRANCH}-raspifw-mluc-cloud" "linux-image-${BRANCH}-${LINUXFAMILY}" "linux-dtb-${BRANCH}-${LINUXFAMILY}")
 	else
 		display_alert "k8s: non UEFI board" "preserving bsp-cli / kernel / dtb / u-boot" "info"
 		debfoster_keepers+=("armbian-bsp-cli-${BOARD}-${BRANCH}-mluc-cloud" "linux-image-${BRANCH}-${LINUXFAMILY}" "linux-dtb-${BRANCH}-${LINUXFAMILY}" "linux-u-boot-${BOARD}-${BRANCH}")
+	fi
+
+	# Hack: if u-boot-menu installed, keep it.
+	if [[ -f "${SDCARD}/etc/default/u-boot" ]]; then
+		display_alert "k8s: u-boot-menu" "keeping" "info"
+		debfoster_keepers+=("u-boot-menu")
 	fi
 
 	display_alert "Debfoster: installing" "Installing '${install_pre_debfoster[*]}'" "info"
