@@ -147,16 +147,16 @@ lists:
     - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: uefi-rescue }
 
   cloud-metadata: &cloud-metadata
-    # edge, x86 and arm64, with cloud-metadata
-    - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata" }
-    - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata" }
-    - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata,k8s" }
-    - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata,k8s" }
-    #- { BOARD: uefi-x86, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata,k8s" }
-    #- { BOARD: uefi-arm64, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata,k8s" }
-    #- { BOARD: uefi-x86, BRANCH: current, ENABLE_EXTENSIONS: cloud-metadata }
-    #- { BOARD: uefi-arm64, BRANCH: current, ENABLE_EXTENSIONS: cloud-metadata }
-    # same stuff again, but for azure/VHD; "azure" implies cloud-metadata
+    # edge, x86 and arm64, with cloud-metadata-qcow2-initrd
+    - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" }
+    - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" }
+    - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    #- { BOARD: uefi-x86, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    #- { BOARD: uefi-arm64, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    #- { BOARD: uefi-x86, BRANCH: current, ENABLE_EXTENSIONS: cloud-metadata-qcow2-initrd }
+    #- { BOARD: uefi-arm64, BRANCH: current, ENABLE_EXTENSIONS: cloud-metadata-qcow2-initrd }
+    # same stuff again, but for azure/VHD; "azure" implies cloud-metadata-qcow2-initrd
     #- { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: azure }
     #- { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: azure }
 
@@ -371,7 +371,7 @@ targets:
     items:
       - { BOARD: "mekotronics-r58x-pro" }
 
-  k8s-cloud-edge:
+  k8s-cloud-edge-k8s-rawimg:
     enabled: yes
     configs: [ rpardini-generic ]
     pipeline:
