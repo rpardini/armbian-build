@@ -65,6 +65,7 @@ function post_config_uboot_target__extra_configs_for_rockpro64() {
 	run_host_command_logged scripts/config --enable CONFIG_CMD_DNS
 	run_host_command_logged scripts/config --enable CONFIG_PROT_TCP
 	run_host_command_logged scripts/config --enable CONFIG_PROT_TCP_SACK
+	run_host_command_logged scripts/config --enable CONFIG_SERVERIP_FROM_PROXYDHCP # Enable ProxyDHCP support
 
 	# UMS, RockUSB, gadget stuff
 	declare -a enable_configs=("CONFIG_CMD_USB_MASS_STORAGE" "CONFIG_USB_GADGET" "USB_GADGET_DOWNLOAD" "CONFIG_USB_FUNCTION_ROCKUSB" "CONFIG_USB_FUNCTION_ACM" "CONFIG_CMD_ROCKUSB" "CONFIG_CMD_USB_MASS_STORAGE")
