@@ -15,7 +15,7 @@ common-gha-configs:
 lists:
 
   rpardini-physical-boards: &rpardini-physical-boards
-    - { BOARD: rock-5b, BRANCH: edge, RELEASE: trixie }
+    #- { BOARD: rock-5b, BRANCH: edge, RELEASE: trixie }
     # Actual Physical boards
     #- { BOARD: odroidn2, BRANCH: edge }
     #- { BOARD: odroidhc4, BRANCH: edge }
@@ -27,9 +27,9 @@ lists:
     #- { BOARD: orangepi3b, BRANCH: legacy }
     #- { BOARD: orangepi3b, BRANCH: edge }
     - { BOARD: odroidm1, BRANCH: edge }
-    - { BOARD: bigtreetech-cb2, BRANCH: edge }
+    #- { BOARD: bigtreetech-cb2, BRANCH: edge }
     # - { BOARD: tinkerboard-2, BRANCH: legacy }
-    - { BOARD: rpi4b, BRANCH: current, RELEASE: bookworm }
+    #- { BOARD: rpi4b, BRANCH: current, RELEASE: bookworm }
     #- { BOARD: rpi4b, BRANCH: edge, RELEASE: bookworm }
     - { BOARD: rockpro64, BRANCH: edge }
     #- { BOARD: tinker-edge-r, BRANCH: edge }
@@ -37,16 +37,16 @@ lists:
     #- { BOARD: oneplus5, BRANCH: edge }
     #- { BOARD: phytium-d2000, BRANCH: legacy }
     # - { BOARD: thinkpad-x13s, BRANCH: sc8280xp }
-    - { BOARD: khadas-vim3l, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-oowow" }
-    - { BOARD: khadas-vim3, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-oowow" }
+    #- { BOARD: khadas-vim3l, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-oowow" }
+    #- { BOARD: khadas-vim3, BRANCH: edge, ENABLE_EXTENSIONS: "image-output-oowow" }
     #- { BOARD: khadas-vim4, BRANCH: legacy, ENABLE_EXTENSIONS: "image-output-oowow" }
     #- { BOARD: khadas-vim1s, BRANCH: legacy, ENABLE_EXTENSIONS: "image-output-oowow" }
     # NOT MINE
     #- { BOARD: orangepizero2, BRANCH: legacy }
     #- { BOARD: odroidxu4, BRANCH: current }
     #- { BOARD: bananapicm4io, BRANCH: edge }
-    - { BOARD: aml-s9xx-box, BRANCH: edge }
-    - { BOARD: radxa-zero3, BRANCH: edge }
+    #- { BOARD: aml-s9xx-box, BRANCH: edge }
+    #- { BOARD: radxa-zero3, BRANCH: edge }
     #- { BOARD: helios64, BRANCH: edge }
     #- { BOARD: rock-5b, BRANCH: collabora, RELEASE: bookworm }
     # - { BOARD: orangepi5, BRANCH: edge }
@@ -65,7 +65,7 @@ lists:
     # - { BOARD: oneplus5, BRANCH: edge, RELEASE: jammy }
     - { BOARD: mekotronics-r58x-pro, BRANCH: legacy }
     - { BOARD: mekotronics-r58x-pro, BRANCH: vendor }
-    - { BOARD: mixtile-blade3, BRANCH: edge }
+    #- { BOARD: mixtile-blade3, BRANCH: edge }
     #- { BOARD: licheepi-4a, BRANCH: current, RELEASE: noble } # riscv64 sid was broken last time I tried, was it debootstrap crap?
 
   rpardini-uboot-only-boards: &rpardini-uboot-only-boards
@@ -188,7 +188,7 @@ targets:
           amd64: [ { BOARD: "uefi-x86", BRANCH: "current" } ]
 
   u-boot-only-for-some-boards:
-    enabled: no # return soon
+    enabled: yes
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -219,7 +219,7 @@ targets:
 
 
   cli-debian:
-    enabled: no # return soon
+    enabled: yes
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -232,7 +232,7 @@ targets:
       - *rpardini-virtual-boards
 
   cloud-rescues:
-    enabled: no # return soon
+    enabled: yes
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -295,7 +295,7 @@ targets:
     items: *home-assistant-boards
 
   desktop:
-    enabled: no # return soon
+    enabled: yes
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -384,12 +384,12 @@ targets:
       RELEASE: bookworm
       ENABLE_EXTENSIONS: "cloud-metadata,k8s"
     items:
-      #- { BOARD: "aml-t95z-plus" }
-      #- { BOARD: "odroidhc4" }
+      - { BOARD: "aml-t95z-plus" }
+      - { BOARD: "odroidhc4" }
       - { BOARD: "odroidm1" }
-      #- { BOARD: "khadas-vim3l" }
-      #- { BOARD: "nanopct6" }
-      #- { BOARD: "nanopc-cm3588-nas" }
+      - { BOARD: "khadas-vim3l" }
+      - { BOARD: "nanopct6" }
+      - { BOARD: "nanopc-cm3588-nas" }
       #- { BOARD: "nanopct6", BRANCH: "current" }
       #- { BOARD: "nanopc-cm3588-nas", BRANCH: "current" }
       #- { BOARD: "rpi4b", BRANCH: "current" }
