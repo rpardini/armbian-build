@@ -101,16 +101,16 @@ lists:
 
   rpardini-virtual-boards: &rpardini-virtual-boards
     # UTM images, virtual
-    - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: image-output-utm }
-    - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: image-output-utm }
+    #- { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: image-output-utm }
+    #- { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: image-output-utm }
     # Plain UEFI's, for physical machines
     - { BOARD: uefi-arm64, BRANCH: edge }
     - { BOARD: uefi-x86, BRANCH: edge }
     # WSL2 UEFI's, for Windows WSL2
     #- { BOARD: wsl2-arm64, BRANCH: edge } # edge is missing some hyper-v patches & configs
     #- { BOARD: wsl2-x86, BRANCH: edge }
-    - { BOARD: wsl2-arm64, BRANCH: current }
-    - { BOARD: wsl2-x86, BRANCH: current }
+    #- { BOARD: wsl2-arm64, BRANCH: current }
+    #- { BOARD: wsl2-x86, BRANCH: current }
 
 
   desktop-boards: &desktop-boards # Gotta define RELEASE here
