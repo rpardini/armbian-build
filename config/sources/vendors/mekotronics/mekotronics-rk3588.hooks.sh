@@ -19,11 +19,11 @@ if [[ "${MEKO_USE_MAINLINE_UBOOT:-"no"}" == "yes" ]]; then
 
 		declare -g BOOTCONFIG="generic-rk3588_defconfig" # MAINLINE U-BOOT OVERRIDE
 
-		declare -g BOOTDELAY=1 # Wait for UART interrupt to enter UMS/RockUSB mode etc
+		declare -g BOOTDELAY=1 # Wait for UART interrupt
 
-		BOOTSOURCE="https://github.com/Kwiboo/u-boot-rockchip.git"
-		BOOTBRANCH="branch:rk3xxx-2024.04"  # commit:31522fe7b3c7733313e1c5eb4e340487f6000196 as of 2024-04-01
-		BOOTPATCHDIR="v2024.04-mekotronics" # empty
+		BOOTSOURCE="https://github.com/u-boot/u-boot.git"
+		BOOTBRANCH="tag:v2024.07"
+		BOOTPATCHDIR="v2024.07-mekotronics" # empty
 
 		BOOTDIR="u-boot-${BOARD}" # do not share u-boot directory
 
