@@ -115,7 +115,7 @@ lists:
 
   desktop-boards: &desktop-boards # Gotta define RELEASE here
     #- { BOARD: thinkpad-x13s, BRANCH: sc8280xp, RELEASE: lunar, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
-    - { BOARD: thinkpad-x13s, BRANCH: sc8280xp, RELEASE: noble, DESKTOP_ENVIRONMENT: gnome }
+    - { BOARD: thinkpad-x13s, BRANCH: sc8280xp, RELEASE: trixie, DESKTOP_ENVIRONMENT: gnome }
     #- { BOARD: thinkpad-x13s, BRANCH: jhovoldsc8280xp, RELEASE: lunar, DESKTOP_ENVIRONMENT: gnome, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
     #- { BOARD: khadas-vim3, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
     #- { BOARD: khadas-vim3l, BRANCH: edge, RELEASE: bookworm, DESKTOP_ENVIRONMENT: xfce, ENABLE_EXTENSIONS: "nicod-armbian-gaming" }
