@@ -185,6 +185,7 @@ function pre_customize_image__400_k8s_debfoster() {
 		curl      # generally a good idea to have in the image
 		busybox   # needed for growroot inside initrd, lest 'sed not found'
 		toilet    # armbian motd et al
+		tree      # too useful
 		netplan.io
 		nfs-common
 		openssh-server
@@ -207,7 +208,8 @@ function pre_customize_image__400_k8s_debfoster() {
 
 	# Preserve grub/bsp/kernel for UEFI builds
 	if [[ "${BOARDFAMILY}" == "uefi-"* ]]; then
-		display_alert "k8s: UEFI board" "preserving grub, bsp-cli and kernel" "info"
+		display_alert "k8s: UEFI board" "preserving efibootmgr, grub, bsp-cli and kernel" "info"
+		debfoster_keepers+=("efibootmgr") # always
 		case "${ARCH}" in
 			"arm64")
 				debfoster_keepers+=("armbian-bsp-cli-uefi-arm64-${BRANCH}-grub-mluc-cloud" "grub-efi-arm64")
