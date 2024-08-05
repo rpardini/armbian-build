@@ -152,6 +152,8 @@ lists:
     - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" }
     - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
     - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    - { BOARD: uefi-x86, BRANCH: current, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    - { BOARD: uefi-arm64, BRANCH: current, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
     #- { BOARD: uefi-x86, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
     #- { BOARD: uefi-arm64, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
     #- { BOARD: uefi-x86, BRANCH: current, ENABLE_EXTENSIONS: cloud-metadata-qcow2-initrd }
@@ -387,6 +389,7 @@ targets:
       - { BOARD: "aml-t95z-plus" }
       - { BOARD: "odroidhc4" }
       - { BOARD: "odroidm1" }
+      - { BOARD: "odroidm1", BRANCH: "current" }
       - { BOARD: "khadas-vim3l" }
       - { BOARD: "nanopct6" }
       - { BOARD: "nanopc-cm3588-nas" }
