@@ -152,8 +152,8 @@ lists:
     - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" }
     - { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
     - { BOARD: uefi-arm64, BRANCH: edge, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
-    - { BOARD: uefi-x86, BRANCH: current, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
-    - { BOARD: uefi-arm64, BRANCH: current, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    - { BOARD: uefi-x86, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+    - { BOARD: uefi-arm64, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
     #- { BOARD: uefi-x86, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
     #- { BOARD: uefi-arm64, BRANCH: ddk, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
     #- { BOARD: uefi-x86, BRANCH: current, ENABLE_EXTENSIONS: cloud-metadata-qcow2-initrd }
