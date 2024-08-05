@@ -181,11 +181,12 @@ function pre_customize_image__400_k8s_debfoster() {
 		distro-info-data
 		cloud-init
 		cloud-initramfs-growroot
-		eatmydata # used by cloud-init
-		curl      # generally a good idea to have in the image
-		busybox   # needed for growroot inside initrd, lest 'sed not found'
-		toilet    # armbian motd et al
-		tree      # too useful
+		eatmydata         # used by cloud-init
+		curl              # generally a good idea to have in the image
+		busybox           # needed for growroot inside initrd, lest 'sed not found'
+		toilet            # armbian motd et al
+		tree              # too useful
+		systemd-timesyncd # needed for ntp on non-rtc arm
 		netplan.io
 		nfs-common
 		openssh-server
