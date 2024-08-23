@@ -1,0 +1,57 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "rk3588-friendlyelec-cm3588-nas.dts"
+
+/ {
+	model = "FriendlyElec CM3588 NAS with 4-pin 5v PWM fan (drive pin 32/tacho pin 33)";
+
+	fan: pwm-fan {
+		compatible = "pwm-fan";
+		#cooling-cells = <2>;
+		cooling-levels = <0 50 100 150 200 255>;
+		pwms = <&pwm5 0 50000 0>; /* GPIO 40-pin Connector pin 32 - and NOT the original pwm1 which MOSFET-drives the built-in small-connector "5v fan" */
+		fan-supply = <&vcc_5v0_sys>;
+		pulses-per-revolution = <2>;
+		interrupt-parent = <&gpio3>;  /* GPIO GPIO3_B0/PWM9_M0 + ... */
+		interrupts = <RK_PB0 IRQ_TYPE_EDGE_FALLING>; /* ... + GPIO 40-pin Connector pin 33 */
+		status = "okay";
+	};
+};
+
+/* Temperature sensor near the center of the SoC */
+&package_thermal {
+	polling-delay = <1000>;
+
+	trips {
+		package_hot: package_hot {
+			hysteresis = <2000>;
+			temperature = <60000>; /* 60 celsius */
+			type = "active";
+		};
+	};
+
+	cooling-maps {
+		map0 {
+			cooling-device = <&fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+			trip = <&package_hot>;
+		};
+	};
+};
+
+
+/* GPIO 40-pin Connector pin 33 - EXTFAN TACHO - used as interrupt source in pwm-fan - gpio GPIO3_B0/PWM9_M0 */
+&pwm9 {
+	pinctrl-0 = <&pwm9m0_pins>;
+	status = "disabled"; /* unsure if this is enabled or disabled, as it is used as an interrupt source and not pwm output */
+};
+
+/* Just for reference, as it is already okay'ed on upstream DT (wasn't on Nargas) */
+/* GPIO 40-pin Connector pin 32 - EXTFAN PWM Drive */
+/* &pwm5 {
+	pinctrl-0 = <&pwm5m1_pins>;
+	status = "okay";
+};
+*/
+
