@@ -13,17 +13,17 @@ BOOT_SCENARIO="spl-blobs"
 
 function fancontrol_marker() {
 	# @TODO
-	cat <<- FANCONTROL > /dev/null # @TODO
+	cat <<- FANCONTROL > /etc/fancontrol # @TODO
 		INTERVAL=3
-		DEVPATH=hwmon0=devices/virtual/thermal/thermal_zone0 hwmon9=devices/platform/pwm-fan
-		DEVNAME=hwmon0=package_thermal hwmon9=pwmfan
-		FCTEMPS=hwmon9/pwm1=hwmon0/temp1_input
-		FCFANS= hwmon9/pwm1=hwmon9/fan1_input
-		MINTEMP=hwmon9/pwm1=50
-		MAXTEMP=hwmon9/pwm1=65
-		MINSTART=hwmon9/pwm1=100
-		MINSTOP=hwmon9/pwm1=30
-		MAXPWM=hwmon9/pwm1=250
+		DEVPATH=hwmon0=devices/virtual/thermal/thermal_zone0 hwmon8=devices/platform/pwm-fan
+		DEVNAME=hwmon0=package_thermal hwmon8=pwmfan
+		FCTEMPS=hwmon8/pwm1=hwmon0/temp1_input
+		FCFANS= hwmon8/pwm1=hwmon8/fan1_input
+		MINTEMP=hwmon8/pwm1=50
+		MAXTEMP=hwmon8/pwm1=65
+		MINSTART=hwmon8/pwm1=100
+		MINSTOP=hwmon8/pwm1=30
+		MAXPWM=hwmon8/pwm1=250
 	FANCONTROL
 	return 0
 }
