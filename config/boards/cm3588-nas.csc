@@ -2,7 +2,7 @@
 BOARD_NAME="FriendlyElec CM3588 NAS"
 BOARDFAMILY="rockchip-rk3588"
 BOARD_MAINTAINER="ColorfulRhino"
-BOOTCONFIG="cm3588-nas-rk3588_defconfig" # Mainline defconfig, enables booting from NVMe
+BOOTCONFIG="nanopc_cm3588_defconfig" # Enables booting from NVMe. Vendor name, not standard, see hook below, set BOOT_SOC below to compensate
 BOOT_SOC="rk3588"
 KERNEL_TARGET="edge,current,vendor"
 FULL_DESKTOP="yes"
@@ -60,7 +60,9 @@ function post_family_tweaks__cm3588_nas_udev_naming_network_interfaces() {
 }
 
 # Mainline U-Boot
-function post_family_config__cm3588_nas_use_mainline_uboot() {
+function post_family_config_branch_edge__cm3588_nas_use_mainline_uboot() {
+	declare -g BOOTCONFIG="cm3588-nas-rk3588_defconfig" # Mainline defconfig, enables booting from NVMe
+
 	display_alert "$BOARD" "Using mainline U-Boot for $BOARD / $BRANCH" "info"
 
 	declare -g BOOTDELAY=1                                       # Wait for UART interrupt to enter UMS/RockUSB mode etc
@@ -80,7 +82,7 @@ function post_family_config__cm3588_nas_use_mainline_uboot() {
 	}
 }
 
-function post_config_uboot_target__extra_configs_for_cm3588-nas_uboot() {
+function post_config_uboot_branch_edge_target__extra_configs_for_cm3588-nas_uboot() {
 	display_alert "$BOARD" "u-boot configs for ${BOOTBRANCH} u-boot config BRANCH=${BRANCH}" "info"
 
 	display_alert "u-boot for ${BOARD}" "u-boot: enable RNG / KASLRSEED" "info"
