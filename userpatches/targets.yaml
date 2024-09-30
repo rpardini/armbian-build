@@ -7,8 +7,8 @@ common-gha-configs:
       by-name-and-arch:
         rootfs-arm64: [ "self-hosted", "Linux", 'armbian', "rootfs-arm64" ]
         image-arm64: [ "self-hosted", "Linux", 'armbian', "image-arm64" ]
-        rootfs-armhf: [ "self-hosted", "Linux", 'armbian', "rootfs-armhf" ]
-        image-armhf: [ "self-hosted", "Linux", 'armbian', "image-armhf" ]
+        #rootfs-armhf: [ "self-hosted", "Linux", 'armbian', "rootfs-armhf" ]
+        #image-armhf: [ "self-hosted", "Linux", 'armbian', "image-armhf" ]
         rootfs-riscv64: [ "self-hosted", "Linux", 'armbian', "rootfs-riscv64" ]
         image-riscv64: [ "self-hosted", "Linux", 'armbian', "image-riscv64" ]
 
@@ -182,7 +182,7 @@ targets:
     items-from-inventory:
       userspace: # creates items from userspace inventory automatically... 'eos' distributions are always skipped.
         #skip-releases: [ "sid" ] # do NOT include these releases
-        only-releases: [ "bookworm", "jammy", "noble" ] # ONLY include these releases, "trixie"
+        only-releases: [ "bookworm", "trixie", "jammy", "noble" ] # ONLY include these releases
         # skip-desktops: [ "lxde" ] # do NOT include these desktops
         only-desktops: [ "gnome", "kde-neon" ] # ONLY include these desktops, "xfce",
         cli: yes # include normal CLI userspace
@@ -194,6 +194,7 @@ targets:
         arches: # wanted architectures, and their "example" BOARD and BRANCH.
           arm64: [ { BOARD: "uefi-arm64", BRANCH: "current" } ]
           amd64: [ { BOARD: "uefi-x86", BRANCH: "current" } ]
+          armhf: [ { BOARD: "tinkerboard", BRANCH: "current" } ]
 
   u-boot-only-for-some-boards:
     enabled: yes
