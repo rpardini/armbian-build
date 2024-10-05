@@ -10,17 +10,10 @@ This reverts commit 16a7adc42e350ee3ff96298f295ae01f52f103bb.
  1 file changed, 13 deletions(-)
 
 diff --git a/drivers/pci/controller/dwc/pcie-dw-rockchip.c b/drivers/pci/controller/dwc/pcie-dw-rockchip.c
-index 94b221b5b6148..ba462061f6a0c 100644
+index 111111111111..222222222222 100644
 --- a/drivers/pci/controller/dwc/pcie-dw-rockchip.c
 +++ b/drivers/pci/controller/dwc/pcie-dw-rockchip.c
-@@ -267,32 +267,20 @@ static inline void rk_pcie_link_status_clear(struct rk_pcie *rk_pcie)
- static inline void rk_pcie_disable_ltssm(struct rk_pcie *rk_pcie)
- {
- 	rk_pcie_writel_apb(rk_pcie, 0x0, 0xc0008);
- }
- 
- static inline void rk_pcie_enable_ltssm(struct rk_pcie *rk_pcie)
- {
+@@ -274,18 +274,6 @@ static inline void rk_pcie_enable_ltssm(struct rk_pcie *rk_pcie)
  	rk_pcie_writel_apb(rk_pcie, 0x0, 0xC000C);
  }
  
@@ -39,21 +32,7 @@ index 94b221b5b6148..ba462061f6a0c 100644
  static void rk_pcie_enable_debug(struct rk_pcie *rk_pcie)
  {
  	if (!IS_ENABLED(CONFIG_DEBUG_FS))
- 		return;
- 
- 	rk_pcie_writel_apb(rk_pcie, PCIE_CLIENT_DBG_FIFO_PTN_HIT_D0,
- 			   PCIE_CLIENT_DBG_TRANSITION_DATA);
- 	rk_pcie_writel_apb(rk_pcie, PCIE_CLIENT_DBG_FIFO_PTN_HIT_D1,
- 			   PCIE_CLIENT_DBG_TRANSITION_DATA);
- 	rk_pcie_writel_apb(rk_pcie, PCIE_CLIENT_DBG_FIFO_TRN_HIT_D0,
-@@ -819,21 +807,20 @@ static const struct of_device_id rk_pcie_of_match[] = {
- 		.compatible = "rockchip,rk3588-pcie",
- 		.data = NULL,
- 	},
- 	{},
- };
- 
- MODULE_DEVICE_TABLE(of, rk_pcie_of_match);
+@@ -826,7 +814,6 @@ MODULE_DEVICE_TABLE(of, rk_pcie_of_match);
  
  static const struct dw_pcie_ops dw_pcie_ops = {
  	.start_link = rk_pcie_establish_link,
@@ -61,13 +40,6 @@ index 94b221b5b6148..ba462061f6a0c 100644
  };
  
  static void rk_pcie_fast_link_setup(struct rk_pcie *rk_pcie)
- {
- 	u32 val;
- 
- 	/* LTSSM EN ctrl mode */
- 	val = rk_pcie_readl_apb(rk_pcie, PCIE_CLIENT_HOT_RESET_CTRL);
- 	val |= (PCIE_LTSSM_ENABLE_ENHANCE | PCIE_LTSSM_APP_DLY2_EN)
- 		| ((PCIE_LTSSM_APP_DLY2_EN | PCIE_LTSSM_ENABLE_ENHANCE) << 16);
 -- 
 Armbian
 
