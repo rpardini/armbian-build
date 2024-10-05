@@ -11,7 +11,6 @@
 
 THIS_SCRIPT="header"
 MOTD_DISABLE=""
-HIDE_IP_PATTERN="^dummy0|^lo|^docker"
 
 # Read image configuration
 [[ -f /etc/armbian-image-release ]] && . /etc/armbian-image-release
@@ -55,47 +54,25 @@ for f in $MOTD_DISABLE; do
 	[[ $f == $THIS_SCRIPT ]] && exit 0
 done
 
-function get_wan_address() {
-	curl --connect-timeout 2 -s http://whatismyip.akamai.com/
-} # get wan ip address
-
-function get_ip_addresses() {
-	local ipv4s=()
-	local ipv6s=()
-
-	for f in /sys/class/net/*; do
-		local intf=$(basename $f)
-		# match only interface names
-		if [[ $intf =~ $HIDE_IP_PATTERN ]]; then
-			continue
-		else
-			local ipv4=$(ip -4 addr show dev $intf | grep -v "$intf:avahi" | awk '/inet/ {print $2}' | cut -d'/' -f1 | uniq)
-			local ipv6=$(ip -6 addr show dev $intf | grep -v "$intf:avahi" | awk '/inet6/ {print $2}' | cut -d'/' -f1 | uniq)
-
-			[[ -n $ipv4 ]] && ipv4s+=("$ipv4")
-			[[ -n $ipv6 ]] && ipv6s+=("$ipv6")
-		fi
-	done
-
-	echo "${ipv4s[@]}|${ipv6s[@]}"
-} # get_ip_addresses
-
 # Read Armbian kernel version
 KERNELID=$(uname -r)
-# Get other variables
-ip_address=$(get_ip_addresses &)
-wan_ip_address=$(get_wan_address &)
-# Get access point info
-if systemctl is-active --quiet service hostapd && [ -f /etc/hostapd/hostapd.conf ]; then
-. /etc/hostapd/hostapd.conf
-fi
 
-# Display software vendor logo
-echo -e "\e[1;91m$(figlet -f small " $VENDOR")\e[0m";
+# Understand: this file is run as root by pam_motd on every console and ssh authentication/login.
+# There is no way to get any info about the console on which it is running, as it is _not_ running on a console then it is invoked.
+# So here we have to assume the terminal size somehow.  Lets get the size of the first console terminal (/dev/ttyX) and use that.
+# If that fails, we will use 80 as a fallback.
+declare columns
+columns=$(stty -F /dev/tty0 size 2> /dev/null | cut -d" " -f2)
+[[ -z $columns ]] && columns=80
+
+# Display the board name using fancy toilet (which is not figlet and actually depends on libcaca0 ;-) )
+declare board_title_toilet=""
+board_title_toilet="$(echo "${BOARD_NAME}" | sed 's/Orange Pi/OPi/' | sed 's/NanoPi/NPi/' | sed 's/Banana Pi/BPi/' | sed 's/RaspberryPi/RPi/')"
+TERM=linux toilet --width "${columns}" --metal --font smblock "${board_title_toilet}"
 
 # Display version, board, and kernel version
 [[ $VERSION == *trunk* ]] && VERSION=$(echo -e $VERSION | cut -d"." -f1-2 | sed "s/\$/ rolling/")
-echo -e " \e[0;92mv${VERSION}\x1B[0m for $BOARD_NAME running Armbian Linux \e[0;92m${KERNELID^}\x1B[0m"
+echo -e " \e[0;92mv${VERSION}\x1B[0m for $BOARD_NAME running ${VENDOR} \e[0;92m${KERNELID^}\x1B[0m"
 
 # render image and board type
 if [[ "$IMAGE_TYPE" != "stable" ]]; then
@@ -116,25 +93,18 @@ else
 	DISTRO_STATUS="\e[0;93mrolling\e[0m ($DISTRIBUTION_CODENAME)"
 fi
 
-
 # read packages update status
 NUM_UPDATES=0
 NUM_UPDATES_ONHOLD=0
 NUM_SECURITY_UPDATES=0
 [[ -f /var/cache/apt/archives/updates.number ]] && . /var/cache/apt/archives/updates.number
+UPDATE_STATUS=""
 if [[ $NUM_UPDATES -gt 0 ]]; then
-	if apt-mark showhold | grep -q linux-image 2>/dev/null; then
-		UPDATE_STATUS="Kernel upgrade \e[0;91mdisabled\e[0m"
-		else
-		UPDATE_STATUS="Kernel upgrade \e[0;92menabled\e[0m"
-	fi
-	UPDATE_STATUS+=" and \e[1;92m$NUM_UPDATES\e[0m package"
+	UPDATE_STATUS+=" \e[1;92m$NUM_UPDATES\e[0m package"
 	# Cosmetic is important
 	[[ $NUM_UPDATES -gt 1 ]] && UPDATE_STATUS+="s"
 	UPDATE_STATUS+=" available for upgrade\e[0m "
 fi
-
-echo ""
 
 # Display packages status
 if [[ -n $DISTRO_STATUS ]]; then
@@ -146,24 +116,29 @@ fi
 
 # Display available updates
 if [[ -n $UPDATE_STATUS ]]; then
-        echo -e " Updates:      $UPDATE_STATUS"
+	echo -e " Updates:      $UPDATE_STATUS"
 fi
 
 # Display hardware support status
 if [[ -n $HARDWARE_STATUS ]]; then
-        echo -e " Support:      $HARDWARE_STATUS"
+	echo -e " Support:      $HARDWARE_STATUS"
 fi
 
-IFS='|' read -r ipv4s ipv6s <<< "$ip_address"
-echo -en " IP addresses: \x1B[93m(LAN)\x1B[0m IPv4: \x1B[92m${ipv4s// /, }\x1B[0m IPv6: \x1B[96m${ipv6s// /, }\x1B[0m "
-if [[ -n $wan_ip_address ]]; then
-echo -e "\x1B[93m(WAN)\x1B[0m $wan_ip_address"
-fi
+declare -a ipv4s=()
+declare -a ipv6s=()
+declare intf ipv4 ipv6
 
-# Display hostapd
-if [[ -n $ssid ]]; then
-        echo -e " WiFi AP:      SSID: (\x1B[91m$ssid\x1B[0m), $(iw $interface info | grep channel | xargs)"
-fi
+for f in /sys/class/net/*; do
+	intf="$(basename "${f}")"
+	if [[ "${intf}" =~ ^dummy.*|^lo.*|^docker.* ]]; then # skip interfaces that should not be displayed
+		continue
+	else
+		ipv4="$(ip -4 addr show dev "${intf}" | grep -v "$intf:avahi" | awk '/inet/ {print $2}' | cut -d'/' -f1 | uniq)" # @TODO: what if there are multiple IPs on the interface?
+		#ipv6="$(ip -6 addr show dev "${intf}" | grep -v "$intf:avahi" | grep "global" | grep "::" | awk '/inet6/ {print $2}' | cut -d'/' -f1 | uniq)"
+		[[ -n ${ipv4} ]] && ipv4s+=("${ipv4}")
+		#[[ -n ${ipv6} ]] && ipv6s+=("${ipv6}")
+	fi
+done
 
-
+echo -en " IP addresses: \x1B[93m(LAN)\x1B[0m IPv4: \x1B[92m${ipv4s[*]// /, }\x1B[0m" #  IPv6: \x1B[96m${ipv6s[*]// /, }\x1B[0m
 echo ""

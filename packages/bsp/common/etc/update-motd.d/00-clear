@@ -20,7 +20,7 @@ done
 
 # Clear screen
 if [ -f /bin/bash ]; then
-export TERM="$(/bin/bash -c 'echo $TERM')"
+	export TERM="$(/bin/bash -c 'echo $TERM')"
 fi
 clear
 
