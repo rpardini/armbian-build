@@ -12,7 +12,7 @@ Signed-off-by: zhangping <zhangping@focalcrest.com>
  1 file changed, 59 insertions(+)
 
 diff --git a/drivers/net/ethernet/realtek/r8169_main.c b/drivers/net/ethernet/realtek/r8169_main.c
-index a4c7e8f5f893..0bd1faed0462 100644
+index 111111111111..222222222222 100644
 --- a/drivers/net/ethernet/realtek/r8169_main.c
 +++ b/drivers/net/ethernet/realtek/r8169_main.c
 @@ -30,10 +30,18 @@
@@ -34,7 +34,7 @@ index a4c7e8f5f893..0bd1faed0462 100644
  #define FIRMWARE_8168D_1	"rtl_nic/rtl8168d-1.fw"
  #define FIRMWARE_8168D_2	"rtl_nic/rtl8168d-2.fw"
  #define FIRMWARE_8168E_1	"rtl_nic/rtl8168e-1.fw"
-@@ -4931,6 +4939,46 @@ static int rtl_alloc_irq(struct rtl8169_private *tp)
+@@ -4978,6 +4986,46 @@ static int rtl_alloc_irq(struct rtl8169_private *tp)
  	return pci_alloc_irq_vectors(tp->pci_dev, 1, 1, flags);
  }
  
@@ -81,7 +81,7 @@ index a4c7e8f5f893..0bd1faed0462 100644
  static void rtl_read_mac_address(struct rtl8169_private *tp,
  				 u8 mac_addr[ETH_ALEN])
  {
-@@ -4946,6 +4994,7 @@ static void rtl_read_mac_address(struct rtl8169_private *tp,
+@@ -4993,6 +5041,7 @@ static void rtl_read_mac_address(struct rtl8169_private *tp,
  		rtl_read_mac_from_reg(tp, mac_addr, MAC0_BKP);
  	}
  }
@@ -89,7 +89,7 @@ index a4c7e8f5f893..0bd1faed0462 100644
  
  DECLARE_RTL_COND(rtl_link_list_ready_cond)
  {
-@@ -5107,7 +5156,12 @@ static void rtl_init_mac_address(struct rtl8169_private *tp)
+@@ -5154,7 +5203,12 @@ static void rtl_init_mac_address(struct rtl8169_private *tp)
  	if (!rc)
  		goto done;
  
@@ -102,7 +102,7 @@ index a4c7e8f5f893..0bd1faed0462 100644
  	if (is_valid_ether_addr(mac_addr))
  		goto done;
  
-@@ -5141,6 +5195,11 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+@@ -5188,6 +5242,11 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
  	struct net_device *dev;
  	u16 xid;
  
