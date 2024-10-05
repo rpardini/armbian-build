@@ -44,7 +44,7 @@ function display() {
 	# $1=name $2=value $3=red_limit $4=minimal_show_limit $5=unit $6=after $7=acs/desc{
 	# battery red color is opposite, lower number
 	if [[ "$1" == "Battery" ]]; then local great="<"; else local great=">"; fi
-	if [[ -n "$2" && "$2" -gt "0" && (( "${2%.*}" -ge "$4" )) ]]; then
+	if [[ -n "$2" && "$2" -gt "0" && (("${2%.*}" -ge "$4")) ]]; then
 		printf "%-14s" "$1:"
 		if awk "BEGIN{exit ! ($2 $great $3)}"; then echo -ne "\e[0;91m $2"; else echo -ne "\e[0;92m $2"; fi
 		printf "%-1s\x1B[0m" "$5"
@@ -56,12 +56,12 @@ function display() {
 function storage_info() {
 	# storage info
 	RootInfo=$(df -h /)
-	root_usage=$(awk '/\// {print $(NF-1)}' <<<${RootInfo} | sed 's/%//g')
-	root_total=$(awk '/\// {print $(NF-4)}' <<<${RootInfo})
-	StorageInfo=$(df -h $STORAGE 2>/dev/null | grep $STORAGE)
+	root_usage=$(awk '/\// {print $(NF-1)}' <<< ${RootInfo} | sed 's/%//g')
+	root_total=$(awk '/\// {print $(NF-4)}' <<< ${RootInfo})
+	StorageInfo=$(df -h $STORAGE 2> /dev/null | grep $STORAGE)
 	if [[ -n "${StorageInfo}" && ${RootInfo} != *$STORAGE* ]]; then
-		storage_usage=$(awk '/\// {print $(NF-1)}' <<<${StorageInfo} | sed 's/%//g')
-		storage_total=$(awk '/\// {print $(NF-4)}' <<<${StorageInfo})
+		storage_usage=$(awk '/\// {print $(NF-1)}' <<< ${StorageInfo} | sed 's/%//g')
+		storage_total=$(awk '/\// {print $(NF-4)}' <<< ${StorageInfo})
 		if [[ -n "$(command -v smartctl)" ]]; then
 			DISK="${STORAGE::-1}"
 			storage_temp+=$(smartctl -l scttempsts $DISK 2> /dev/null | grep -i 'Current Temperature:' | awk '{print $(NF-1)}')
@@ -81,13 +81,13 @@ critical_load=80
 UPTIME=$(LC_ALL=C uptime)
 UPT1=${UPTIME#*'up '}
 UPT2=${UPT1%'user'*}
-users=${UPT2//*','}
-users=${users//' '}
+users=${UPT2//*','/}
+users=${users//' '/}
 time=${UPT2%','*}
-time=${time//','}
+time=${time//','/}
 time=$(echo $time | xargs)
 load=${UPTIME#*'load average: '}
-load=${load//','}
+load=${load//','/}
 load=$(echo $load | cut -d" " -f1)
 [[ $load == 0.0* ]] && load=0.10
 cpucount=$(grep -c processor /proc/cpuinfo)
@@ -95,35 +95,34 @@ cpucount=$(grep -c processor /proc/cpuinfo)
 load=$(awk '{printf("%.0f",($1/$2) * 100)}' <<< "$load $cpucount")
 
 # memory and swap
-mem_info=$(LC_ALL=C free -w 2>/dev/null | grep "^Mem" || LC_ALL=C free | grep "^Mem")
-memory_usage=$(awk '{printf("%.0f",(($2-($4+$6+$7))/$2) * 100)}' <<<${mem_info})
+mem_info=$(LC_ALL=C free -w 2> /dev/null | grep "^Mem" || LC_ALL=C free | grep "^Mem")
+memory_usage=$(awk '{printf("%.0f",(($2-($4+$6+$7))/$2) * 100)}' <<< ${mem_info})
 mem_info=$(echo $mem_info | awk '{print $2}')
-memory_total=$(( mem_info / 1024 ))
+memory_total=$((mem_info / 1024))
 swap_info=$(LC_ALL=C free -m | grep "^Swap")
-swap_usage=$( (awk '/Swap/ { printf("%3.0f", $3/$2*100) }' <<<${swap_info} 2>/dev/null || echo 0) | tr -c -d '[:digit:]')
-swap_total=$(awk '{print $(2)}' <<<${swap_info})
+swap_usage=$( (awk '/Swap/ { printf("%3.0f", $3/$2*100) }' <<< ${swap_info} 2> /dev/null || echo 0) | tr -c -d '[:digit:]')
+swap_total=$(awk '{print $(2)}' <<< ${swap_info})
 
 # display info
 
 # draw a line to start this section
 
 #echo ""
-printf "\e[0;90m Performance:  \x1B[0m"
-echo "" # fixed newline
-echo ""
+#printf "\e[0;90m Performance:  \x1B[0m"
+#echo "" # fixed newline
 display " Load" "${load%% *}" "${critical_load}" "0" "%" ""
 
 printf "Up time:       \x1B[92m%s\x1B[0m\t" "$time"
 display "Local users" "${users##* }" "3" "2" ""
 echo "" # fixed newline
 if [[ ${memory_total} -gt 1000 ]]; then
-	memory_total=$(awk '{printf("%.2f",$1/1024)}' <<<${memory_total})"G"
+	memory_total=$(awk '{printf("%.2f",$1/1024)}' <<< ${memory_total})"G"
 else
 	memory_total+="M"
 fi
 
 if [[ ${swap_total} -gt 500 ]]; then
-	swap_total=$(awk '{printf("%.2f",$1/1024)}' <<<${swap_total})"G"
+	swap_total=$(awk '{printf("%.2f",$1/1024)}' <<< ${swap_total})"G"
 else
 	swap_total+="M"
 fi
@@ -135,14 +134,17 @@ display " CPU temp" "$board_temp" $CPU_TEMP_LIMIT "0" "°C" ""
 display "Ambient temp" "$amb_temp" $AMB_TEMP_LIMIT "0" "°C" ""
 display "Usage of /" "$root_usage" "90" "1" "%" " of $root_total $overlay_root"
 if command -v overlayroot-chroot > /dev/null 2>&1 && findmnt -k /media/root-ro | tail -1 | grep -w /media/root-ro > /dev/null 2>&1; then
-echo -ne "\x1B[91m(read only rootfs)\x1B[0m"
+	echo -ne "\x1B[91m(read only rootfs)\x1B[0m"
 fi
 echo "" # fixed newline
 a=0
-display "storage/" "$storage_usage" "90" "1" "%" " of $storage_total" ; a=$((a+$?))
-display "storage temp" "$storage_temp" $HDD_TEMP_LIMIT "0" "°C" "" ; a=$((a+$?))
-display "Battery" "$battery_percent" "20" "1" "%" "$status_battery_text" ; a=$((a+$?))
-(( $a > 0 )) && echo "" # new line only if some value is displayed
+display "storage/" "$storage_usage" "90" "1" "%" " of $storage_total"
+a=$((a + $?))
+display "storage temp" "$storage_temp" $HDD_TEMP_LIMIT "0" "°C" ""
+a=$((a + $?))
+display "Battery" "$battery_percent" "20" "1" "%" "$status_battery_text"
+a=$((a + $?))
+(($a > 0)) && echo "" # new line only if some value is displayed
 
 line=0
 if [[ -n "$PRIMARY_INTERFACE" ]] && vnstat -i "$PRIMARY_INTERFACE" &> /dev/null; then
@@ -151,42 +153,45 @@ if [[ -n "$PRIMARY_INTERFACE" ]] && vnstat -i "$PRIMARY_INTERFACE" &> /dev/null;
 	traffic_rx_unit=$(echo $traffic | cut -d";" -f1,1 | sed -r 's/([0-9]+\.[0-9]{1})[0-9]*/\1/' | cut -d" " -f2)
 	traffic_tx=$(echo $traffic | cut -d";" -f2,2 | sed -r 's/([0-9]+\.[0-9]{1})[0-9]*/\1/' | cut -d" " -f1 | cut -d"." -f1)
 	traffic_tx_unit=$(echo $traffic | cut -d";" -f2,2 | sed -r 's/([0-9]+\.[0-9]{1})[0-9]*/\1/' | cut -d" " -f2)
-	[[ "$traffic" == *"Not enough"* ]] && { traffic_tx="n/a	"; traffic_rx="n/a	"; }
+	[[ "$traffic" == *"Not enough"* ]] && {
+		traffic_tx="n/a	"
+		traffic_rx="n/a	"
+	}
 	case $PRIMARY_DIRECTION in
 		tx)
 			display " TX today" "$traffic_tx" 500 0 "" "$traffic_tx_unit" ""
-			line=$((line+1))
-		;;
+			line=$((line + 1))
+			;;
 		rx)
 			display " RX today" "$traffic_rx" 500 0 "" "$traffic_rx_unit" ""
-			line=$((line+1))
-		;;
+			line=$((line + 1))
+			;;
 		both)
 			display " TX today" "$traffic_tx" 500 0 "" "$traffic_tx_unit" ""
 			display "RX today" "$traffic_rx" 500 0 "" "$traffic_rx_unit" ""
-			line=$((line+1))
-		;;
+			line=$((line + 1))
+			;;
 		*) #off or whatever
-		;;
+			;;
 	esac
 fi
 
 if [[ $(command -v zpool) ]]; then
-	zpoolstatus="$(zpool status </dev/stdin 2>&1 )"
+	zpoolstatus="$(zpool status < /dev/stdin 2>&1)"
 	if [[ -n $(echo $zpoolstatus | grep 'not loaded') ]]; then
-	:
+		:
 	elif [[ -n $(echo $zpoolstatus | grep 'degraded\|OFFLINE') ]]; then
 		printf " ZFS pool:     "
 		echo -ne "\e[0;91mDegraded\x1B[0m"
-		line=$((line+1))
+		line=$((line + 1))
 	elif [[ -n $(echo $zpoolstatus | grep 'no pools available') ]]; then
 		printf " ZFS pool:     "
 		echo -ne "n/a"
-		line=$((line+1))
+		line=$((line + 1))
 	else
 		printf " ZFS pool:     "
 		echo -ne "\e[0;92mOnline\x1B[0m"
-		line=$((line+1))
+		line=$((line + 1))
 	fi
 fi
 echo ""
