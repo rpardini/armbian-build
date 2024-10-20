@@ -94,6 +94,8 @@ lists:
     - { BOARD: radxa-zero3, BRANCH: edge }
     - { BOARD: rock-4se, BRANCH: edge }
     - { BOARD: rock-5b, BRANCH: edge }
+    - { BOARD: nanopi-r6c, BRANCH: edge }
+    - { BOARD: nanopi-r6s, BRANCH: edge }
     - { BOARD: nanopct6, BRANCH: edge }
     - { BOARD: nanopct6-lts, BRANCH: edge }
     - { BOARD: mixtile-edge2, BRANCH: edge }
