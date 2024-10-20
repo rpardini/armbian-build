@@ -2,7 +2,7 @@
 BOARD_NAME="NanoPi R6C"
 BOARDFAMILY="rockchip-rk3588"
 BOARD_MAINTAINER="ColorfulRhino"
-BOOTCONFIG="nanopi-r6c-rk3588s_defconfig" # Mainline defconfig, enables booting from NVMe
+BOOTCONFIG="nanopi-r6s-rk3588s_defconfig" # vendor name (same as R6S!), not standard, see hook below, set BOOT_SOC below to compensate
 BOOT_SOC="rk3588"
 KERNEL_TARGET="edge,current,vendor"
 FULL_DESKTOP="yes"
@@ -30,9 +30,12 @@ function post_family_tweaks__nanopi_r6c_naming_udev_network_interfaces() {
 	EOF
 }
 
-# Mainline U-Boot
+# Mainline U-Boot (for current and edge)
 function post_family_config__nanopi_r6c_use_mainline_uboot() {
+	if [[ "${BRANCH}" != "edge" && "${BRANCH}" != "current" ]]; then return 0; fi
+
 	display_alert "$BOARD" "Using mainline U-Boot for $BOARD / $BRANCH" "info"
+	declare -g BOOTCONFIG="nanopi-r6c-rk3588s_defconfig" # Mainline defconfig, enables booting from NVMe
 
 	declare -g BOOTDELAY=1                                       # Wait for UART interrupt to enter UMS/RockUSB mode etc
 	declare -g BOOTSOURCE="https://github.com/u-boot/u-boot.git" # We ❤️ Mainline U-Boot
@@ -51,7 +54,10 @@ function post_family_config__nanopi_r6c_use_mainline_uboot() {
 	}
 }
 
+# Mainline U-Boot configs (for current and edge)
 function post_config_uboot_target__extra_configs_for_nanopi_r6c_uboot() {
+	if [[ "${BRANCH}" != "edge" && "${BRANCH}" != "current" ]]; then return 0; fi
+
 	display_alert "$BOARD" "u-boot configs for ${BOOTBRANCH} u-boot config BRANCH=${BRANCH}" "info"
 
 	display_alert "u-boot for ${BOARD}" "u-boot: enable RNG / KASLRSEED" "info"
