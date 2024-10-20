@@ -82,7 +82,8 @@ function post_family_config_branch_edge__cm3588_nas_use_mainline_uboot() {
 	}
 }
 
-function post_config_uboot_branch_edge_target__extra_configs_for_cm3588-nas_uboot() {
+function post_config_uboot_target__extra_configs_for_cm3588-nas_uboot() {
+	if [[ "${BRANCH}" != "edge" ]]; then return 0; fi
 	display_alert "$BOARD" "u-boot configs for ${BOOTBRANCH} u-boot config BRANCH=${BRANCH}" "info"
 
 	display_alert "u-boot for ${BOARD}" "u-boot: enable RNG / KASLRSEED" "info"
