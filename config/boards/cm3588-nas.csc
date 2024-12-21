@@ -8,12 +8,12 @@ KERNEL_TARGET="edge,current,vendor"
 FULL_DESKTOP="yes"
 BOOT_LOGO="desktop"
 IMAGE_PARTITION_TABLE="gpt"
-BOOT_FDT_FILE="rockchip/rk3588-friendlyelec-cm3588-nas.dtb"
+BOOT_FDT_FILE="rockchip/rk3588-friendlyelec-cm3588-nas-40pin-pwm-fan.dtb"
 BOOT_SCENARIO="spl-blobs"
 
 # Compat with vendor kernel
 function post_family_config_branch_vendor__old_vendor_dtb_name() {
-	declare -g BOOT_FDT_FILE="rockchip/rk3588-nanopc-cm3588-nas.dtb"
+	declare -g BOOT_FDT_FILE="rockchip/rk3588-nanopc-cm3588-nas-40pin-pwm-fan.dtb"
 	display_alert "Override FDT for ${BOARD}/${BRANCH}" "${BOOT_FDT_FILE}" "info"
 }
 
