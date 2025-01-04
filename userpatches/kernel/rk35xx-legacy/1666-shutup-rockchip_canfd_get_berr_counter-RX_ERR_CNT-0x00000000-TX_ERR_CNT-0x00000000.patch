@@ -9,10 +9,10 @@ Subject: shutup rockchip_canfd_get_berr_counter RX_ERR_CNT=0x00000000
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/net/can/rockchip/rockchip_canfd.c b/drivers/net/can/rockchip/rockchip_canfd.c
-index abdcdb580eff..5b01849a645c 100644
+index 111111111111..222222222222 100644
 --- a/drivers/net/can/rockchip/rockchip_canfd.c
 +++ b/drivers/net/can/rockchip/rockchip_canfd.c
-@@ -383,9 +383,9 @@ static int rockchip_canfd_get_berr_counter(const struct net_device *ndev,
+@@ -392,9 +392,9 @@ static int rockchip_canfd_get_berr_counter(const struct net_device *ndev,
  
  	pm_runtime_put(rcan->dev);
  
