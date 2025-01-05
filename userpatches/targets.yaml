@@ -55,7 +55,7 @@ lists:
     # - { BOARD: orangepi5, BRANCH: edge }
     #- { BOARD: hikey960, BRANCH: edge } # PR https://github.com/armbian/build/pull/5660
     #- { BOARD: hinlink-h28k, BRANCH: legacy } # PR https://github.com/armbian/build/pull/5747
-    #- { BOARD: tinkerboard, BRANCH: edge }
+    - { BOARD: tinkerboard, BRANCH: edge } # For some armhf testing
     # very distant from being mine
     # - { BOARD: star64, BRANCH: edge, RELEASE: sid } # only sid has proper riscv64 support in Debian?
     #- { BOARD: helios64, BRANCH: current }
@@ -116,8 +116,8 @@ lists:
     # WSL2 UEFI's, for Windows WSL2
     #- { BOARD: wsl2-arm64, BRANCH: edge } # edge is missing some hyper-v patches & configs
     #- { BOARD: wsl2-x86, BRANCH: edge }
-    #- { BOARD: wsl2-arm64, BRANCH: current }
-    #- { BOARD: wsl2-x86, BRANCH: current }
+    - { BOARD: wsl2-arm64, BRANCH: current }
+    - { BOARD: wsl2-x86, BRANCH: current }
 
 
   desktop-boards: &desktop-boards # Gotta define RELEASE here
