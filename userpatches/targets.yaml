@@ -214,7 +214,7 @@ targets:
       - *rpardini-uboot-only-boards
 
   all-uboots-that-is-really-a-lot-of-uboots:
-    enabled: yes
+    enabled: no
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
