@@ -16,7 +16,7 @@ function calculate_image_version() {
 		vendor_version_prelude=""
 	fi
 
-	calculated_image_version="${vendor_version_prelude}${BOARD^}_${RELEASE}_${BRANCH}_${kernel_version_for_image}${DESKTOP_ENVIRONMENT:+_$DESKTOP_ENVIRONMENT}${EXTRA_IMAGE_SUFFIX}"
+	calculated_image_version="${vendor_version_prelude}${BOARD}_${RELEASE}_${BRANCH}${DESKTOP_ENVIRONMENT:+_$DESKTOP_ENVIRONMENT}${EXTRA_IMAGE_SUFFIX}"
 	[[ $BUILD_DESKTOP == yes ]] && calculated_image_version=${calculated_image_version}_desktop
 	[[ $BUILD_MINIMAL == yes ]] && calculated_image_version=${calculated_image_version}_minimal
 	[[ $ROOTFS_TYPE == nfs ]] && calculated_image_version=${calculated_image_version}_nfsboot
