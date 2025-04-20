@@ -13,7 +13,7 @@
 function extension_prepare_config__k8s() {
 	display_alert "Preparing k8s extension" "${EXTENSION}" "info"
 
-	declare -g K8S_MAJOR_MINOR=${K8S_MAJOR_MINOR:-"1.30"}
+	declare -g K8S_MAJOR_MINOR=${K8S_MAJOR_MINOR:-"1.32"}
 	EXTRA_IMAGE_SUFFIXES+=("-k8s-${K8S_MAJOR_MINOR}") # global array
 
 	#declare -g EXTRA_BSP_NAME="${EXTRA_BSP_NAME}-k8s" # Unique bsp name for this extension
