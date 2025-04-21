@@ -103,8 +103,29 @@ function pre_umount_final_image__300_prepare_cloud_init_startup() {
 	[[ -f "${CI_TARGET}/boot/armbian_first_run.txt.template" ]] && rm -f "${CI_TARGET}/boot/armbian_first_run.txt.template"
 	[[ -f "${CI_TARGET}/root/.not_logged_in_yet" ]] && rm -f "${CI_TARGET}/root/.not_logged_in_yet"
 
+	# Configure logging for cloud-init. INFO is too little and DEBUG too much (as always)
+	cp "${EXTENSION_DIR}"/config/debug_logging.yaml "${CI_TARGET}"/etc/cloud/cloud.cfg.d/05_logging.cfg
+
+	# fact is, that systemd-networkd-wait-online.service is not too smart (just google. it's.. sad).
+	# it will gag on conditions we don't care about (and hang "waiting" for 2 minutes).
+	# let it accept any interface online, and timeout after 15s; that should be plenty for the slowest DHCP to work.
+	display_alert "cloud-init: networking" "let systemd-networkd-wait-online wait for any interface online" "info"
+	mkdir -p "${CI_TARGET}"/etc/systemd/system/systemd-networkd-wait-online.service.d
+	cat <<- OVERRIDE_NETWORKD_WAIT_ANY > "${CI_TARGET}"/etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf
+		[Service]
+		ExecStart=/lib/systemd/systemd-networkd-wait-online --any --timeout=15
+	OVERRIDE_NETWORKD_WAIT_ANY
+
 	# if disabled skip configuration
 	if [[ "${SKIP_CLOUD_INIT_CONFIG}" == "yes" ]]; then
+		# cloud-init will create it's own netplan config at /etc/netplan/50-cloud-init.yaml based
+		# on what the datasource tells it. If the datasource itself needs a network (eg EC2 et al)
+		# then it will create a netplan config itself (not from a template) by inspecting the network interfaces.
+		# It is pretty hard to control -- the only ensured way would be to disable network rendering completely
+		# and instead preconfigure netplan, like is done below for non-metadata based datasources, but
+		# since this is meant as generic image (that could have net config from CIDATA local metadata) there's
+		# nothing much we can do.
+		# Hopefully the wait-online fix above will be enough to make it work.
 		display_alert "Cloud-init config" "skipped, use cloud-native metadata" ""
 		return 0
 	fi
@@ -157,16 +178,6 @@ function pre_umount_final_image__300_prepare_cloud_init_startup() {
 		cp "${EXTENSION_DIR}"/config/network-configs/${CLOUD_INIT_NET_CONFIG_FILE}.yaml "${CI_TARGET}${CLOUD_INIT_CONFIG_LOCATION}"/network-config
 	fi
 
-	# fact is, that systemd-networkd-wait-online.service is not too smart (just google. it's.. sad).
-	# it will gag on conditions we don't care about (and hang "waiting" for 2 minutes).
-	# let it accept any interface online, and timeout after 15s; that should be plenty for the slowest DHCP to work.
-	display_alert "cloud-init: networking" "let systemd-networkd-wait-online wait for any interface online" "info"
-	mkdir -p "${CI_TARGET}"/etc/systemd/system/systemd-networkd-wait-online.service.d
-	cat <<- OVERRIDE_NETWORKD_WAIT_ANY > "${CI_TARGET}"/etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf
-		[Service]
-		ExecStart=/lib/systemd/systemd-networkd-wait-online --any --timeout=15
-	OVERRIDE_NETWORKD_WAIT_ANY
-
 	# Second chance; use a hook to overwrite the network-config file.
 	[[ $(type -t cloud_init_modify_network_config) == function ]] && cloud_init_modify_network_config # @TODO: should be a hook
 
@@ -175,9 +186,6 @@ function pre_umount_final_image__300_prepare_cloud_init_startup() {
 		display_alert "Cloud-init user-data points directly to" "${CLOUD_INIT_USER_DATA_URL}" "wrn"
 		echo -e "#include\n${CLOUD_INIT_USER_DATA_URL}" > "${CI_TARGET}${CLOUD_INIT_CONFIG_LOCATION}"/user-data
 	fi
-
-	# Configure logging for cloud-init. INFO is too little and DEBUG too much (as always)
-	cp "${EXTENSION_DIR}"/config/debug_logging.yaml "${CI_TARGET}"/etc/cloud/cloud.cfg.d/05_logging.cfg
 
 	# seed the /var/lib/cloud/seed/nocloud directory with symlinks to ${CLOUD_INIT_CONFIG_LOCATION}/*-data|config
 	# symlinks always there, be dangling or not.
