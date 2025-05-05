@@ -178,7 +178,6 @@ function pre_customize_image__400_k8s_debfoster() {
 
 	debfoster_keepers+=(
 		bash-completion
-		distro-info-data
 		cloud-init
 		cloud-initramfs-growroot
 		eatmydata         # used by cloud-init
@@ -199,10 +198,12 @@ function pre_customize_image__400_k8s_debfoster() {
 			install_pre_debfoster+=("usr-is-merged") # compensate, otherwise missing deps. fix Armbian messup in pkgs
 			debfoster_keepers+=("systemd-resolved" "usr-is-merged")
 			[[ "${BRANCH}" == "ddk" ]] && debfoster_keepers+=("linux-image-${ARCH}")
+			[[ "${RELEASE}" == "bookworm" ]] && debfoster_keepers+=("distro-info-data")
 			;;
 		"Ubuntu-"*)
 			display_alert "Ubuntu: python3-apt" "keeping" "info"
-			debfoster_keepers+=("python3-apt") # needed for grub-mkconfig, noble+ ?
+			debfoster_keepers+=("python3-apt")      # needed for grub-mkconfig, noble+ ?
+			debfoster_keepers+=("distro-info-data") # needed for grub-mkconfig, noble+ ?
 			[[ "${BRANCH}" == "ddk" ]] && debfoster_keepers+=("linux-image-generic")
 			;;
 	esac
@@ -245,10 +246,10 @@ function pre_customize_image__400_k8s_debfoster() {
 	chroot_sdcard_apt_get_install "${install_pre_debfoster[@]}"
 
 	display_alert "Debfoster: setting keepers" "Keeping '${#debfoster_keepers[*]}' packages" "info"
-	chroot_sdcard debfoster --force --mark-only "${debfoster_keepers[@]}"
+	chroot_sdcard_custom_with_apt_logic debfoster --force --mark-only "${debfoster_keepers[@]}"
 
 	display_alert "Debfoster: removing unused packages" "running debfoster!" "info"
-	chroot_sdcard debfoster --force --option "'RemoveCmd=apt-get --purge --autoremove -y remove'" -o "UseRecommends=no"
+	chroot_sdcard_custom_with_apt_logic debfoster --force --option "'RemoveCmd=apt-get --purge --autoremove -y remove'" -o "UseRecommends=no"
 
 	# Show a list of installed packages and their sizes after debfoster is done -- "what is left?"
 	display_alert "Debfoster: list of installed packages and their sizes" "after debfoster" "info"
