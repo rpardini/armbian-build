@@ -81,9 +81,7 @@ function extension_prepare_config__990_late_finish_cloud_init_config() {
 	ci_packages_install+=("cloud-init" "cloud-initramfs-growroot" "busybox" "eatmydata" "curl" "tree") # 'busybox' helps with growroot working on bookworm
 	ci_packages_install+=("lvm2" "systemd-timesyncd" "wpasupplicant")
 
-	if [[ "${RELEASE}" != "trixie" ]]; then # Hack, trixie recently (2023-10-01) lost this package for some reason
-		ci_packages_install+=("thin-provisioning-tools")
-	fi
+	ci_packages_install+=("thin-provisioning-tools")
 
 	# This means "add to rootfs cache list", not "for this board".
 	add_packages_to_rootfs "${ci_packages_install[@]}"
