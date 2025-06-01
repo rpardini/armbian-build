@@ -6,12 +6,14 @@ function user_config__metadata_cloud_config_common() {
 
 function user_config__metadata_cloud_config_arm64() {
 	[[ "${ARCH}" != "arm64" ]] && return 0
+	[[ "${BOARDFAMILY}" != uefi-* ]] && return 0
 	declare -g SERIALCON="ttyAMA0" # Default serial console for arm64
 	display_alert "Configuring cloud-init for arm64 metadata" "cloud-metadata: arm64; SERIALCON=${SERIALCON}" "warn"
 }
 
 function user_config__metadata_cloud_config_amd64_x86() {
 	[[ "${ARCH}" != "amd64" ]] && return 0
+	[[ "${BOARDFAMILY}" != uefi-* ]] && return 0
 	declare -g SERIALCON="ttyS0" # Default serial console for amd64
 	display_alert "Configuring cloud-init for amd64 metadata" "cloud-metadata: amd64; SERIALCON=${SERIALCON}" "warn"
 }
