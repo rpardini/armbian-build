@@ -6,6 +6,8 @@ Subject: FROMLIST(v5): auxdisplay: add support for Titanmec TM1628 7 segment
 
 FROMLIST(v5): MAINTAINERS: Add entry for tm1628 auxdisplay driver
 
+/* TODO: move to https://github.com/jefflessard/tm16xx-display */
+
 Signed-off-by: Heiner Kallweit <hkallweit1@gmail.com>
 
 FROMLIST(v5): auxdisplay: add support for Titanmec TM1628 7 segment display controller

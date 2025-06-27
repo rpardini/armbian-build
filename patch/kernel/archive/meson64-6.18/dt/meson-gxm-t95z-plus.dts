@@ -64,6 +64,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		/* TODO: move to https://github.com/jefflessard/tm16xx-display */
 		tm1628: led-controller@0 {
 			compatible = "titanmec,tm1628";
 			reg = <0>;
