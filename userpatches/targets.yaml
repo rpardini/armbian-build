@@ -24,9 +24,9 @@ targets:
     items-from-inventory:
       userspace: # creates items from userspace inventory automatically... 'eos' distributions are always skipped.
         #skip-releases: [ "sid" ] # do NOT include these releases
-        only-releases: [ "bookworm", "trixie", "noble" ] # ONLY include these releases
+        only-releases: [ "bookworm", "trixie" ] # ONLY include these releases; , "noble"
         # skip-desktops: [ "lxde" ] # do NOT include these desktops
-        only-desktops: [ "gnome", "kde-neon" ] # ONLY include these desktops, "xfce",
+        only-desktops: [ "gnome" ] # ONLY include these desktops, "xfce", , "kde-neon"
         cli: yes # include normal CLI userspace
         minimal: no # include minimal CLI userspace
         cloud: yes # include cloud CLI userspace (rpardini's stuff, default is no)
@@ -150,8 +150,9 @@ targets:
       - { BOARD: "odroidhc4" }
       - { BOARD: "nanopct6-lts" }
       - { BOARD: "nanopct6-lts", BRANCH: "vendor" }
+      - { BOARD: "mixtile-blade3" } # edge
       - { BOARD: "mixtile-blade3", BRANCH: "vendor" }
-      - { BOARD: "rpi4b", BRANCH: "current" }
+      #- { BOARD: "rpi4b", BRANCH: "current" }
 
   cloud-metadatas:
     enabled: yes # keep, cloud-container-disk; k8s-only 2025
