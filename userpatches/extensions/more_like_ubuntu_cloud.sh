@@ -20,8 +20,6 @@ function extension_prepare_config__prepare_mluc() {
 	add_packages_to_rootfs bash-completion ssh-import-id curl bind9-dnsutils dosfstools ethtool git jq lsof nano pciutils lm-sensors pv screen unzip wget zsh tmux
 	declare -g EXTRA_ROOTFS_NAME="${EXTRA_ROOTFS_NAME}-mluc" # Unique rootfs name for this extension; goes together with add_packages_to_rootfs
 
-	add_packages_to_image systemd-timesyncd # chrony does not play well with systemd / qemu-agent.
-
 	declare -g EXTRA_BSP_NAME="${EXTRA_BSP_NAME}-mluc" # Unique bsp name for this extension: more like ubuntu cloud
 }
 

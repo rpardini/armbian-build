@@ -80,6 +80,7 @@ function extension_prepare_config__990_late_finish_cloud_init_config() {
 
 	ci_packages_install+=("cloud-init" "cloud-initramfs-growroot" "busybox" "eatmydata" "curl" "tree") # 'busybox' helps with growroot working on bookworm
 	ci_packages_install+=("lvm2" "systemd-timesyncd" "wpasupplicant")
+	ci_packages_install+=("btop") # just cos I like it
 
 	ci_packages_install+=("thin-provisioning-tools")
 
@@ -235,9 +236,5 @@ function pre_customize_image__restore_preserved_systemd_and_netplan_stuff() {
 	# Clean netplan config. Cloud-init will create its own.
 	rm -fv "${SDCARD}"/etc/netplan/armbian-default.yaml
 
-	# Update Debian's c-i template for apt, due to bullseye security layout change.
-	if [[ "${RELEASE}" == "bullseye" ]]; then
-		display_alert "Cloud-init sources.list.debian.tmpl" "${DISTRIBUTION} ${RELEASE}" "info"
-		wget --quiet --output-document="${SDCARD}/etc/cloud/templates/sources.list.debian.tmpl" "https://raw.githubusercontent.com/canonical/cloud-init/main/templates/sources.list.debian.tmpl" || display_alert "Failed to update c-i apt template for" "${RELEASE}" "err"
-	fi
+	return 0
 }
