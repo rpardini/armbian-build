@@ -109,7 +109,7 @@ targets:
       CLOUD_IMAGE: "yes"
     expand:
       debian-stable:
-        RELEASE: bookworm
+        RELEASE: trixie
     items:
       # rescue e2img's; only for arm64 for ORACLE OCI
       - { BOARD: uefi-arm64, BRANCH: edge,  ENABLE_EXTENSIONS: uefi-rescue }
