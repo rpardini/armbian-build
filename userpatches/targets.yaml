@@ -142,8 +142,6 @@ targets:
       BUILD_DESKTOP: "no"
       ENABLE_EXTENSIONS: "cloud-metadata,k8s"
     expand:
-      debian-stable:
-        RELEASE: bookworm
       debian-testing:
         RELEASE: trixie
     items:
@@ -165,8 +163,6 @@ targets:
       BUILD_DESKTOP: "no"
       BRANCH: edge
     expand:
-      debian-stable:
-        RELEASE: bookworm
       debian-testing:
         RELEASE: trixie
     items:
