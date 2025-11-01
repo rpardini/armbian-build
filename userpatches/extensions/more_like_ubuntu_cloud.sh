@@ -7,7 +7,7 @@ function extension_prepare_config__prepare_mluc() {
 	remove_packages vnstat chrony unattended-upgrades rng-tools networkd-dispatcher hping3 selinux-policy-default dkms
 	#remove_packages armbian-config # contains the armbian neofetch. keep it
 	# remove most packages from additional: find . -name packages.additional | xargs cat  | sort | uniq | xargs echo
-	remove_packages alsa-utils aptitude avahi-autoipd btrfs-progs cracklib-runtime evtest f2fs-tools f3 haveged \
+	remove_packages alsa-utils aptitude avahi-autoipd cracklib-runtime evtest f2fs-tools f3 haveged \
 		iputils-arping libcrack2 libdigest-sha-perl \
 		libproc-processtable-perl mc ntfs-3g
 
