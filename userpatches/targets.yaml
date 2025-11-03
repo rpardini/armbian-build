@@ -36,7 +36,7 @@ targets:
         arches: # wanted architectures, and their "example" BOARD and BRANCH.
           arm64: [ { BOARD: "uefi-arm64", BRANCH: "current" } ]
           amd64: [ { BOARD: "uefi-x86", BRANCH: "current" } ]
-          armhf: [ { BOARD: "tinkerboard", BRANCH: "current" } ]
+          #armhf: [ { BOARD: "tinkerboard", BRANCH: "current" } ]
 
   u-boot-only-for-some-boards:
     enabled: yes
