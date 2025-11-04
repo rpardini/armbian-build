@@ -157,6 +157,7 @@ function create_new_rootfs_cache_via_debootstrap() {
 	cd "${SDCARD}" || exit_with_error "cray-cray about SDCARD" "${SDCARD}" # this will prevent error sh: 0: getcwd() failed
 
 	declare -ga debootstrap_arguments=(
+	    "--verbose"
 		"--variant=minbase"                                         # minimal base variant. go ask Debian about it.
 		"--arch=${ARCH}"                                            # the arch
 		"'--include=${AGGREGATED_PACKAGES_DEBOOTSTRAP_COMMA}'"      # from aggregation.py
