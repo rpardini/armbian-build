@@ -215,8 +215,8 @@ function adaptative_prepare_host_dependencies() {
 
 	# Some versions of U-Boot do not require/import 'python3-setuptools' properly, so add them explicitly.
 	if [[ 'tag:v2022.04' == "${BOOTBRANCH:-}" || 'tag:v2022.07' == "${BOOTBRANCH:-}" ]]; then
-		display_alert "Adding package to 'host_dependencies'" "python3-setuptools" "info"
-		host_dependencies+=("python3-setuptools")
+		display_alert "NOT Adding package to 'host_dependencies'" "python3-setuptools due to BOOTBRANCH=${BOOTBRANCH}" "warn"
+		#host_dependencies+=("python3-setuptools")
 	fi
 
 	# qemu binfmt + chrooted user emulation.
