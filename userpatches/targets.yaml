@@ -90,7 +90,7 @@ targets:
     pipeline:
       gha: *rpardini-gha
     vars:
-      RELEASE: bookworm
+      RELEASE: trixie
       BUILD_MINIMAL: "no" # quoting "no" is the first lesson of YAML
       CLOUD_IMAGE: "no"
     items: # list of reference-lists
@@ -98,6 +98,7 @@ targets:
       - { BOARD: mixtile-blade3, BRANCH: vendor }
       - { BOARD: uefi-arm64, BRANCH: edge }
       - { BOARD: uefi-x86, BRANCH: edge }
+      - { BOARD: uefi-x86, BRANCH: "applet2" }
 
   cloud-rescues:
     enabled: yes
