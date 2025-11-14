@@ -146,7 +146,9 @@ targets:
       debian-testing:
         RELEASE: trixie
     items:
+      - { BOARD: "khadas-vim3l" }
       - { BOARD: "odroidhc4" }
+      - { BOARD: "cm3588-nas" }
       - { BOARD: "nanopct6-lts" }
       - { BOARD: "nanopct6-lts", BRANCH: "vendor" }
       - { BOARD: "mixtile-blade3" } # edge
