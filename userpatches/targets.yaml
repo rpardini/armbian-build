@@ -146,6 +146,7 @@ targets:
       debian-testing:
         RELEASE: trixie
     items:
+      - { BOARD: "rpi4b", BRANCH: "current" }
       - { BOARD: "rock-5b" } # For Lane
       - { BOARD: "khadas-vim3l" }
       - { BOARD: "odroidhc4" }
