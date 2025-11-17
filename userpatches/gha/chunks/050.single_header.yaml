@@ -156,6 +156,7 @@ jobs:
       # Store output/info folder in a GitHub Actions artifact
       - uses: actions/upload-artifact@v5
         name: Upload output/info as GitHub Artifact
+        continue-on-error: true # 20251117: all artifact uploads are broken at GHA
         with:
           name: build-info-json
           path: output/info
