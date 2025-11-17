@@ -146,6 +146,7 @@ targets:
       debian-testing:
         RELEASE: trixie
     items:
+      - { BOARD: "rock-5b" } # For Lane
       - { BOARD: "khadas-vim3l" }
       - { BOARD: "odroidhc4" }
       - { BOARD: "cm3588-nas" }
