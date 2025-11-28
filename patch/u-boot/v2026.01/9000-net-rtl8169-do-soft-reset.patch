@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ricardo Pardini <ricardo@pardini.net>
+Date: Fri, 28 Nov 2025 01:36:21 +0100
+Subject: net: rtl8169: do soft reset
+
+- remove `#if 0` from 22 years ago
+---
+ drivers/net/rtl8169.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/drivers/net/rtl8169.c b/drivers/net/rtl8169.c
+index 111111111111..222222222222 100644
+--- a/drivers/net/rtl8169.c
++++ b/drivers/net/rtl8169.c
+@@ -703,7 +703,6 @@ static void rtl8169_hw_start(struct udevice *dev)
+ 	printf ("%s\n", __FUNCTION__);
+ #endif
+ 
+-#if 0
+ 	/* Soft reset the chip. */
+ 	RTL_W8(ChipCmd, CmdReset);
+ 
+@@ -714,7 +713,6 @@ static void rtl8169_hw_start(struct udevice *dev)
+ 		else
+ 			udelay(10);
+ 	}
+-#endif
+ 
+ 	RTL_W8(Cfg9346, Cfg9346_Unlock);
+ 
+-- 
+Armbian
+
