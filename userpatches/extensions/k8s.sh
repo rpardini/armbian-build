@@ -32,6 +32,10 @@ function extension_prepare_config__k8s() {
 	display_alert "Setting large sparse qcow2" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
 	declare -g QCOW2_RESIZE_AMOUNT="+10G" # resize the qcow2 image to be 10G bigger
 
+	# extra packages to support longhorn running on k8s (required host dependencies):
+	display_alert "Adding extra packages for k8s/longhorn support" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
+	add_packages_to_image "open-iscsi" "cryptsetup" "dmsetup"
+
 	return 0
 }
 
@@ -190,6 +194,9 @@ function pre_customize_image__400_k8s_debfoster() {
 		nfs-common
 		openssh-server
 		sudo
+		"open-iscsi" # for longhorn
+		"cryptsetup" # for longhorn
+		"dmsetup"    # for longhorn
 	)
 
 	case "${DISTRIBUTION}-${RELEASE}" in
