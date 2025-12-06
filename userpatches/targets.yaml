@@ -82,6 +82,8 @@ targets:
       - { BOARD: mixtile-edge2, BRANCH: edge }
       - { BOARD: cm3588-nas, BRANCH: edge }
       - { BOARD: rockpi-4cplus, BRANCH: edge }
+      - { BOARD: radxa-e24c, BRANCH: edge }
+      - { BOARD: radxa-e24c, BRANCH: vendor } # same as edge
       - { BOARD: tinkerboard, BRANCH: current }
 
   cli-debian:
