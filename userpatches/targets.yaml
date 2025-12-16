@@ -150,17 +150,17 @@ targets:
     items:
       - { BOARD: "rpi4b", BRANCH: "current" }
       - { BOARD: "rock-5b" } # For Lane
-      - { BOARD: "khadas-vim3l" }
+      #- { BOARD: "khadas-vim3l" }
       - { BOARD: "odroidhc4" }
       - { BOARD: "cm3588-nas" }
       - { BOARD: "nanopct6-lts" }
-      - { BOARD: "nanopct6-lts", BRANCH: "vendor" }
+      #- { BOARD: "nanopct6-lts", BRANCH: "vendor" }
       - { BOARD: "mixtile-blade3" } # edge
       - { BOARD: "mixtile-blade3", BRANCH: "vendor" }
       #- { BOARD: "rpi4b", BRANCH: "current" }
 
   cloud-metadatas:
-    enabled: yes # keep, cloud-container-disk; k8s-only 2025
+    enabled: yes # keep, cloud-container-disk; k8s-only 2025; also used for Tinkerbell UEFI
     configs: [ rpardini-generic ]
     pipeline:
       gha: *rpardini-gha
@@ -175,8 +175,10 @@ targets:
     items:
       #- { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" }
       #- { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" }
-      - { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
-      - { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+      #- { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+      #- { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+      - { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-initrd,k8s" }
+      - { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-initrd,k8s" }
 
 
   ## ---- Useful sometimes
