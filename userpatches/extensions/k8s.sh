@@ -181,6 +181,7 @@ function pre_customize_image__400_k8s_debfoster() {
 	install_pre_debfoster+=("debfoster") # we need to install it first
 
 	debfoster_keepers+=(
+		armbian-firmware # keep firmware package itself - k8s ext forces non-full firmware in prepare
 		bash-completion
 		cloud-init
 		cloud-initramfs-growroot
