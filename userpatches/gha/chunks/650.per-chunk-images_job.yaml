@@ -73,7 +73,7 @@ jobs: # <TEMPLATE-IGNORE>
         with:
           tag_name: ${{ needs.matrix_prep.outputs.images_release }}
           files: |
-            output/images/*.xz
+            output/images/*.zst
 
       - name: Release ${{ matrix.board }} (retry if 1st failed)
         id: release2
@@ -82,7 +82,7 @@ jobs: # <TEMPLATE-IGNORE>
         with:
           tag_name: ${{ needs.matrix_prep.outputs.images_release }}
           files: |
-            output/images/*.xz
+            output/images/*.zst
 
       - name: Cleanup output images
         if: always()
