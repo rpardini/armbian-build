@@ -181,7 +181,6 @@ function pre_customize_image__400_k8s_debfoster() {
 	install_pre_debfoster+=("debfoster") # we need to install it first
 
 	debfoster_keepers+=(
-		armbian-firmware # keep firmware package itself - k8s ext forces non-full firmware in prepare
 		bash-completion
 		cloud-init
 		cloud-initramfs-growroot
@@ -230,6 +229,7 @@ function pre_customize_image__400_k8s_debfoster() {
 				[[ "${BRANCH}" != "ddk" ]] && debfoster_keepers+=("linux-image-${BRANCH}-x86")
 				;;
 		esac
+		# NOT armbian-firmware; it is not needed anyway on uefi images (or -full would, but certainly the regular one)
 	elif [[ "${BOARDFAMILY}" == "bcm2711" ]]; then
 		display_alert "k8s: RPi4" "preserving bsp-cli / kernel / dtb" "info"
 		debfoster_keepers+=("armbian-bsp-cli-${BOARD}-${BRANCH}-raspifw-mluc-cloud" "linux-image-${BRANCH}-${LINUXFAMILY}" "linux-dtb-${BRANCH}-${LINUXFAMILY}")
@@ -241,6 +241,7 @@ function pre_customize_image__400_k8s_debfoster() {
 	else
 		display_alert "k8s: non UEFI board" "preserving bsp-cli / kernel / dtb / u-boot" "info"
 		debfoster_keepers+=("armbian-bsp-cli-${BOARD}-${BRANCH}-mluc-cloud" "linux-image-${BRANCH}-${LINUXFAMILY}" "linux-dtb-${BRANCH}-${LINUXFAMILY}" "linux-u-boot-${BOARD}-${BRANCH}")
+		debfoster_keepers+=("armbian-firmware") # keep firmware package itself - k8s ext forces non-full firmware in prepare
 	fi
 
 	# Hack: if u-boot-menu installed, keep it.
