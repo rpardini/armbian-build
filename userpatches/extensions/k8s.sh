@@ -26,7 +26,7 @@ function extension_prepare_config__k8s() {
 	declare -g UEFI_GRUB_TIMEOUT=0
 
 	display_alert "Trimming down firmware" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
-	declare -g INSTALL_ARMBIAN_FIRMWARE="no" # Do not install full firmware for UEFI boards
+	declare -g BOARD_FIRMWARE_INSTALL="" # not '-full' in case it was set that way
 
 	## Also make the output qcow2 larger; KubeVirt does not resize/overlay qcow2's for container-disks
 	display_alert "Setting large sparse qcow2" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
