@@ -58,6 +58,7 @@ targets:
       - { BOARD: mekotronics-r58x, BRANCH: legacy }
       - { BOARD: mekotronics-r58-minipc, BRANCH: legacy }
       - { BOARD: mixtile-blade3, BRANCH: legacy }
+      - { BOARD: mixtile-core3588e, BRANCH: edge }
       - { BOARD: odroidhc4, BRANCH: edge }
       - { BOARD: khadas-vim3l, BRANCH: edge }
       - { BOARD: khadas-vim3, BRANCH: edge }
@@ -158,6 +159,7 @@ targets:
       #- { BOARD: "nanopct6-lts", BRANCH: "vendor" }
       - { BOARD: "mixtile-blade3" } # edge
       - { BOARD: "mixtile-blade3", BRANCH: "vendor" }
+      - { BOARD: "mixtile-core3588e", BRANCH: "edge" }
       #- { BOARD: "rpi4b", BRANCH: "current" }
 
   cloud-metadatas:
