@@ -159,6 +159,7 @@ targets:
       - { BOARD: "mixtile-blade3" } # edge
       - { BOARD: "mixtile-blade3", BRANCH: "vendor" }
       - { BOARD: "mixtile-core3588e", BRANCH: "edge" }
+      - { BOARD: "mekotronics-r58-4x4", BRANCH: "edge" }
       - { BOARD: "mixtile-core3588e", BRANCH: "vendor" }
       #- { BOARD: "rpi4b", BRANCH: "current" }
 
