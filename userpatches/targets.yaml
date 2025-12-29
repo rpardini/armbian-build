@@ -101,7 +101,6 @@ targets:
       - { BOARD: mixtile-blade3, BRANCH: vendor }
       - { BOARD: uefi-arm64, BRANCH: edge }
       - { BOARD: uefi-x86, BRANCH: edge } # applet2
-      - { BOARD: uefi-x86, BRANCH: "current" } # applet2
 
   cloud-rescues:
     enabled: yes
