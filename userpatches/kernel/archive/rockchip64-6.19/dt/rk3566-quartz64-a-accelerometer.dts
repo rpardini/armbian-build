@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "rk3566-quartz64-a.dts"
+
+/ {
+	model = "Pine64 Quartz64 Model A with st_accel_i2c Accelerometer";
+
+};
+
+/* i2c2 has a SC7A20; see https://files.pine64.org/doc/quartz64/Quartz64_model-A_schematic_v2.0_20210427.pdf page 41 */
+&i2c2 {
+	status = "okay";
+	sc7a20: accelerometer@18 {
+		compatible = "silan,sc7a20";
+		reg = <0x18>;
+
+		interrupt-parent = <&gpio3>;
+		interrupts = <8 IRQ_TYPE_EDGE_FALLING>; /* GSENSOR_INT_L_GPIO3_B0 */
+
+		odr = <100>; /* 100Hz */
+		vdd-supply = <&vcc_3v3>;
+		vio-supply = <&vcc_3v3>;
+		vddio-supply = <&vcc_3v3>;
+	};
+};
