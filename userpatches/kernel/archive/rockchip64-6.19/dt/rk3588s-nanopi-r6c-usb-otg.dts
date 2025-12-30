@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "rk3588s-nanopi-r6c.dts"
+
+/ {
+	model = "FriendlyElec NanoPi R6C with USB OTG blue port in the back";
+};
+
+// Same as u-boot
+&u2phy0 { status = "okay"; };
+&u2phy0_otg { status = "okay"; };
+&usbdp_phy0 { status = "okay"; };
+&usb_host0_xhci { dr_mode = "peripheral";  maximum-speed = "high-speed";  status = "okay"; };
