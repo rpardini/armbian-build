@@ -161,7 +161,7 @@ targets:
       - { BOARD: "mixtile-core3588e", BRANCH: "edge" }
       - { BOARD: "mekotronics-r58-4x4", BRANCH: "edge" }
       - { BOARD: "mixtile-core3588e", BRANCH: "vendor" }
-      - { BOARD: "radxa-nio-12l", BRANCH: "collabora" }
+      - { BOARD: "radxa-nio-12l", BRANCH: "collabora", ENABLE_EXTENSIONS: "ufs", DOCKER_ARMBIAN_BASE_IMAGE: "debian:trixie" }
       #- { BOARD: "rpi4b", BRANCH: "current" }
 
   cloud-metadatas:
