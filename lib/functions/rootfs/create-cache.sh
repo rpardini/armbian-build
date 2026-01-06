@@ -9,8 +9,13 @@
 
 # called by artifact-rootfs::artifact_rootfs_prepare_version()
 function calculate_rootfs_cache_id() {
-	# Validate that AGGREGATED_ROOTFS_HASH is set
-	[[ -z "${AGGREGATED_ROOTFS_HASH}" ]] && exit_with_error "AGGREGATED_ROOTFS_HASH is not set at calculate_rootfs_cache_id()"
+	if [[ "${AGGREGATION_INFO_ONLY:-"no"}" == "yes" ]]; then
+		# Doesn't matter, use a fake
+		AGGREGATED_ROOTFS_HASH="00000000000000000000000000000000"
+	else
+		# Validate that AGGREGATED_ROOTFS_HASH is set
+		[[ -z "${AGGREGATED_ROOTFS_HASH}" ]] && exit_with_error "AGGREGATED_ROOTFS_HASH is not set at calculate_rootfs_cache_id()"
+	fi
 
 	# If the vars are already set and not empty, exit_with_error
 	[[ "x${packages_hash}x" != "xx" ]] && exit_with_error "packages_hash is already set"

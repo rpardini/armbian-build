@@ -62,6 +62,9 @@ function aggregate_all_packages_python() {
 		"COLORFGBG=${COLORFGBG}"
 		"COLUMNS=${COLUMNS:-160}"
 
+		# Metadata-only
+		"AGGREGATION_INFO_ONLY=${AGGREGATION_INFO_ONLY:-"no"}"
+
 		# For the main packages, and others; main packages are not mixed with BOARD or DESKTOP packages.
 		# Results:
 		# - AGGREGATED_DEBOOTSTRAP_COMPONENTS
@@ -118,5 +121,12 @@ function aggregate_all_packages_python() {
 
 	# shellcheck disable=SC1090
 	source "${temp_file_for_aggregation}" # SOURCE IT!
-	run_host_command_logged rm -f "${temp_file_for_aggregation}"
+
+	if [[ "${AGGREGATION_INFO_ONLY:-"no"}" == "yes" ]]; then
+		# We can't output here, as we don't know what to call it. Set a global variable and the caller will export later.
+		declare -g aggregation_info_only_file="${temp_file_for_aggregation}" # do NOT delete it here
+		display_alert "Aggregation info only mode" "set global variable aggregation_info_only_file='${aggregation_info_only_file}'" "warn"
+	else
+		run_host_command_logged rm -f "${temp_file_for_aggregation}"
+	fi
 }

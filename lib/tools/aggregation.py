@@ -44,6 +44,7 @@ DESKTOP_ENVIRONMENT = armbian_utils.get_from_env("DESKTOP_ENVIRONMENT")
 DESKTOP_ENVIRONMENT_CONFIG_NAME = armbian_utils.get_from_env("DESKTOP_ENVIRONMENT_CONFIG_NAME")
 RELEASE = armbian_utils.get_from_env_or_bomb("RELEASE")  # "kinetic"
 USERPATCHES_PATH = armbian_utils.get_from_env_or_bomb("USERPATCHES_PATH")
+AGGREGATION_INFO_ONLY = armbian_utils.yes_or_no_or_bomb(armbian_utils.get_from_env_or_bomb("AGGREGATION_INFO_ONLY"))
 
 # Show the environment
 armbian_utils.show_incoming_environment()
@@ -191,7 +192,7 @@ with open(output_file, "w") as bash, SummarizedMarkdownWriter("aggregation.md", 
 
 	# loop over the aggregated lists
 	for id, name, value, extra_func in output_lists:
-		stats = util.prepare_bash_output_array_for_list(bash, md, name, value, extra_func)
+		stats = util.prepare_bash_output_array_for_list(bash, md, name, value, extra_func, AGGREGATION_INFO_ONLY)
 		md.add_summary(f"{id}: {stats['number_items']}")
 
 	# extra: if DESKTOP, add number of DESKTOP_APPGROUPS_SELECTED to the summary
@@ -199,14 +200,16 @@ with open(output_file, "w") as bash, SummarizedMarkdownWriter("aggregation.md", 
 		md.add_summary(f"desktop_appgroups: {len(util.DESKTOP_APPGROUPS_SELECTED)}")
 
 	# The rootfs hash (md5) is used as a cache key.
-	bash.write(f"declare -g -r AGGREGATED_ROOTFS_HASH='{AGGREGATED_ROOTFS_HASH}'\n")  # (this done simply cos it has no newlines)
-	bash.write(util.bash_string_multiline("AGGREGATED_ROOTFS_HASH_TEXT", AGGREGATED_ROOTFS_HASH_TEXT))
+	if not AGGREGATION_INFO_ONLY:
+		bash.write(f"declare -g -r AGGREGATED_ROOTFS_HASH='{AGGREGATED_ROOTFS_HASH}'\n")  # (this done simply cos it has no newlines)
+	#bash.write(util.bash_string_multiline("AGGREGATED_ROOTFS_HASH_TEXT", AGGREGATED_ROOTFS_HASH_TEXT))
 	# add_summary with the first 16 chars of the hash @TODO: unify the cropping of the hash vs bash
 	md.add_summary(f"hash: {AGGREGATED_ROOTFS_HASH[:16]}")
 
 	# Special case for components: debootstrap also wants a list of components, comma separated.
-	bash.write(
-		f"declare -g -r AGGREGATED_DEBOOTSTRAP_COMPONENTS_COMMA='{AGGREGATED_DEBOOTSTRAP_COMPONENTS_COMMA}'\n")
+	if not AGGREGATION_INFO_ONLY:
+		bash.write(
+			f"declare -g -r AGGREGATED_DEBOOTSTRAP_COMPONENTS_COMMA='{AGGREGATED_DEBOOTSTRAP_COMPONENTS_COMMA}'\n")
 
 	# Single string stuff for desktop packages postinst's and preparation. @TODO use functions instead of eval.
 	bash.write(util.prepare_bash_output_single_string(
@@ -217,7 +220,7 @@ with open(output_file, "w") as bash, SummarizedMarkdownWriter("aggregation.md", 
 		"AGGREGATED_DESKTOP_BSP_POSTINST", AGGREGATED_DESKTOP_BSP_POSTINST))
 	bash.write(util.prepare_bash_output_single_string(
 		"AGGREGATED_DESKTOP_BSP_PREPARE", AGGREGATED_DESKTOP_BSP_PREPARE))
-	bash.write("\n## End of aggregation output\n");
+	bash.write("\n## End of aggregation output\n")
 
 	# 2) @TODO: Some removals... uninstall-inside-cache and such. (debsums case? also some gnome stuff)
 
