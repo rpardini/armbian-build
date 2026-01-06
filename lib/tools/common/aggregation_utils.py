@@ -264,7 +264,7 @@ def only_names_not_removed(merged_list):
 
 
 def prepare_bash_output_array_for_list(
-	bash_writer, md_writer, output_array_name, merged_list, extra_dict_function=None):
+	bash_writer, md_writer, output_array_name, merged_list, extra_dict_function=None, AGGREGATION_INFO_ONLY=False):
 	md_writer.write(f"### `{output_array_name}`\n")
 
 	values_list = []
@@ -301,7 +301,11 @@ def prepare_bash_output_array_for_list(
 		extra_list_bash = "\n".join([f"\t['{value}']='{extra_dict[value]}'" for value in extra_dict.keys()])
 		extra_dict_decl = f"declare -r -g -A {output_array_name}_DICT=(\n{extra_list_bash}\n)\n"
 
-	final_value = actual_var + "\n" + extra_dict_decl + "\n" + comma_var + "\n" + explain_var
+	if AGGREGATION_INFO_ONLY:
+		final_value = actual_var + "\n" + extra_dict_decl + "\n"
+	else:
+		final_value = actual_var + "\n" + extra_dict_decl + "\n" + comma_var + "\n" + explain_var
+
 	bash_writer.write(final_value)
 
 	# return some statistics for the summary

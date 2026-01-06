@@ -66,6 +66,45 @@ function artifact_rootfs_build_from_sources() {
 	debug_var artifact_final_file
 	debug_var artifact_final_file_basename
 
+	# Detour to get some metadata out of the aggregation.
+	if [[ "${AGGREGATION_INFO_ONLY:-"no"}" == "yes" ]]; then
+		display_alert "Aggregation info only mode enabled, skipping rootfs build" "AGGREGATION_INFO_ONLY=yes" "warn"
+
+		# Ensure aggregation_info_only_file has been set (by aggregation.sh)
+		: "${aggregation_info_only_file:?aggregation_info_only_file is not set but AGGREGATION_INFO_ONLY=yes}"
+
+		# shellcheck disable=SC2034 # outer scope
+		declare -g ARTIFACT_WILL_NOT_BUILD="yes" # signal to outer scope that no build happened
+
+		# resulting aggregation info file is in aggregation_info_only_file
+		declare -a aggr_info_dirs=(
+			"${SRC}/output/info/aggregation/all"
+			"${SRC}/output/info/aggregation/by-distro/${DISTRIBUTION}"
+			"${SRC}/output/info/aggregation/by-release/${RELEASE}"
+			"${SRC}/output/info/aggregation/by-arch/${ARCH}"
+			"${SRC}/output/info/aggregation/by-desktop/${DESKTOP_ENVIRONMENT:-"0none"}"
+			"${SRC}/output/info/aggregation/by-type/${cache_type}"
+			"${SRC}/output/info/aggregation/by-distro-arch-type/${DISTRIBUTION}/${ARCH}/${cache_type}"
+			"${SRC}/output/info/aggregation/by-distro-type-arch/${DISTRIBUTION}/${cache_type}/${ARCH}"
+		)
+		declare aggr_info_basedir
+		for aggr_info_basedir in "${aggr_info_dirs[@]}"; do
+			mkdir -p "${aggr_info_basedir}"
+			declare target_info_file="${aggr_info_basedir}/${ARCH}_${RELEASE}_${cache_type}.sh"
+			# if the target already exists, bomb; means the rootfs is inconsistent (should not happen)
+			if [[ -f "${target_info_file}" ]]; then
+				exit_with_error "Target aggregation info file '${target_info_file}' already exists; inconsistent rootfs build?"
+			fi
+
+			cp "${aggregation_info_only_file}" "${target_info_file}"
+			display_alert "Copied aggregation info only file to output info" "'${target_info_file}'" "warn"
+		done
+
+		rm -f "${aggregation_info_only_file}" # remove the temporary aggregation_info_only_file
+
+		return 0
+	fi
+
 	# Creates a cleanup handler 'trap_handler_cleanup_rootfs_and_image'
 	LOG_SECTION="prepare_rootfs_build_params_and_trap" do_with_logging prepare_rootfs_build_params_and_trap
 
@@ -136,7 +175,10 @@ function artifact_rootfs_cli_adapter_config_prep() {
 
 	declare -r __wanted_rootfs_arch="${ARCH}"
 	declare -g -r RELEASE="${RELEASE}" # make readonly for finding who tries to change it
-	declare -g -r NEEDS_BINFMT="yes"   # make sure binfmts are installed during prepare_host_interactive
+
+	if [[ "${AGGREGATION_INFO_ONLY:-"no"}" != "yes" ]]; then # not if aggregation info only; we don't need binfmt then.
+		declare -g -r NEEDS_BINFMT="yes"                        # make sure binfmts are installed during prepare_host_interactive
+	fi
 
 	if [[ "${SKIP_ARMBIAN_REPO}" != "yes" ]]; then # if not set to yes, force it to yes.
 		declare -g SKIP_ARMBIAN_REPO="yes"            # Using the repo during rootfs build causes insanity, so don't. Make readonly to ensure.
