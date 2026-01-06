@@ -240,7 +240,7 @@ function docker_cli_prepare_dockerfile() {
 		# Include certain files and directories; mostly the build system, and some of the config. when run, those are bind-mounted in.
 		!/VERSION
 		!/LICENSE
-		!/*.sh
+		!/compile.sh
 		!/requirements.txt
 		!/lib
 		!/extensions
