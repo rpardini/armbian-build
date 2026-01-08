@@ -182,6 +182,7 @@ targets:
       #- { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" }
       #- { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
       #- { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+      - { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-lima-vz" } # for lima/vz etc
       - { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-initrd,k8s" }
       - { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-initrd,k8s" }
 
