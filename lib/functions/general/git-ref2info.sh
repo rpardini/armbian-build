@@ -76,6 +76,31 @@ function memoized_git_ref_to_info() {
 	fi
 
 	if [[ "${ARMBIAN_COMMAND}" == "artifact-config-dump-json" ]] && [[ ${ref_type} == "branch" ]]; then
+		# This block writes the resolved SHA1 for a branch to the cache file output/info/git_sources.json.
+		#
+		# Why all this complexity?
+		# - We want to avoid race conditions when multiple processes write to the cache at the same time.
+		# - We want to atomically update the cache file, so we use file descriptors and flock.
+		#
+		# flock -x 5 and flock -x 6:
+		#   Acquire exclusive locks on file descriptors 5 and 6, which are attached to the cache file and a temp file.
+		#   This prevents concurrent writes from corrupting the cache.
+		#
+		# [[ -s ... ]]:
+		#   Checks if the cache file exists and is not empty. If it doesn't exist or is empty, initializes it as an empty JSON array ('[]').
+		#   This ensures jq always has valid JSON input.
+		#
+		# jq logic:
+		#   - For branches: Looks for an entry with matching 'source' and 'branch'.
+		#   - If found, updates the 'sha1' field. If not found, appends a new object.
+		#   - This keeps the cache up to date and avoids duplicate entries.
+		#
+		# /dev/fd/5 and /dev/fd/6:
+		#   Use file descriptors for atomic read/write operations. /dev/fd/5 is the input, /dev/fd/6 is the output.
+		#   The result is written to a temp file, then atomically moved to the real cache file.
+		#
+		# The whole block is wrapped in a subshell to scope the file descriptors and locks, so they don't leak.
+		#
 		{
 			flock -x 5
 			flock -x 6
