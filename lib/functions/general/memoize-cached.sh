@@ -30,6 +30,29 @@ function run_memoized() {
 	#display_alert "memoize" "before" "info"
 	#debug_dict MEMO_DICT
 
+	# --- Begin: Disk/file-based caching logic ---
+	# This section implements persistent, file-based caching for memoized function results.
+	#
+	# The cache key is a hash of:
+	#   - The cache_id (logical cache namespace)
+	#   - The input associative array (as serialized by declare -p)
+	#   - The function body (via declare -f), so code changes invalidate the cache
+	#   - Any extra arguments
+	#
+	# The cache is stored in SRC/cache/memoize/<cache_id>/<hash>.
+	#
+	# To avoid race conditions and corruption when multiple processes access the cache, we use file locking:
+	#   - exec {lock_fd}> ... creates a new file descriptor for the lock file
+	#   - flock $lock_fd acquires an exclusive lock on the lock file, blocking until available
+	#   - The lock is held for the duration of the cache read/write
+	#
+	# If the cache file exists and is not stale (older than memoize_cache_ttl), it is sourced to restore the associative array.
+	# If the cache file is missing or stale, the function is executed, and the result is saved to the cache file.
+	#
+	# The cache file is written using declare -p, with a sed to strip the 'declare -A' prefix for easier sourcing.
+	#
+	# The lock is released with flock -u when done.
+	# --- End: Disk/file-based caching logic ---
 	MEMO_DICT+=(["MEMO_TYPE"]="${cache_id}")
 	declare single_string_input="${cache_id}"
 	single_string_input="$(declare -p "${var_n}")" # this might use random order...
