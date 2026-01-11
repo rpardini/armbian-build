@@ -76,6 +76,7 @@ function memoized_git_ref_to_info() {
 	fi
 
 	if [[ "${ARMBIAN_COMMAND}" == "artifact-config-dump-json" ]] && [[ ${ref_type} == "branch" ]]; then
+		display_alert "Updating git_sources.json cache" "${MEMO_DICT[GIT_SOURCE]} :: ${ref_name} :: ${sha1}" "warn"
 		# This block writes the resolved SHA1 for a branch to the cache file output/info/git_sources.json.
 		#
 		# Why all this complexity?
@@ -120,7 +121,7 @@ function memoized_git_ref_to_info() {
 
 	if [[ -f "${SRC}"/config/sources/git_sources.json && ${ref_type} == "branch" ]]; then
 		cached_revision=$(jq --raw-output '.[] | select(.source == "'${MEMO_DICT[GIT_SOURCE]}'" and .branch == "'$ref_name'") |.sha1' "${SRC}"/config/sources/git_sources.json)
-		display_alert "Found cached git version" "${cached_revision}" "info"
+		display_alert "Found cached git version in git_sources.json" "${cached_revision}" "warn"
 		[[ -z "${cached_revision}" ]] || sha1=${cached_revision}
 	fi
 
