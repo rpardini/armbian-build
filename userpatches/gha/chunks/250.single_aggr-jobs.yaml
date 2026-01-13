@@ -34,7 +34,7 @@ jobs: # <TEMPLATE-IGNORE>
     name: "[[num_chunks_artifacts]] artifact chunks and apt repository ready"
     runs-on: ubuntu-latest # not going to run, anyway, but is required.
     if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
-    needs: [ "matrix_prep", "all-artifacts-ready", "publish-debs-to-repo" ]
+    needs: [ "matrix_prep", "all-artifacts-ready" ] # it's 2026, and images don't need to wait for the repo. "publish-debs-to-repo"
     steps:
       - name: fake step
         run: uptime
