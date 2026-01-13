@@ -53,7 +53,7 @@ jobs: # <TEMPLATE-IGNORE>
 
       # Clean the memoize cache destination to avoid stale data
       - name: Clean memoize cache destination
-        run: rm -rf cache/memoize
+        run: sudo rm -rf cache/memoize
 
       # Restore the memoize cache; required and job should fail it this fails
       - name: GitHub cache restore memoize
