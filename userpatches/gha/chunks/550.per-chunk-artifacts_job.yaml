@@ -54,10 +54,23 @@ jobs: # <TEMPLATE-IGNORE>
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
 
+      # Clean the memoize cache destination to avoid stale data
+      - name: Clean memoize cache destination
+        run: rm -rf cache/memoize
+
+      # Restore the memoize cache; required and job should fail it this fails
+      - name: GitHub cache restore memoize
+        uses: actions/cache@v4
+        id: cache-restore-memoize
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number
+          fail-on-cache-miss: true
+
       - name: Build  ${{matrix.desc}}
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} UPLOAD_TO_OCI_ONLY=yes
+          bash ./compile.sh ${{ matrix.invocation }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_IMAGE_ARTIFACT}} ${{env.EXTRA_PARAMS_ARTIFACT}} UPLOAD_TO_OCI_ONLY=yes
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
