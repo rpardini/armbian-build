@@ -58,7 +58,9 @@ env:
 
   # Added to every image build arguments.
   EXTRA_PARAMS_IMAGE: "'DONT_BUILD_ARTIFACTS=any' COMPRESS_OUTPUTIMAGE=zst SHOW_DEBIAN=yes SKIP_CUSTOM_REPO=${{github.event.inputs.skipCustomRepo}}" # IMAGE_VERSION is individually added at the build step.
-
+  EXTRA_PARAMS_ARTIFACT: "" # not used currently
+  EXTRA_PARAMS_IMAGE_ARTIFACT: "MEMOIZE_TTL_FORCE=86400"
+  EXTRA_PARAMS_REPO: "MEMOIZE_TTL_FORCE=86400"
 jobs:
 
   matrix_prep:
@@ -156,10 +158,24 @@ jobs:
       # Store output/info folder in a GitHub Actions artifact
       - uses: actions/upload-artifact@v5
         name: Upload output/info as GitHub Artifact
-        continue-on-error: true # 20251117: all artifact uploads are broken at GHA
         with:
           name: build-info-json
           path: output/info
+
+      # Save a cache including memoize and oci positive cache, specific to _this run_ - all other jobs will restore from it, so they'll use the same versions of everything as the prepare job did (MEMOIZE_TTL_FORCE=86400); much faster too
+      - name: GitHub cache save memoize
+        uses: actions/cache/save@v4
+        id: save_memoize_cache
+        with:
+          path: cache/memoize
+          key: memoize-${{ github.run_number }} # keyed by run_number: all jobs will use it
+
+      - name: GitHub cache save oci positive
+        uses: actions/cache/save@v4
+        id: save_ocipositive_cache
+        with:
+          path: cache/oci/positive
+          key: oci-positive-${{ github.run_number }} # keyed by run_number
 
       - name: Prepare GH Release
         uses: "marvinpinto/action-automatic-releases@latest" # @TODO this is outdated, needs replacement. Also it deletes the release if it already exists, which is not what we want. Might be necessary to move the tag.
