@@ -65,6 +65,12 @@ function run_memoized() {
 
 	declare -i memoize_cache_ttl=${memoize_cache_ttl:-3600} # 1 hour default; can be overriden from outer scope
 
+	# If MEMOIZE_TTL_FORCE is set and higher 1, override the ttl; emit an info message.
+	if [[ -n "${MEMOIZE_TTL_FORCE:-}" && "${MEMOIZE_TTL_FORCE}" -gt 1 ]]; then
+		memoize_cache_ttl="${MEMOIZE_TTL_FORCE}"
+		display_alert "Forcing memoize cache ttl to ${memoize_cache_ttl} seconds" "MEMOIZE_TTL_FORCE=${MEMOIZE_TTL_FORCE}" "info"
+	fi
+
 	# Lock with timeout and user feedback
 	exec {lock_fd}> "${disk_cache_file}.lock" || exit_with_error "failed to open lock file"
 
@@ -113,6 +119,11 @@ function run_memoized() {
 			source "${disk_cache_file}"
 			return 0
 		fi
+	fi
+
+	# cache miss. if MEMOIZE_TTL_FORCE is set, emit a warning that we are recomputing the value.
+	if [[ -n "${MEMOIZE_TTL_FORCE:-}" && "${MEMOIZE_TTL_FORCE}" -gt 1 ]]; then
+		display_alert "Cache miss despite MEMOIZE_TTL_FORCE=${MEMOIZE_TTL_FORCE} being set" "Recomputing value for ${var_n}" "warning"
 	fi
 
 	# if cache miss, run the memoized_func...
