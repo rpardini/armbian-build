@@ -163,6 +163,7 @@ targets:
       #- { BOARD: "mixtile-core3588e", BRANCH: "vendor" } # vendor NOT tested; edge works fine-ish
       - { BOARD: "radxa-nio-12l", BRANCH: "collabora", ENABLE_EXTENSIONS: "ufs,cloud-metadata,k8s", DOCKER_ARMBIAN_BASE_IMAGE: "debian:trixie" } # goddamn ENABLE_EXTENSIONS commarr
       #- { BOARD: "rpi4b", BRANCH: "current" }
+      - { BOARD: "radxa-zero2", BRANCH: "edge" }
 
   cloud-metadatas:
     enabled: yes # keep, cloud-container-disk; k8s-only 2025; also used for Tinkerbell UEFI
