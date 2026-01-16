@@ -86,6 +86,9 @@ targets:
       - { BOARD: radxa-e24c, BRANCH: edge }
       - { BOARD: radxa-e24c, BRANCH: vendor } # same as edge
       - { BOARD: tinkerboard, BRANCH: current }
+      - { BOARD: tritium-h3, BRANCH: edge } # sunxi
+      - { BOARD: tritium-h5, BRANCH: edge } # sunxi64
+      - { BOARD: bananapif3, BRANCH: edge } # riscv64
 
   cli-debian:
     enabled: no # don't strictly need any of those
