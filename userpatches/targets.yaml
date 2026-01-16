@@ -49,7 +49,7 @@ targets:
       BUILD_MINIMAL: "yes"
       BUILD_DESKTOP: "no"
       CLOUD_IMAGE: "no"
-      RELEASE: bookworm
+      RELEASE: trixie
     items:
       - { BOARD: mekotronics-r58x-pro, BRANCH: legacy }
       - { BOARD: mekotronics-r58x-4g, BRANCH: legacy }
