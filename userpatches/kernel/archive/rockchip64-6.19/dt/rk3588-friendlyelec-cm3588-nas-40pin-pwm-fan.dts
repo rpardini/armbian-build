@@ -20,10 +20,10 @@
 	};
 
 	// rpardini abusing this for unrelated goodness
-	ir-receiver {
-		linux,rc-map-name = "rc-rc6-mce";
-		wakeup-source;
-	};
+	//ir-receiver {
+	//	linux,rc-map-name = "rc-rc6-mce";
+	//	wakeup-source;
+	//};
 
 };
 
