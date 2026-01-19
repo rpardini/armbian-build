@@ -1,29 +1,98 @@
 #!/bin/bash
-exec </dev/null </dev/null 2>/dev/null
-export LANG=C LC_ALL=C
+set -euo pipefail
 
-# In all cases, we want the media to be in quiescent, clean state.
-sync
-[ -x /sbin/mdadm ] && /sbin/mdadm --wait-clean --scan
+declare LOG_PREFIX="sata.shutdown"
+declare -i DRY_RUN=0
 
-# Function used to park all SATA disks.
-function ParkDisks() {
-    if [ -x /sbin/hdparm ]; then
-        Wait=0
-        for Dev in /sys/block/sd* ; do
-            [ -e $Dev ] && /sbin/hdparm -y /dev/${Dev##*/} && Wait=2
-            sleep $Wait
-            echo 1 > /sys/class/block/${Dev##*/}/device/delete
-        done
-        sleep $Wait
-    fi  
+log_kmsg() {
+	declare msg="$1"
+	echo "${LOG_PREFIX}: ${msg}" > /dev/kmsg
 }
 
-case "$1" in
-    # reboot|kexec)
-        # Do not park disks when rebooting or switching kernels.
-    #     ;;  
-    *)  
-        ParkDisks
-        ;;  
-esac
+sleep_and_log() {
+	declare -i wait="$1"
+	if ((wait > 0)); then
+		log_kmsg "Sleeping for ${wait} seconds."
+	fi
+	((DRY_RUN)) || sleep "${wait}"
+	return 0
+}
+
+[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1 && log_kmsg "Dry run mode enabled."
+log_kmsg "Starting shutdown script (DRY_RUN==${DRY_RUN})."
+
+export LANG=C LC_ALL=C
+
+log_kmsg "Syncing filesystems."
+((DRY_RUN)) && log_kmsg "[dry-run] Would sync filesystems." || sync || log_kmsg "Warning: sync failed."
+
+if command -v mdadm &> /dev/null; then
+	log_kmsg "Waiting for mdadm arrays to clean."
+	((DRY_RUN)) && log_kmsg "[dry-run] Would run: mdadm --wait-clean --scan." || mdadm --wait-clean --scan || log_kmsg "Warning: mdadm --wait-clean failed."
+else
+	log_kmsg "mdadm not found, skipping RAID clean."
+fi
+
+if ! command -v hdparm &> /dev/null; then
+	log_kmsg "hdparm not found, skipping disk parking."
+	exit 1
+fi
+
+log_kmsg "Parking SATA disks."
+for dev in /sys/block/sd*; do
+	declare -i wait=0
+	if [[ ! -e "${dev}" ]]; then
+		log_kmsg "Could not find ${dev}, skipping."
+		continue
+	fi
+	declare dev_name="${dev##*/}"
+	declare dev_path="/dev/${dev_name}"
+
+	declare mounted=0 # Check if device or any partition is mounted using findmnt
+	if findmnt -rn -S "${dev_path}" > /dev/null; then
+		log_kmsg "Device ${dev_path} is mounted (findmnt). Will skip kernel delete."
+		mounted=1
+	else
+		for part in "/dev/${dev_name}"[0-9]*; do
+			[[ -b "${part}" ]] || continue
+			if findmnt -rn -S "${part}" > /dev/null; then
+				log_kmsg "Partition ${part} is mounted (findmnt). Will skip kernel delete for ${dev_path}."
+				mounted=1
+				break
+			fi
+		done
+	fi
+
+	if ((DRY_RUN)); then
+		log_kmsg "[dry-run] Would run: hdparm -y ${dev_path}"
+		log_kmsg "[dry-run] Would set wait=2."
+		wait=2
+	else
+		if hdparm -y "${dev_path}"; then
+			log_kmsg "Disk ${dev_path} parked."
+			wait=2
+		else
+			log_kmsg "Warning: hdparm failed for ${dev_path}"
+		fi
+	fi
+
+	if ((mounted)); then
+		log_kmsg "Mounted filesystems detected on ${dev_path} or its partitions. Skipping kernel delete."
+	elif ((DRY_RUN)); then
+		log_kmsg "[dry-run] Would run: echo 1 > /sys/class/block/${dev_name}/device/delete"
+		log_kmsg "[dry-run] Would log: Disk ${dev_path} deleted from kernel."
+	else
+		sleep_and_log "${wait}"
+
+		log_kmsg "Deleting disk ${dev_path} from kernel /sys/class/block/${dev_name}/device/delete ..."
+		if echo 1 > "/sys/class/block/${dev_name}/device/delete"; then
+			log_kmsg "Disk ${dev_path} deleted from kernel."
+		else
+			log_kmsg "Warning: failed to delete ${dev_path} from kernel."
+		fi
+	fi
+	sleep_and_log "${wait}"
+done
+
+log_kmsg "Shutdown script completed."
+exit 0
