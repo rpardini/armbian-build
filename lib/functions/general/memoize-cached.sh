@@ -68,7 +68,7 @@ function run_memoized() {
 	# If MEMOIZE_TTL_FORCE is set and higher 1, override the ttl; emit an info message.
 	if [[ -n "${MEMOIZE_TTL_FORCE:-}" && "${MEMOIZE_TTL_FORCE}" -gt 1 ]]; then
 		memoize_cache_ttl="${MEMOIZE_TTL_FORCE}"
-		display_alert "Forcing memoize cache ttl to ${memoize_cache_ttl} seconds" "MEMOIZE_TTL_FORCE=${MEMOIZE_TTL_FORCE}" "info"
+		display_alert "Forcing memoize cache ttl to ${memoize_cache_ttl} seconds" "MEMOIZE_TTL_FORCE=${MEMOIZE_TTL_FORCE}" "warn"
 	fi
 
 	# Lock with timeout and user feedback

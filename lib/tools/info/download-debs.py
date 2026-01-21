@@ -39,7 +39,8 @@ def download_using_armbian(exec_cmd: list[str], params: dict, counter: int, tota
 				"WRITE_EXTENSIONS_METADATA": "no",  # Not interested in ext meta here
 				"ALLOW_ROOT": "yes",  # We're gonna be calling it as root, so allow it
 				"PRE_PREPARED_HOST": "yes",  # We're gonna be calling it as root, so allow it
-				"SKIP_LOG_ARCHIVE": "yes"  # Don't waste time and conflicts trying to archive logs at this point
+				"SKIP_LOG_ARCHIVE": "yes",  # Don't waste time and conflicts trying to archive logs at this point
+				"MEMOIZE_TTL_FORCE": "86400" # Absolutely trust the memoize cache, don't try to refresh anything for 24 hours @TODO get this from parent
 			},
 			stderr=subprocess.PIPE
 		)
