@@ -72,6 +72,8 @@ targets:
       - { BOARD: radxa-zero2, BRANCH: edge }
       - { BOARD: bananapir2pro, BRANCH: edge }
       - { BOARD: orangepi5, BRANCH: edge }
+      - { BOARD: orangepi5-plus, BRANCH: edge }
+      - { BOARD: orangepi5-plus, BRANCH: vendor }
       - { BOARD: radxa-zero3, BRANCH: edge }
       - { BOARD: rock-4se, BRANCH: edge }
       - { BOARD: rock-5b, BRANCH: edge }
