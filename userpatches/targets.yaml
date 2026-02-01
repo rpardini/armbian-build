@@ -90,7 +90,7 @@ targets:
       - { BOARD: tinkerboard, BRANCH: current }
       - { BOARD: tritium-h3, BRANCH: edge } # sunxi
       - { BOARD: tritium-h5, BRANCH: edge } # sunxi64
-      - { BOARD: bananapif3, BRANCH: edge } # riscv64
+      #- { BOARD: bananapif3, BRANCH: edge } # riscv64 - gitee repo hangs on matrix prepare
 
   cli-debian:
     enabled: no # don't strictly need any of those
