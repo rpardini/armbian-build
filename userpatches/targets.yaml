@@ -92,21 +92,6 @@ targets:
       - { BOARD: tritium-h5, BRANCH: edge } # sunxi64
       #- { BOARD: bananapif3, BRANCH: edge } # riscv64 - gitee repo hangs on matrix prepare
 
-  cli-debian:
-    enabled: no # don't strictly need any of those
-    configs: [ rpardini-generic ]
-    pipeline:
-      gha: *rpardini-gha
-    vars:
-      RELEASE: trixie
-      BUILD_MINIMAL: "no" # quoting "no" is the first lesson of YAML
-      CLOUD_IMAGE: "no"
-    items: # list of reference-lists
-      - { BOARD: mixtile-blade3, BRANCH: legacy }
-      - { BOARD: mixtile-blade3, BRANCH: vendor }
-      - { BOARD: uefi-arm64, BRANCH: edge }
-      - { BOARD: uefi-x86, BRANCH: edge } # applet2
-
   cloud-rescues:
     enabled: yes
     configs: [ rpardini-generic ]
@@ -120,7 +105,7 @@ targets:
         RELEASE: trixie
     items:
       # rescue e2img's; only for arm64 for ORACLE OCI
-      - { BOARD: uefi-arm64, BRANCH: edge,  ENABLE_EXTENSIONS: uefi-rescue }
+      - { BOARD: uefi-arm64, BRANCH: current,  ENABLE_EXTENSIONS: uefi-rescue }
       #- { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: uefi-rescue }
 
   desktop:
