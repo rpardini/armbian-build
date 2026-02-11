@@ -192,7 +192,8 @@ function run_host_x86_binary_logged() {
 	else
 		display_alert "Not using qemu for running x86 binary on $(uname -m)" "$1 (${target_bin_arch})" "debug"
 	fi
-	run_host_command_logged "${qemu_invocation[@]}" # Exit with this result code
+	# QEMU_CPU="qemu64" is set to override any unrelated setting that might have happened before
+	run_host_command_logged 'QEMU_CPU="qemu64"' "${qemu_invocation[@]}" # Exit with this result code
 }
 
 # Run simple and exit with it's code. Exactly the same as run_host_command_logged(). Used to have pv pipe, but that causes chaos.
