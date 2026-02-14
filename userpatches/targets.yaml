@@ -53,6 +53,7 @@ targets:
     items:
       - { BOARD: mekotronics-r58x-pro, BRANCH: legacy }
       - { BOARD: mekotronics-r58x-4g, BRANCH: legacy }
+      - { BOARD: mekotronics-r58x-4g, BRANCH: edge }
       - { BOARD: mekotronics-r58x-pro, BRANCH: vendor }
       - { BOARD: mekotronics-r58x-4g, BRANCH: vendor }
       - { BOARD: mekotronics-r58x, BRANCH: legacy }
