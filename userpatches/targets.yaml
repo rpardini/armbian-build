@@ -62,6 +62,7 @@ targets:
       - { BOARD: mixtile-blade3, BRANCH: legacy }
       - { BOARD: mixtile-core3588e, BRANCH: edge }
       - { BOARD: odroidhc4, BRANCH: edge }
+      - { BOARD: odroidn2, BRANCH: edge }
       - { BOARD: khadas-vim3l, BRANCH: edge }
       - { BOARD: khadas-vim3, BRANCH: edge }
       - { BOARD: tinkerboard-2, BRANCH: edge }
