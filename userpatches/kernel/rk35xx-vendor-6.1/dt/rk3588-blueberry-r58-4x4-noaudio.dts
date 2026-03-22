@@ -1,0 +1,50 @@
+/dts-v1/;
+
+#include "rk3588-blueberry-r58-4x4.dts"
+
+/ {
+	model = "Mekotronics RK3588 R58 4X4 - Vendor - No Audio";
+};
+
+// Add these overrides to rk3588-blueberry-r58-4x4.dts (or use as overlay)
+
+// 1. Disable the ES8388 codec sound card (the main analog audio)
+&es8388_sound {
+	status = "disabled";
+};
+
+// 2. Disable the ES8388 codec itself on i2c3
+&i2c3 {
+	es8388: es8388@10 {
+		status = "disabled";
+	};
+};
+
+// 3. Disable I2S0 (used by es8388_sound)
+&i2s0_8ch {
+	status = "disabled";
+};
+
+// 4. Disable I2S2 (used by lt6911_01-sound - THIS IS THE CRASH SITE)
+&i2s2_2ch {
+	status = "disabled";
+};
+
+// 5. Disable I2S7 (used by hdmiin-sound)
+&i2s7_8ch {
+	status = "disabled";
+};
+
+// 6. Disable I2S5 (used by hdmi0_sound)
+&i2s5_8ch {
+	status = "disabled";
+};
+
+// 7. Disable SPDIF (used by dp0_sound)
+&spdif_tx2 {
+	status = "disabled";
+};
+
+&spdif_tx5 {
+	status = "disabled";
+};
