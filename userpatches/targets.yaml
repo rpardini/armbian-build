@@ -147,6 +147,7 @@ targets:
       - { BOARD: "odroidhc4", BRANCH: "oldlts" } # 6.12, more stable?
       - { BOARD: "cm3588-nas" }
       - { BOARD: "mixtile-blade3", BRANCH: "vendor" }
+      - { BOARD: "mekotronics-r58x-pro", BRANCH: "edge" }
       #- { BOARD: "mixtile-core3588e", BRANCH: "edge" } # to Jacob...
       #- { BOARD: "rock-5b" } # For Lane
       #- { BOARD: "khadas-vim3l" } # too small
