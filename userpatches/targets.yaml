@@ -142,15 +142,15 @@ targets:
         RELEASE: trixie
     items:
       - { BOARD: "rpi4b", BRANCH: "current" }
-      - { BOARD: "radxa-zero2", BRANCH: "edge" }
+      - { BOARD: "radxa-zero2" }
       - { BOARD: "odroidhc4" } # testing other stuff / 6.18 stability / MPS / head retracts/regulator shit
       - { BOARD: "odroidhc4", BRANCH: "oldlts" } # 6.12, more stable?
       - { BOARD: "cm3588-nas" }
       - { BOARD: "mixtile-blade3", BRANCH: "vendor" }
-      - { BOARD: "mekotronics-r58x-pro", BRANCH: "edge" }
-      #- { BOARD: "mixtile-core3588e", BRANCH: "edge" } # to Jacob...
+      - { BOARD: "mekotronics-r58x-pro" }
+      - { BOARD: "khadas-vim3l" } # for Jacob
+      - { BOARD: "mixtile-core3588e" } # for Jacob...
       #- { BOARD: "rock-5b" } # For Lane
-      #- { BOARD: "khadas-vim3l" } # too small
       #- { BOARD: "radxa-e24c" }  # No.
       #- { BOARD: "nanopct6-lts" } # k3s
       #- { BOARD: "nanopct6-lts", BRANCH: "vendor" } # k3s
