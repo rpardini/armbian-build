@@ -178,7 +178,7 @@ function pre_customize_image__400_k8s_debfoster() {
 
 	declare -a debfoster_keepers=() install_pre_debfoster=()
 
-	install_pre_debfoster+=("debfoster") # we need to install it first
+	install_pre_debfoster+=("debfoster" "pigz") # we need to install it first
 
 	debfoster_keepers+=(
 		bash-completion
@@ -197,6 +197,7 @@ function pre_customize_image__400_k8s_debfoster() {
 		"open-iscsi" # for longhorn
 		"cryptsetup" # for longhorn
 		"dmsetup"    # for longhorn
+		pigz # for containerd fast decompress
 	)
 
 	case "${DISTRIBUTION}-${RELEASE}" in
