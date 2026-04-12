@@ -59,6 +59,7 @@ targets:
       - { BOARD: mekotronics-r58x-4g, BRANCH: vendor }
       - { BOARD: mekotronics-r58x, BRANCH: legacy }
       - { BOARD: mekotronics-r58-minipc, BRANCH: legacy }
+      - { BOARD: mekotronics-r58s2, BRANCH: edge }
       - { BOARD: mixtile-blade3, BRANCH: legacy }
       - { BOARD: mixtile-core3588e, BRANCH: edge }
       - { BOARD: odroidhc4, BRANCH: edge }
@@ -78,8 +79,11 @@ targets:
       - { BOARD: orangepi5-plus, BRANCH: edge }
       - { BOARD: orangepi5-plus, BRANCH: vendor }
       - { BOARD: radxa-zero3, BRANCH: edge }
+      - { BOARD: radxa-rock-4d, BRANCH: edge }
+      - { BOARD: orangepi5, BRANCH: edge }
       - { BOARD: rock-4se, BRANCH: edge }
       - { BOARD: rock-5b, BRANCH: edge }
+      - { BOARD: rock-3a, BRANCH: edge }
       - { BOARD: nanopi-r6c, BRANCH: edge }
       - { BOARD: nanopi-r6s, BRANCH: edge }
       - { BOARD: quartz64a, BRANCH: edge }
