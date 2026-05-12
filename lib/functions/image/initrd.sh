@@ -104,7 +104,7 @@ update_initramfs() {
 		fi
 
 		display_alert "Updating initramfs..." "$update_initramfs_cmd" ""
-		chroot_custom_long_running "$chroot_target" "$update_initramfs_cmd" "${logging_filter}"
+		chroot_custom_long_running "$chroot_target" "$update_initramfs_cmd" "${logging_filter}" || chroot_custom_long_running "$chroot_target" "$update_initramfs_cmd -v" "${logging_filter}"
 		display_alert "Updated initramfs." "${update_initramfs_cmd}" "info"
 
 		display_alert "Storing initrd in cache" "${initrd_cache_key}" "debug"                                              # notice there's no -p here: no need to touch LRU
