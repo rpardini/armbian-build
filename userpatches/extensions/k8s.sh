@@ -197,7 +197,7 @@ function pre_customize_image__400_k8s_debfoster() {
 		"open-iscsi" # for longhorn
 		"cryptsetup" # for longhorn
 		"dmsetup"    # for longhorn
-		pigz # for containerd fast decompress
+		pigz         # for containerd fast decompress
 	)
 
 	case "${DISTRIBUTION}-${RELEASE}" in
@@ -220,13 +220,15 @@ function pre_customize_image__400_k8s_debfoster() {
 	if [[ "${BOARDFAMILY}" == "uefi-"* ]]; then
 		display_alert "k8s: UEFI board" "preserving efibootmgr, grub, bsp-cli and kernel" "info"
 		debfoster_keepers+=("efibootmgr") # always
+		debfoster_keepers+=("armbian-bsp-cli-${BOARD}-${BRANCH}-grub-mluc-cloud")
+
 		case "${ARCH}" in
 			"arm64")
-				debfoster_keepers+=("armbian-bsp-cli-uefi-arm64-${BRANCH}-grub-mluc-cloud" "grub-efi-arm64")
+				debfoster_keepers+=("grub-efi-arm64")
 				[[ "${BRANCH}" != "ddk" ]] && debfoster_keepers+=("linux-dtb-${BRANCH}-arm64" "linux-image-${BRANCH}-arm64")
 				;;
 			"amd64")
-				debfoster_keepers+=("armbian-bsp-cli-uefi-x86-${BRANCH}-grub-mluc-cloud" "grub-pc" "grub-efi-amd64-bin")
+				debfoster_keepers+=("grub-pc" "grub-efi-amd64-bin")
 				[[ "${BRANCH}" != "ddk" ]] && debfoster_keepers+=("linux-image-${BRANCH}-x86")
 				;;
 		esac
