@@ -25,8 +25,12 @@ function extension_prepare_config__k8s() {
 	# Disable GRUB menu timeout, we wanna boot fast; for fastest, instead use kernelBoot/kexec, that is already provided by Armbian
 	declare -g UEFI_GRUB_TIMEOUT=0
 
-	display_alert "Trimming down firmware" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
-	declare -g BOARD_FIRMWARE_INSTALL="" # not '-full' in case it was set that way
+	if [[ "${BOARD}" == "thinkpad-x13s" ]]; then
+		display_alert "Keeping armbian-firmware-full for ${BOARD}" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
+	else
+		display_alert "Trimming down firmware" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
+		declare -g BOARD_FIRMWARE_INSTALL="" # not '-full' in case it was set that way
+	fi
 
 	## Also make the output qcow2 larger; KubeVirt does not resize/overlay qcow2's for container-disks
 	display_alert "Setting large sparse qcow2" "${EXTENSION} ${K8S_MAJOR_MINOR}" "info"
@@ -226,6 +230,7 @@ function pre_customize_image__400_k8s_debfoster() {
 			"arm64")
 				debfoster_keepers+=("grub-efi-arm64")
 				[[ "${BRANCH}" != "ddk" ]] && debfoster_keepers+=("linux-dtb-${BRANCH}-arm64" "linux-image-${BRANCH}-arm64")
+				[[ "${BOARD}" == "thinkpad-x13s" ]] && debfoster_keepers+=("armbian-firmware-full") # required for booting x13s
 				;;
 			"amd64")
 				debfoster_keepers+=("grub-pc" "grub-efi-amd64-bin")
