@@ -26,6 +26,17 @@
 		interrupt-parent = <&gpio3>;  /* GPIO GPIO3_B0/PWM9_M0 + ... */
 		interrupts = <RK_PB0 IRQ_TYPE_EDGE_FALLING>; /* ... + GPIO 40-pin Connector pin 33 */
 	};
+
+	/* Unrelated, really, but nice to have */
+	/* disabled
+	ir_receiver: ir-receiver {
+		compatible = "gpio-ir-receiver";
+		gpios = <&gpio0 RK_PD4 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&ir_recv_pin>;
+		linux,rc-map-name = "rc-rc6-mce";
+	};
+	*/
 };
 
 /* GPIO 40-pin Connector pin 33 - EXTFAN TACHO - used as interrupt source in pwm-fan - gpio GPIO3_B0/PWM9_M0 */
@@ -42,3 +53,29 @@
 };
 */
 
+/* Ref ir-receiver */
+/* disabled
+&pinctrl {
+	ir {
+		ir_recv_pin: ir-recv-pin {
+			rockchip,pins = <0 RK_PD4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+};
+*/
+
+/*
+ * Disable the inherited vendor IR decoder on pwm3 so the rockchip,remotectl-pwm
+ * driver doesn't bind and pwm3's pinctrl doesn't remux GPIO0_D4 back to mux 3.
+ */
+&pwm3 {
+	status = "disabled";
+	/delete-property/ pinctrl-0;
+	/delete-property/ pinctrl-names;
+};
+
+/* UNRELATED2: backport from FriendlyELEC */
+&display_subsystem {
+	clocks = <&hdptxphy_hdmi0>, <&hdptxphy_hdmi1>;
+	clock-names = "hdmi0_phy_pll", "hdmi1_phy_pll";
+};
