@@ -162,20 +162,20 @@ jobs:
           name: build-info-json
           path: output/info
 
-      # Save a cache including memoize and oci positive cache, specific to _this run_ - all other jobs will restore from it, so they'll use the same versions of everything as the prepare job did (MEMOIZE_TTL_FORCE=86400); much faster too
-      - name: GitHub cache save memoize
-        uses: actions/cache/save@v5
+      # Upload memoize and oci positive caches as artifacts, specific to _this run_ - all other jobs will download them, so they'll use the same versions of everything as the prepare job did (MEMOIZE_TTL_FORCE=86400); much faster too
+      - name: Upload memoize cache as GitHub Artifact
+        uses: actions/upload-artifact@v7
         id: save_memoize_cache
         with:
+          name: memoize-${{ github.run_number }} # named by run_number: all jobs will use it
           path: cache/memoize
-          key: memoize-${{ github.run_number }} # keyed by run_number: all jobs will use it
 
-      - name: GitHub cache save oci positive
-        uses: actions/cache/save@v5
+      - name: Upload oci positive cache as GitHub Artifact
+        uses: actions/upload-artifact@v7
         id: save_ocipositive_cache
         with:
+          name: oci-positive-${{ github.run_number }} # named by run_number
           path: cache/oci/positive
-          key: oci-positive-${{ github.run_number }} # keyed by run_number
 
       - name: Prepare GH Release
         uses: "marvinpinto/action-automatic-releases@latest" # @TODO this is outdated, needs replacement. Also it deletes the release if it already exists, which is not what we want. Might be necessary to move the tag.
