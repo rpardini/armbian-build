@@ -168,6 +168,6 @@ function host_deps_add_extra_python() {
 		display_alert "Using Python3 for" "hostdeps: '${host_release}' has python3 >= 3.9" "debug"
 	fi
 
-	host_dependencies+=("libdb-dev") # For Python's berkeleydb package to build correctly
+	host_dependencies+=("python::libdb-dev") # For Python's berkeleydb package to build correctly
 	return 0
 }
