@@ -3,7 +3,7 @@
 # Add binwalk dependency
 function add_host_dependencies__debug_boot_binwalk() {
 	display_alert "Adding binwalk dependency" "${EXTENSION} :: ${MOUNT}" "info"
-	declare -g EXTRA_BUILD_DEPS="${EXTRA_BUILD_DEPS} binwalk" # @TODO: convert to array later
+	EXTRA_BUILD_DEPS+=("binwalk")
 }
 
 function pre_umount_final_image__debug_boot_dump_slash_boot() {
