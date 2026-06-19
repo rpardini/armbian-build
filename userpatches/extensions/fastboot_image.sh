@@ -10,7 +10,7 @@ declare -g ROOT_FS_LABEL="Armbian_root"
 
 ## Hooks
 function add_host_dependencies__fastboot_stuff() {
-	declare -g EXTRA_BUILD_DEPS="${EXTRA_BUILD_DEPS} mkbootimg android-sdk-libsparse-utils fastboot"
+	EXTRA_BUILD_DEPS+=("mkbootimg" "android-sdk-libsparse-utils" "fastboot")
 }
 
 # Early check for host-side tools needed for Android fastboot.

@@ -47,10 +47,11 @@ post_determine_cthreads__be_more_awesome() {
 }
 
 #### *run before installing host dependencies*
-###  you can add packages to install, space separated, to ${EXTRA_BUILD_DEPS} here.
+###  you can append packages to install to the EXTRA_BUILD_DEPS array here, e.g. EXTRA_BUILD_DEPS+=("pkg").
 add_host_dependencies__be_more_awesome() {
 	# @TODO: Please rename this function to reflect what it does, but preserve the "add_host_dependencies__" prefix.
 	display_alert "Being awesome 6!" "${EXTENSION}" "info"
+	# EXTRA_BUILD_DEPS+=("some-package" "another-package") # append packages to the array here
 }
 
 #### *fetch host-side sources needed for tools and build*
