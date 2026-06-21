@@ -1,17 +1,16 @@
-From ccf3cb07ac5ceedc2ef1f1e847c79c1e5004c7d6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sun, 27 Jul 2025 08:45:50 +0000
-Subject: [PATCH 9001/9006] WIP: net: rockchip: Allow use of rx/tx delayline
- for rgmii-id modes
+Subject: WIP: net: rockchip: Allow use of rx/tx delayline for rgmii-id modes
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 ---
- drivers/net/dwc_eth_qos_rockchip.c | 24 +++++++---
- drivers/net/gmac_rockchip.c        | 74 +++++++++---------------------
+ drivers/net/dwc_eth_qos_rockchip.c | 24 ++-
+ drivers/net/gmac_rockchip.c        | 74 +++-------
  2 files changed, 39 insertions(+), 59 deletions(-)
 
 diff --git a/drivers/net/dwc_eth_qos_rockchip.c b/drivers/net/dwc_eth_qos_rockchip.c
-index d646d3ebac8..3780d0f79a6 100644
+index 111111111111..222222222222 100644
 --- a/drivers/net/dwc_eth_qos_rockchip.c
 +++ b/drivers/net/dwc_eth_qos_rockchip.c
 @@ -764,18 +764,30 @@ static int eqos_start_clks_rk(struct udevice *dev)
@@ -52,7 +51,7 @@ index d646d3ebac8..3780d0f79a6 100644
  		return data->ops->set_to_rmii(dev);
  	}
 diff --git a/drivers/net/gmac_rockchip.c b/drivers/net/gmac_rockchip.c
-index c8cfe7448d4..fa246ec374b 100644
+index 111111111111..222222222222 100644
 --- a/drivers/net/gmac_rockchip.c
 +++ b/drivers/net/gmac_rockchip.c
 @@ -54,6 +54,7 @@ struct rk_gmac_ops {
@@ -167,5 +166,5 @@ index c8cfe7448d4..fa246ec374b 100644
  		debug("NO interface defined!\n");
  		return -ENXIO;
 -- 
-2.52.0
+Armbian
 

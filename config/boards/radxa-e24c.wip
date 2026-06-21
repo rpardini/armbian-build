@@ -13,11 +13,17 @@ BOOT_SCENARIO="spl-blobs"
 BOOT_SOC="rk3528"
 IMAGE_PARTITION_TABLE="gpt"
 
+# Newer blobs...
+declare -g DDR_BLOB="rk35/rk3528_ddr_1056MHz_v1.13.bin"
+declare -g BL31_BLOB="rk35/rk3528_bl31_v1.21.elf"
+
 # Schematics: https://dl.radxa.com/e/e24c/docs/radxa_e24c_v1200_schematic.pdf
 
 # Mainline U-Boot, only for non-vendor BRANCH
 function post_family_config__e24c_use_mainline_uboot() {
 	if [[ "${BRANCH}" == "vendor" ]]; then
+		display_alert "$BOARD" "Using vendor u-boot for $BOARD on branch $BRANCH" "info"
+		declare -g SRC_CMDLINE="earlycon=uart8250,mmio32,0xff9f0000 console=ttyFIQ0,1500000n8 loglevel=7"
 		return 0
 	fi
 
@@ -27,7 +33,7 @@ function post_family_config__e24c_use_mainline_uboot() {
 	declare -g BOOTDELAY=1
 
 	declare -g BOOTSOURCE="https://github.com/u-boot/u-boot.git"
-	declare -g BOOTBRANCH="commit:47b50fb1125c539d80ed3e7f739c02c6486e1b52" # midway after 2026.01-rc4
+	declare -g BOOTBRANCH="tag:v2026.01"
 	declare -g BOOTPATCHDIR="v2026.01"
 	declare -g BOOTDIR="u-boot-${BOARD}"
 	declare -g UBOOT_TARGET_MAP="BL31=${RKBIN_DIR}/${BL31_BLOB} ROCKCHIP_TPL=${RKBIN_DIR}/${DDR_BLOB};;u-boot-rockchip.bin u-boot-rockchip-spi.bin u-boot-rockchip-usb471.bin u-boot-rockchip-usb472.bin"

@@ -1,15 +1,14 @@
-From 97b9627ece95d34d560bc0a2dcd8c5c749a505a0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ricardo Pardini <ricardo@pardini.net>
 Date: Thu, 18 Dec 2025 01:01:14 +0100
-Subject: [PATCH 9003/9006] WIP: Kwiboo's WIP rk3528.dtsi with pcie usb combphy
- etc
+Subject: WIP: Kwiboo's WIP rk3528.dtsi with pcie usb combphy etc
 
 ---
- dts/upstream/src/arm64/rockchip/rk3528.dtsi | 161 +++++++++++++++++++-
+ dts/upstream/src/arm64/rockchip/rk3528.dtsi | 161 +++++++++-
  1 file changed, 160 insertions(+), 1 deletion(-)
 
 diff --git a/dts/upstream/src/arm64/rockchip/rk3528.dtsi b/dts/upstream/src/arm64/rockchip/rk3528.dtsi
-index 001a555c83b..8ee96d4b945 100644
+index 111111111111..222222222222 100644
 --- a/dts/upstream/src/arm64/rockchip/rk3528.dtsi
 +++ b/dts/upstream/src/arm64/rockchip/rk3528.dtsi
 @@ -7,6 +7,7 @@
@@ -219,5 +218,5 @@ index 001a555c83b..8ee96d4b945 100644
  };
  
 -- 
-2.52.0
+Armbian
 
