@@ -89,7 +89,11 @@ function calculate_hash_for_function_bodies() {
 		if [[ $(type -t "${func}") != function ]]; then
 			continue
 		fi
-		function_bodies+=("$(declare -f "${func}")")
+		declare body body_sha256
+		body="$(declare -f "${func}")"
+		body_sha256="$(sha256sum <<< "${body}" | cut -d' ' -f1)"
+		display_alert "calculate_hash_for_function_bodies sha256 for ${func}" "${body_sha256}" "wrn"
+		function_bodies+=("${body}")
 	done
 
 	if [[ ${#function_bodies[@]} -eq 0 ]]; then

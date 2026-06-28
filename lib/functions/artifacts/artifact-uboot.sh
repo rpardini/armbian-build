@@ -93,10 +93,15 @@ function artifact_uboot_prepare_version() {
 		"setup_write_uboot_platform" "compile_atf"
 	declare hash_uboot_functions="${hash_functions}"
 
+	display_alert "uboot hash hooks only (hash_hooks):" "${hash_hooks}" "wrn"
+	display_alert "uboot hash functions only (hash_uboot_functions):" "${hash_uboot_functions}" "wrn"
+
 	# Hash those two together
 	declare hash_hooks_and_functions="undetermined"
 	hash_hooks_and_functions="$(echo "${hash_hooks}" "${hash_uboot_functions}" | sha256sum | cut -d' ' -f1)"
 	declare hash_hooks_and_functions_short="${hash_hooks_and_functions:0:${short_hash_size}}"
+
+	display_alert "uboot hash both (hash_hooks_and_functions):" "${hash_hooks_and_functions}" "wrn"
 
 	display_alert "BOOTCONFIG: ${BOOTCONFIG}" "BOOTCONFIG: ${BOOTCONFIG}" "debug"
 
