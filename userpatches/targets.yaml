@@ -1,0 +1,205 @@
+common-gha-configs:
+  rpardini-gha: &rpardini-gha
+    runners:
+      default: "ubuntu-24.04-arm" # used to be "ubuntu-latest"
+      by-name:
+        kernel: [ "self-hosted", "Linux", 'armbian', "artifact-kernel" ] # LaneCloud: 12min # "ubuntu-24.04-arm": 1h30min
+      by-name-and-arch:
+        rootfs-amd64: "ubuntu-latest"
+        image-amd64: "ubuntu-latest"
+        rootfs-arm64: [ "self-hosted", "Linux", 'armbian', "rootfs-arm64" ]
+        image-arm64: [ "self-hosted", "Linux", 'armbian', "image-arm64" ]
+
+targets:
+
+  some-userspace-rpardini:
+    configs: [ rpardini-generic ]
+    pipeline:
+      build-image: no # don't build images for this
+      only-artifacts: [ "armbian-base-files", "armbian-desktop", "rootfs" ] # only these artifacts
+      gha: *rpardini-gha
+    vars: # common vars, must exist.
+      USERSPACE_ONLY: "yes" # this does nothing, but some var must exist. might as well be this.
+      CLOUD_IMAGE: "no" # rpardini-specific cloud stuff due to rpardini-generic
+    items-from-inventory:
+      userspace: # creates items from userspace inventory automatically... 'eos' distributions are always skipped.
+        #skip-releases: [ "sid" ] # do NOT include these releases
+        only-releases: [ "bookworm", "trixie", "forky" ] # ONLY include these releases; , "noble"
+        # skip-desktops: [ "lxde" ] # do NOT include these desktops
+        only-desktops: [ ] # ONLY include these desktops, "xfce", , "kde-neon", "gnome"
+        cli: yes # include normal CLI userspace
+        minimal: no # include minimal CLI userspace
+        cloud: yes # include cloud CLI userspace (rpardini's stuff, default is no)
+        desktops: no # yes # include desktops, one per desktop_variations below; 'eos' ones are always skipped
+        #desktop_variations:
+        #  - [ browsers ] # browsers appgroup
+        arches: # wanted architectures, and their "example" BOARD and BRANCH.
+          arm64: [ { BOARD: "uefi-arm64", BRANCH: "current" } ]
+          amd64: [ { BOARD: "uefi-x86", BRANCH: "current" } ]
+          #armhf: [ { BOARD: "tinkerboard", BRANCH: "current" } ]
+
+  u-boot-only-for-some-boards:
+    enabled: yes
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+      build-image: no # don't build images for this target ("no" here is a boolean, not string)
+      only-artifacts: [ "uboot" ] # only build these artifacts for these targets. it's "uboot", not "u-boot"
+    vars:
+      BUILD_MINIMAL: "yes"
+      BUILD_DESKTOP: "no"
+      CLOUD_IMAGE: "no"
+      RELEASE: trixie
+    items:
+      - { BOARD: mixtile-edge2, BRANCH: vendor }
+      - { BOARD: mixtile-edge2, BRANCH: edge }
+      - { BOARD: mekotronics-r58x-pro, BRANCH: legacy }
+      - { BOARD: mekotronics-r58x-4g, BRANCH: legacy }
+      - { BOARD: mekotronics-r58x-4g, BRANCH: edge }
+      - { BOARD: mekotronics-r58x-pro, BRANCH: vendor }
+      - { BOARD: mekotronics-r58x-pro, BRANCH: edge }
+      - { BOARD: mekotronics-r58x-4g, BRANCH: vendor }
+      - { BOARD: mekotronics-r58x, BRANCH: legacy }
+      - { BOARD: mekotronics-r58-minipc, BRANCH: legacy }
+      - { BOARD: mekotronics-r58s2, BRANCH: edge }
+      - { BOARD: mixtile-blade3, BRANCH: legacy }
+      - { BOARD: mixtile-core3588e, BRANCH: edge }
+      - { BOARD: odroidhc4, BRANCH: edge }
+      - { BOARD: odroidn2, BRANCH: edge }
+      - { BOARD: khadas-vim3l, BRANCH: edge }
+      - { BOARD: khadas-vim3, BRANCH: edge }
+      - { BOARD: tinkerboard-2, BRANCH: edge }
+      - { BOARD: rockpro64, BRANCH: edge }
+      - { BOARD: odroidm1, BRANCH: edge }
+      - { BOARD: nanopi-r5c, BRANCH: edge }
+      - { BOARD: nanopi-r5s, BRANCH: edge }
+      - { BOARD: orangepi3b, BRANCH: edge }
+      - { BOARD: radxa-zero, BRANCH: edge }
+      - { BOARD: radxa-zero2, BRANCH: edge }
+      - { BOARD: bananapir2pro, BRANCH: edge }
+      - { BOARD: orangepi5, BRANCH: edge }
+      - { BOARD: orangepi5-plus, BRANCH: edge }
+      - { BOARD: orangepi5-plus, BRANCH: vendor }
+      - { BOARD: radxa-zero3, BRANCH: edge }
+      - { BOARD: radxa-rock-4d, BRANCH: edge }
+      - { BOARD: orangepi5, BRANCH: edge }
+      - { BOARD: rock-4se, BRANCH: edge }
+      - { BOARD: rock-5b, BRANCH: edge }
+      - { BOARD: rock-3a, BRANCH: edge }
+      - { BOARD: nanopi-r6c, BRANCH: edge }
+      - { BOARD: nanopi-r6s, BRANCH: edge }
+      - { BOARD: quartz64a, BRANCH: edge }
+      - { BOARD: nanopct6, BRANCH: edge }
+      - { BOARD: nanopct6-lts, BRANCH: edge }
+      - { BOARD: mixtile-edge2, BRANCH: edge }
+      - { BOARD: cm3588-nas, BRANCH: edge }
+      - { BOARD: cm3588-nas, BRANCH: vendor }
+      - { BOARD: rockpi-4cplus, BRANCH: edge }
+      - { BOARD: radxa-e24c, BRANCH: edge }
+      - { BOARD: radxa-e24c, BRANCH: vendor } # same as edge
+      - { BOARD: tinkerboard, BRANCH: current }
+      - { BOARD: tritium-h3, BRANCH: edge } # sunxi
+      - { BOARD: tritium-h5, BRANCH: edge } # sunxi64
+      - { BOARD: "radxa-nio-12l", BRANCH: edge } # genio
+      - { BOARD: "bananapim7" , BRANCH: "vendor" }
+      - { BOARD: "recomputer-rk3576-devkit", BRANCH: "vendor" }
+      - { BOARD: "recomputer-rk3576-devkit", BRANCH: "edge" }
+      #- { BOARD: bananapif3, BRANCH: edge } # riscv64 - gitee repo hangs on matrix prepare
+
+  cloud-rescues:
+    enabled: yes
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+    expand:
+      debian-stable:
+        RELEASE: trixie
+    items:
+      # rescue e2img's; only for arm64 for ORACLE OCI
+      - { BOARD: uefi-arm64, BRANCH: current,  ENABLE_EXTENSIONS: uefi-rescue }
+      #- { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: uefi-rescue }
+
+  k8s-cloud-edge-k8s-rawimg:
+    enabled: yes # keep, for sbcs tinkerbell
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BRANCH: "edge"
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+      BUILD_DESKTOP: "no"
+      ENABLE_EXTENSIONS: "cloud-metadata,k8s"
+    expand:
+      debian-testing:
+        RELEASE: trixie
+    items:
+      - { BOARD: "rpi4b", BRANCH: "current" }
+      #- { BOARD: "radxa-zero2" }
+      #- { BOARD: "odroidhc4" } # testing other stuff / 6.18 stability / MPS / head retracts/regulator shit
+      - { BOARD: "odroidhc4", BRANCH: "oldlts" } # 6.12, more stable?
+      #- { BOARD: "cm3588-nas" }
+      - { BOARD: "cm3588-nas", BRANCH: "vendor" }
+      - { BOARD: "mixtile-blade3", BRANCH: "vendor" }
+      - { BOARD: "mixtile-blade3" } # edge - retry 2026, after many fails in 2025-
+      - { BOARD: "mekotronics-r58x-pro" }
+      #- { BOARD: "mekotronics-r58x-pro", BRANCH: "vendor" }
+      #- { BOARD: "khadas-vim3l" } # for Jacob
+      #- { BOARD: "mixtile-core3588e" } # for Jacob...
+      #- { BOARD: "radxa-nio-12l", BRANCH: "edge", ENABLE_EXTENSIONS: "ufs,cloud-metadata,k8s", DOCKER_ARMBIAN_BASE_IMAGE: "debian:trixie" } # goddamn ENABLE_EXTENSIONS commarr
+      #- { BOARD: "thinkpad-x13s", BRANCH: "sc8280xp" }
+      #- { BOARD: "rock-5b" } # For Lane
+      #- { BOARD: "radxa-e24c" }  # No.
+      #- { BOARD: "nanopct6-lts" } # k3s
+      #- { BOARD: "nanopct6-lts", BRANCH: "vendor" } # k3s
+      #- { BOARD: "mekotronics-r58-4x4", BRANCH: "edge" }
+      #- { BOARD: "mixtile-core3588e", BRANCH: "vendor" } # vendor NOT tested; edge works fine-ish
+      #- { BOARD: "rpi4b", BRANCH: "current" }
+      - { BOARD: "recomputer-rk3576-devkit" }
+      - { BOARD: "recomputer-rk3576-devkit", BRANCH: "vendor", SEEED_DEFAULT_ENABLE: "no" } # no wifi, no bt, no usbgadget, etc
+
+  cloud-metadatas:
+    enabled: yes # keep, cloud-container-disk; k8s-only 2025; also used for Tinkerbell UEFI
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+    vars:
+      BUILD_MINIMAL: "no"
+      CLOUD_IMAGE: "yes"
+      BUILD_DESKTOP: "no"
+      BRANCH: edge
+    expand:
+      debian-testing:
+        RELEASE: trixie
+    items:
+      - { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" } # for elquicko x86
+      - { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" } # for elquicko arm64
+      #- { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+      #- { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd,k8s" }
+      #- { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-lima-vz" } # for lima/vz etc
+      - { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-initrd,k8s" }
+      - { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-initrd,k8s" }
+      #- { BOARD: gateway-dk, BRANCH: "current", CLOUD_IMAGE: "no" } # gateway-dk testing, @TODO remove eventually
+
+
+  ## ---- Useful sometimes
+
+  all-uboots-that-is-really-a-lot-of-uboots:
+    enabled: no
+    configs: [ rpardini-generic ]
+    pipeline:
+      gha: *rpardini-gha
+      build-image: no # don't build images for this target ("no" here is a boolean, not string)
+      only-artifacts: [ "uboot" ] # only build these artifacts for these targets. it's "uboot", not "u-boot"
+    vars:
+      BUILD_MINIMAL: "yes"
+      BUILD_DESKTOP: "no"
+      CLOUD_IMAGE: "no"
+      RELEASE: bookworm
+    items-from-inventory:
+      not-eos: yes # not-eos boards, all branches
+
+
