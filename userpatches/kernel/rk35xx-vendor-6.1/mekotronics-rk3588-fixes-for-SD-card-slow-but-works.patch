@@ -1,0 +1,26 @@
+From 2b0653c9452ea080919f2ee683a43e32b1be6d46 Mon Sep 17 00:00:00 2001
+From: Ricardo Pardini <ricardo@pardini.net>
+Date: Fri, 10 Jan 2025 17:32:18 +0100
+Subject: [PATCH] arm64: dts: mekotronics rk3588: fixes for SD card, slow but
+ works
+
+- Meko's 10cm-long flat cable SD connector won't work with sd-uhs-sdr104
+---
+ arch/arm64/boot/dts/rockchip/rk3588-blueberry-edge-v12.dtsi | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3588-blueberry-edge-v12.dtsi b/arch/arm64/boot/dts/rockchip/rk3588-blueberry-edge-v12.dtsi
+index 3da66e7dded0..5ccf0d60d925 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3588-blueberry-edge-v12.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3588-blueberry-edge-v12.dtsi
+@@ -676,7 +676,6 @@ &sdmmc {
+ 	cap-mmc-highspeed;
+ 	cap-sd-highspeed;
+ 	disable-wp;
+-	sd-uhs-sdr104;
+ 	vqmmc-supply = <&vccio_sd_s0>;
+ 	status = "okay";
+ };
+-- 
+2.47.1
+

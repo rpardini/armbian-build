@@ -1,0 +1,91 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "rk3588-nanopc-cm3588-nas.dts"
+
+/ {
+	model = "FriendlyElec CM3588 NAS (vendor) with 4-pin 5v PWM fan (drive pin 32/tacho pin 33)";
+
+	fan: pwm-fan {
+		status = "okay";
+		compatible = "pwm-fan";
+		#cooling-cells = <2>;
+		fan-supply = <&vcc5v0_sys>;
+		pwms = <&pwm5 0 50000 0>; /* GPIO 40-pin Connector pin 32 - and NOT the original pwm1 which MOSFET-drives the built-in small-connector "5v fan" */
+		cooling-levels = <0 35 64 100 150 255>;
+		rockchip,hold-time-ms = <2000>;
+		rockchip,temp-trips = <
+			50000	1
+			55000	2
+			60000	3
+			65000	4
+			70000	5
+		>;
+		pulses-per-revolution = <2>;
+		interrupt-parent = <&gpio3>;  /* GPIO GPIO3_B0/PWM9_M0 + ... */
+		interrupts = <RK_PB0 IRQ_TYPE_EDGE_FALLING>; /* ... + GPIO 40-pin Connector pin 33 */
+	};
+
+	/* Unrelated, really, but nice to have */
+	/* disabled
+	ir_receiver: ir-receiver {
+		compatible = "gpio-ir-receiver";
+		gpios = <&gpio0 RK_PD4 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&ir_recv_pin>;
+		linux,rc-map-name = "rc-rc6-mce";
+	};
+	*/
+};
+
+/* GPIO 40-pin Connector pin 33 - EXTFAN TACHO - used as interrupt source in pwm-fan - gpio GPIO3_B0/PWM9_M0 */
+&pwm9 {
+	pinctrl-0 = <&pwm9m0_pins>;
+	status = "disabled"; /* unsure if this is enabled or disabled, as it is used as an interrupt source and not pwm output */
+};
+
+/* Just for reference, as it is already okay'ed on vendor DT */
+/* GPIO 40-pin Connector pin 32 - EXTFAN PWM Drive */
+/* &pwm5 {
+	pinctrl-0 = <&pwm5m1_pins>;
+	status = "okay";
+};
+*/
+
+/* Ref ir-receiver */
+/* disabled
+&pinctrl {
+	ir {
+		ir_recv_pin: ir-recv-pin {
+			rockchip,pins = <0 RK_PD4 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+};
+*/
+
+/*
+ * Disable the inherited vendor IR decoder on pwm3 so the rockchip,remotectl-pwm
+ * driver doesn't bind and pwm3's pinctrl doesn't remux GPIO0_D4 back to mux 3.
+ */
+&pwm3 {
+	status = "disabled";
+	/delete-property/ pinctrl-0;
+	/delete-property/ pinctrl-names;
+};
+
+/* UNRELATED2: backport from FriendlyELEC */
+&display_subsystem {
+	clocks = <&hdptxphy_hdmi0>, <&hdptxphy_hdmi1>;
+	clock-names = "hdmi0_phy_pll", "hdmi1_phy_pll";
+};
+
+/* UNRELATED3: disable the vendor GPU driver and enable the mainline panthor GPU driver */
+&gpu {
+	status = "disabled";
+};
+
+&gpu_panthor {
+	status = "okay";
+	mali-supply = <&vdd_gpu_s0>;
+};
