@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: AngeloGioacchino Del Regno <angelogioacchino.delregno@somainline.org>
+Date: Wed, 13 Jan 2021 19:24:33 +0100
+Subject: dt-bindings: i2c: qcom,i2c-qup: Document noise rejection properties
+
+Document the new noise rejection properties "qcom,noise-reject-sda"
+and "qcom,noise-reject-scl".
+
+Signed-off-by: AngeloGioacchino Del Regno <angelogioacchino.delregno@somainline.org>
+---
+ Documentation/devicetree/bindings/i2c/qcom,i2c-qup.yaml | 14 ++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/i2c/qcom,i2c-qup.yaml b/Documentation/devicetree/bindings/i2c/qcom,i2c-qup.yaml
+index f43947514d48..520f113c1c0a 100644
+--- a/Documentation/devicetree/bindings/i2c/qcom,i2c-qup.yaml
++++ b/Documentation/devicetree/bindings/i2c/qcom,i2c-qup.yaml
+@@ -55,6 +55,20 @@ properties:
+   reg:
+     maxItems: 1
+ 
++  qcom,noise-reject-sda:
++    $ref: /schemas/types.yaml#/definitions/uint32
++    description: Noise rejection level for the SDA line.
++    minimum: 0
++    maximum: 3
++    default: 0
++
++  qcom,noise-reject-scl:
++    $ref: /schemas/types.yaml#/definitions/uint32
++    description: Noise rejection level for the SCL line.
++    minimum: 0
++    maximum: 3
++    default: 0
++
+ required:
+   - compatible
+   - clock-names
+-- 
+Armbian
+
