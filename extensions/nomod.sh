@@ -5,8 +5,15 @@ function extension_prepare_config__prepare_localmodconfig() {
 }
 
 # This produces non-working kernels. It's meant for testing kernel image build and packaging.
-function custom_kernel_config__apply_mod2noconfig() {
+function custom_kernel_config__999_apply_mod2noconfig() {
 	kernel_config_modifying_hashes+=("mod2noconfig")
-	[[ -f .config ]] && run_kernel_make mod2noconfig
+	if [[ -f .config ]]; then
+		# First turn everything that can be a module into a module
+		display_alert "Applying yes2modconfig" "to .config" "warn"
+		run_kernel_make yes2modconfig
+
+		display_alert "Applying mod2noconfig" "to .config" "warn"
+		run_kernel_make mod2noconfig
+	fi
 	return 0 # short-circuit above
 }
