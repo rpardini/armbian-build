@@ -37,6 +37,7 @@ case $BRANCH in
 
 	oldlts)
 		declare -g KERNEL_MAJOR_MINOR="6.12"
+		declare -g EXTRAWIFI=no # broken drivers with recent 6.12.y (>100):  rtl8189es rtl8189fs rtl8192eu rtl8812au rtl8723ds rtl8811cu rtl88x2cs rtl88x2bu
 		;;
 	current)
 		declare -g KERNEL_MAJOR_MINOR="6.18"
