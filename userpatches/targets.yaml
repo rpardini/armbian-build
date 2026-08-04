@@ -105,6 +105,8 @@ targets:
       - { BOARD: "recomputer-rk3576-devkit", BRANCH: "vendor" }
       - { BOARD: "recomputer-rk3576-devkit", BRANCH: "edge" }
       #- { BOARD: bananapif3, BRANCH: edge } # riscv64 - gitee repo hangs on matrix prepare
+      - { BOARD: "recomputer-rk3588-devkit", BRANCH: "vendor" }
+      - { BOARD: "recomputer-rk3588-devkit", BRANCH: "edge" }
 
   cloud-rescues:
     enabled: yes
@@ -160,6 +162,8 @@ targets:
       #- { BOARD: "rpi4b", BRANCH: "current" }
       - { BOARD: "recomputer-rk3576-devkit" }
       - { BOARD: "recomputer-rk3576-devkit", BRANCH: "vendor", SEEED_DEFAULT_ENABLE: "no" } # no wifi, no bt, no usbgadget, etc
+      - { BOARD: "recomputer-rk3588-devkit" }
+      - { BOARD: "recomputer-rk3588-devkit", BRANCH: "vendor", SEEED_DEFAULT_ENABLE: "no" } # no wifi, no bt, no usbgadget, etc
 
   cloud-metadatas:
     enabled: yes # keep, cloud-container-disk; k8s-only 2025; also used for Tinkerbell UEFI
