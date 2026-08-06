@@ -74,12 +74,6 @@
 	/delete-property/ pinctrl-names;
 };
 
-/* UNRELATED2: backport from FriendlyELEC */
-&display_subsystem {
-	clocks = <&hdptxphy_hdmi0>, <&hdptxphy_hdmi1>;
-	clock-names = "hdmi0_phy_pll", "hdmi1_phy_pll";
-};
-
 /* UNRELATED3: disable the vendor GPU driver and enable the mainline panthor GPU driver */
 &gpu {
 	status = "disabled";
