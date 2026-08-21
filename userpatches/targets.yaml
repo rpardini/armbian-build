@@ -143,7 +143,7 @@ targets:
       #- { BOARD: "radxa-zero2" }
       #- { BOARD: "odroidhc4" } # testing other stuff / 6.18 stability / MPS / head retracts/regulator shit
       - { BOARD: "odroidhc4", BRANCH: "oldlts" } # 6.12, more stable?
-      #- { BOARD: "cm3588-nas" }
+      - { BOARD: "cm3588-nas" }
       - { BOARD: "cm3588-nas", BRANCH: "vendor" }
       - { BOARD: "mixtile-blade3", BRANCH: "vendor" }
       - { BOARD: "mixtile-blade3" } # edge - retry 2026, after many fails in 2025-
