@@ -121,7 +121,8 @@ targets:
         RELEASE: trixie
     items:
       # rescue e2img's; only for arm64 for ORACLE OCI
-      - { BOARD: uefi-arm64, BRANCH: current,  ENABLE_EXTENSIONS: uefi-rescue }
+      #- { BOARD: uefi-arm64, BRANCH: current,  ENABLE_EXTENSIONS: uefi-rescue } # pythium etc?
+      - { BOARD: uefi-arm64, BRANCH: edge,  ENABLE_EXTENSIONS: uefi-rescue }
       #- { BOARD: uefi-x86, BRANCH: edge, ENABLE_EXTENSIONS: uefi-rescue }
 
   k8s-cloud-edge-k8s-rawimg:
