@@ -142,7 +142,7 @@ targets:
     items:
       - { BOARD: "rpi4b", BRANCH: "current" }
       #- { BOARD: "radxa-zero2" }
-      #- { BOARD: "odroidhc4" } # testing other stuff / 6.18 stability / MPS / head retracts/regulator shit
+      - { BOARD: "odroidhc4" }
       - { BOARD: "odroidhc4", BRANCH: "oldlts" } # 6.12, more stable?
       - { BOARD: "cm3588-nas" }
       - { BOARD: "cm3588-nas", BRANCH: "vendor" }
@@ -152,7 +152,7 @@ targets:
       - { BOARD: "mekotronics-r58x-pro", BRANCH: "vendor" }
       #- { BOARD: "khadas-vim3l" } # for Jacob
       #- { BOARD: "mixtile-core3588e" } # for Jacob...
-      #- { BOARD: "radxa-nio-12l", BRANCH: "edge", ENABLE_EXTENSIONS: "ufs,cloud-metadata,k8s", DOCKER_ARMBIAN_BASE_IMAGE: "debian:trixie" } # goddamn ENABLE_EXTENSIONS commarr
+      - { BOARD: "radxa-nio-12l", ENABLE_EXTENSIONS: "ufs,cloud-metadata,k8s" }
       #- { BOARD: "thinkpad-x13s", BRANCH: "sc8280xp" }
       #- { BOARD: "rock-5b" } # For Lane
       #- { BOARD: "radxa-e24c" }  # No.
