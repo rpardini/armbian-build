@@ -177,7 +177,7 @@ targets:
       BUILD_DESKTOP: "no"
       BRANCH: edge
     expand:
-      debian-testing:
+      debian-stable:
         RELEASE: trixie
     items:
       - { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-qcow2-initrd" } # for elquicko x86
@@ -187,7 +187,7 @@ targets:
       #- { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-lima-vz" } # for lima/vz etc
       - { BOARD: uefi-x86, ENABLE_EXTENSIONS: "cloud-metadata-initrd,k8s" }
       - { BOARD: uefi-arm64, ENABLE_EXTENSIONS: "cloud-metadata-initrd,k8s" }
-      #- { BOARD: gateway-dk, BRANCH: "current", CLOUD_IMAGE: "no" } # gateway-dk testing, @TODO remove eventually
+      - { BOARD: gateway-dk, BRANCH: "current", CLOUD_IMAGE: "no" } # gateway-dk testing, @TODO remove eventually
 
 
   ## ---- Useful sometimes
