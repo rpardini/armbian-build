@@ -183,7 +183,7 @@ function pre_customize_image__400_k8s_debfoster() {
 
 	declare -a debfoster_keepers=() install_pre_debfoster=()
 
-	install_pre_debfoster+=("debfoster" "pigz") # we need to install it first
+	install_pre_debfoster+=("debfoster" "pigz" "bird2" "ssh-import-id" "btop") # we need to install it first
 
 	debfoster_keepers+=(
 		bash-completion
@@ -203,6 +203,7 @@ function pre_customize_image__400_k8s_debfoster() {
 		"cryptsetup" # for longhorn
 		"dmsetup"    # for longhorn
 		pigz         # for containerd fast decompress
+		"bird2" "ssh-import-id" "btop" # utils I use all the time plus BIRD2 for BGP
 	)
 
 	case "${DISTRIBUTION}-${RELEASE}" in
