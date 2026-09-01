@@ -150,8 +150,8 @@ targets:
       - { BOARD: "mixtile-blade3" } # edge - retry 2026, after many fails in 2025-
       - { BOARD: "mekotronics-r58x-pro" }
       - { BOARD: "mekotronics-r58x-pro", BRANCH: "vendor" }
-      #- { BOARD: "khadas-vim3l" } # for Jacob
-      #- { BOARD: "mixtile-core3588e" } # for Jacob...
+      - { BOARD: "khadas-vim3l" } # for Jacob
+      - { BOARD: "mixtile-core3588e" } # for Jacob...
       - { BOARD: "radxa-nio-12l", ENABLE_EXTENSIONS: "ufs,cloud-metadata,k8s" }
       #- { BOARD: "thinkpad-x13s", BRANCH: "sc8280xp" }
       #- { BOARD: "rock-5b" } # For Lane
