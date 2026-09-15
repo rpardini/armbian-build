@@ -152,7 +152,7 @@ function pre_umount_final_image__300_prepare_cloud_init_startup() {
 		# 1) configure netplan static
 		# 2) tell cloud-init to not configure network
 		# This should allow for maximum flexibility
-		display_alert "cloud-init: networking" "no network-data specified, static all-ethernet config in netplan" "info"
+		display_alert "cloud-init: networking" "no network-data specified, static all-ethernet config in netplan; CLOUD_INIT_NETPLAN_ALL_ETH_MATCH='${CLOUD_INIT_NETPLAN_ALL_ETH_MATCH:-"e*"}'" "info"
 		cat <<- NETPLAN_CLOUDINIT_CONFIG > "${CI_TARGET}/etc/netplan/80-armbian-all-eths-cloud-init.yaml"
 			network:
 			  version: 2
@@ -160,7 +160,7 @@ function pre_umount_final_image__300_prepare_cloud_init_startup() {
 			  ethernets:
 			    all-eth-interfaces:
 			      match:
-			        name: "e*"
+			        name: "${CLOUD_INIT_NETPLAN_ALL_ETH_MATCH:-"e*"}"
 			      dhcp4: yes
 			      dhcp6: yes
 		NETPLAN_CLOUDINIT_CONFIG
