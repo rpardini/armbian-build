@@ -155,7 +155,8 @@ targets:
       - { BOARD: "radxa-nio-12l", ENABLE_EXTENSIONS: "ufs,cloud-metadata,k8s" }
       #- { BOARD: "thinkpad-x13s", BRANCH: "sc8280xp" }
       #- { BOARD: "rock-5b" } # For Lane
-      #- { BOARD: "radxa-e24c" }  # No.
+      - { BOARD: "radxa-e24c" }  # there and back again
+      - { BOARD: "radxa-e24c", BRANCH: "vendor" }  # there and back again
       #- { BOARD: "nanopct6-lts" } # k3s
       #- { BOARD: "nanopct6-lts", BRANCH: "vendor" } # k3s
       #- { BOARD: "mekotronics-r58-4x4", BRANCH: "edge" }
