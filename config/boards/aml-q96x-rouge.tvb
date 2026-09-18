@@ -1,0 +1,66 @@
+# Amlogic Rouge Q96x (S905W/S905L) GXLX2 p291/p271 china stuff Rouge has 31 of them
+BOARD_NAME="Q96x Rouge"
+BOOT_FDT_FILE="amlogic/meson-gxlx2-s905w-q96x-rouge.dtb"
+BOARDFAMILY="meson-gxl"
+ARCH="arm64"
+BOARD_VENDOR="generic"
+BOOTCONFIG="meson-gxlx2-s905w-q96x-rouge_defconfig" # based on upstream u-boot libretech-cc_defconfig which is already OF_UPSTREAM
+BOARD_MAINTAINER=""
+INTRODUCED="2022"
+KERNEL_TARGET="edge"
+FULL_DESKTOP="yes"
+BOOT_LOGO="desktop"
+declare -g PLYMOUTH="no"
+
+### DeviceTree:
+# We'll be using 'meson-gxlx2-s905w-q96x-rouge.dts' as DT name, and vary what it contains until we nail it.
+#
+# Important: when making changes, always change both:
+# - patch/kernel/archive/meson64-7.2/dt/meson-gxlx2-s905w-q96x-rouge.dts (for kernel)
+# - patch/u-boot/v2026.07/dt_upstream_amlogic/meson-gxlx2-s905w-q96x-rouge.dts (for u-boot)
+#
+# 1) Rouge reports that mainline 'meson-gxlx-s905l-p271.dtb' plus some emmc changes makes it go.
+# - In that case just use the contents of https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/amlogic/meson-gxlx-s905l-p271.dts
+#
+# 2) Maybe some DTS from our chinese friends at ophub/unifreq?
+# - Contents of https://github.com/ophub/linux-6.18.y/blob/main/arch/arm64/boot/dts/amlogic/meson-gxl-s905w-x96w.dts
+
+BOOTBRANCH_BOARD="tag:v2026.07"
+BOOTPATCHDIR="v2026.07"
+
+# Use extlinux and u-boot-menu extension
+declare -g SRC_EXTLINUX="yes"
+declare -g SRC_CMDLINE="loglevel=7 splash=verbose console=ttyAML0,115200"
+enable_extension "u-boot-menu" # this generates the extlinux.conf
+
+# Blob repacking, based on retro98boy's gxlimg extension, which I only found after investigating how to do manually
+# see https://github.com/hexdump0815/u-boot-misc/blob/master/readme.gxl#L90 / # https://github.com/repk/gxlimg/issues/6
+enable_extension "gxlimg"
+
+# This is a fork of from 'enable_extension "amlogic-fip-blobs"' - we should send a PR to retro98boy there and unify later
+function fetch_sources_tools__amlogic-fip-blobs-rouge() {
+	fetch_from_repo "https://github.com/rpardini/amlogic-fip-blobs" "amlogic-fip-blobs" "commit:bd66c8c49582b97abecffc43cf6f57d9a01b2f7b"
+}
+
+function post_uboot_custom_postprocess__repack_vendor_fip_with_mainline_uboot_rouge() {
+	# our backup_boot0.bin is a straight, plain, complete dump of the china-vendor's boot0 eMMC partition
+	# while gxlimg wants the plain bootloader, so lets trim out the empty header
+	declare vendor_blob_full="${SRC}/cache/sources/amlogic-fip-blobs/q96x-rouge/backup_boot0.bin"
+	declare vendor_blob_clean="${SRC}/cache/sources/amlogic-fip-blobs/q96x-rouge/china_vendor_blob.bin"
+
+	# do it with dd; python version was python3 -c "ub = open('${vendor_blob_full}', 'rb').read()[0x200:]; open('${vendor_blob_clean}', 'wb').write(ub[:0x38000 + 0x4DA00]); print('done: ${vendor_blob_clean}');"
+	run_host_command_logged dd "if=${vendor_blob_full}" "of=${vendor_blob_clean}" bs=512 skip=1 conv=fsync,notrunc
+
+	# do the repack. it extracts the FIP, encrypts our new u-boot into bl33.enc, and reassembles. result is in 'u-boot.bin'.
+	gxlimg_repack_fip_with_new_uboot "${vendor_blob_clean}" "gxl"
+	# drop the cleaned blob
+	run_host_command_logged rm -fv "${vendor_blob_clean}"
+}
+
+function post_family_config__use_repacked_fip_rouge() {
+	declare -g UBOOT_TARGET_MAP="u-boot.bin"
+	unset write_uboot_platform
+	function write_uboot_platform() {
+		dd if="$1/u-boot.bin" of="$2" bs=512 seek=1 conv=fsync,notrunc 2>&1
+	}
+}
