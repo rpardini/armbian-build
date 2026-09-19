@@ -101,6 +101,7 @@ targets:
       - { BOARD: tritium-h3, BRANCH: edge } # sunxi
       - { BOARD: tritium-h5, BRANCH: edge } # sunxi64
       - { BOARD: "radxa-nio-12l", BRANCH: edge } # genio
+      - { BOARD: "aml-q96x-rouge", BRANCH: edge } # aml tvbox from rouge
       - { BOARD: "bananapim7" , BRANCH: "vendor" }
       - { BOARD: "recomputer-rk3576-devkit", BRANCH: "vendor" }
       - { BOARD: "recomputer-rk3576-devkit", BRANCH: "edge" }
