@@ -66,6 +66,7 @@ targets:
       - { BOARD: mixtile-core3588e, BRANCH: edge }
       - { BOARD: odroidhc4, BRANCH: edge }
       - { BOARD: odroidn2, BRANCH: edge }
+      - { BOARD: aml-t95z-plus, BRANCH: edge }
       - { BOARD: khadas-vim3l, BRANCH: edge }
       - { BOARD: khadas-vim3, BRANCH: edge }
       - { BOARD: tinkerboard-2, BRANCH: edge }
@@ -145,6 +146,7 @@ targets:
       #- { BOARD: "radxa-zero2" }
       - { BOARD: "odroidhc4" }
       - { BOARD: "odroidhc4", BRANCH: "oldlts" } # 6.12, more stable?
+      - { BOARD: "aml-t95z-plus" }
       - { BOARD: "cm3588-nas" }
       - { BOARD: "cm3588-nas", BRANCH: "vendor" }
       - { BOARD: "mixtile-blade3", BRANCH: "vendor" }
