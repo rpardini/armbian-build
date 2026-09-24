@@ -69,7 +69,12 @@ function gxlimg_repack_fip_with_new_uboot() {
 				-c raw-u-boot.bin \
 				"${gxlimg_extract_temp_dir}/bl33.enc"
 
-			display_alert "${BOARD} gxlimg gxm" "Repacking FIP with new bl33" "info"
+			# drop bl31.enc -- ATF -- we'll take one from tartiflette
+			display_alert "${BOARD} gxlimg gxm" "Dropping bl31.enc from extracted FIP, will use one from tartiflette" "info"
+			run_host_command_logged rm -fv "${gxlimg_extract_temp_dir}/bl31.enc"
+			run_host_command_logged "${glximg_bin}" -t bl3x -c "${SRC}/cache/sources/amlogic-boot-fip/tartiflette-s912/bl31.img" "${gxlimg_extract_temp_dir}/bl31.enc"
+
+			display_alert "${BOARD} gxlimg gxm" "Repacking FIP with new bl31 and bl33" "info"
 			run_host_command_logged "${glximg_bin}" \
 				-t fip \
 				--bl2 "${gxlimg_extract_temp_dir}/bl2.sign" \
