@@ -28,13 +28,45 @@ declare -g UBOOT_MMC_ENV_MODE="hwpart" # use boot0/boot1 partitions for the envi
 declare -g UBOOT_MMC_ENV_DEVICE_INDEX=2 # mmc2 is the eMMC on this board (mmc1 is SDCard, mmc0 the sdio wifi)
 enable_extension "uboot-mainline-mmc-env-storage"
 
-# Use the blobs for not-exactly-matching SBCs which are also S912. Note: the VIM2 blobs expect DDR4 and fails with "DDR4 chl: Rank0+1 @ 1008MHz" last message.
-function post_uboot_custom_postprocess__t95z_uboot() {
-	display_alert "Signing u-boot FIP" "${BOARD}" "info"
-	#uboot_gxl_postprocess_ng "${SRC}/cache/sources/amlogic-boot-fip/khadas-vim2" # DDR4, won't work
-	#uboot_gxl_postprocess_ng "${SRC}/cache/sources/amlogic-boot-fip/beelink-gt1" # untested, might work
-	uboot_gxl_postprocess_ng "${SRC}/cache/sources/amlogic-boot-fip/tartiflette-s912" # DDR3, works
+## Use the blobs for not-exactly-matching SBCs which are also S912. Note: the VIM2 blobs expect DDR4 and fails with "DDR4 chl: Rank0+1 @ 1008MHz" last message.
+#function post_uboot_custom_postprocess__t95z_uboot() {
+#	display_alert "Signing u-boot FIP" "${BOARD}" "info"
+#	uboot_gxl_postprocess_ng "${SRC}/cache/sources/amlogic-boot-fip/tartiflette-s912" # DDR3, works
+#}
+
+
+# Blob repacking, based on retro98boy's gxlimg extension
+enable_extension "gxlimg"
+
+# This is a fork of from 'enable_extension "amlogic-fip-blobs"' - we should send a PR to retro98boy there and unify later
+function fetch_sources_tools__amlogic-fip-blobs-rouge() {
+	fetch_from_repo "https://github.com/rpardini/amlogic-fip-blobs" "amlogic-fip-blobs" "commit:861c24ee566ecc4f13380a4cd89f20ddefe67e62"
 }
+
+function post_uboot_custom_postprocess__repack_vendor_fip_with_mainline_uboot_rouge() {
+	# our backup_boot0.bin is a straight, plain, complete dump of the china-vendor's boot0 eMMC partition
+	# while gxlimg wants the plain bootloader, so lets trim out the empty header
+	#declare vendor_blob_full="${SRC}/cache/sources/amlogic-fip-blobs/t95z-plus-gxm-s912-2017/t95z_factory_uboot.img"
+	declare vendor_blob_full="${SRC}/cache/sources/amlogic-fip-blobs/t95z-plus-gxm-s912-2017/t95z_android_recover.img"
+	declare vendor_blob_clean="${SRC}/cache/sources/amlogic-fip-blobs/t95z-plus-gxm-s912-2017/china_vendor_blob.bin"
+
+	# skip the first 512 bytes
+	run_host_command_logged dd "if=${vendor_blob_full}" "of=${vendor_blob_clean}" bs=512 skip=1 conv=fsync,notrunc
+
+	# do the repack. it extracts the FIP, encrypts our new u-boot into bl33.enc, and reassembles. result is in 'u-boot.bin'.
+	gxlimg_repack_fip_with_new_uboot "${vendor_blob_clean}" "gxm"
+	# drop the cleaned blob
+	run_host_command_logged rm -fv "${vendor_blob_clean}"
+}
+
+function post_family_config__use_repacked_fip_rouge() {
+	declare -g UBOOT_TARGET_MAP="u-boot.bin"
+	unset write_uboot_platform
+	function write_uboot_platform() {
+		dd if="$1/u-boot.bin" of="$2" bs=512 seek=1 conv=fsync,notrunc 2>&1
+	}
+}
+
 
 # Enable extra u-boot .config options, this way we avoid patching defconfig
 function post_config_uboot_target__extra_configs_for_t95z() {
