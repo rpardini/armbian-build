@@ -39,6 +39,7 @@ function gxlimg_repack_fip_with_new_uboot() {
 	run_host_command_logged tree "${gxlimg_extract_temp_dir}"
 
 	# drop the extracted bl33.enc, as we will replace it.
+	# @TODO: instead of just throwing it away, instead decrypt and do a sanity check (strings) to see if the whole thing worked.
 	run_host_command_logged rm -fv "${gxlimg_extract_temp_dir}/bl33.enc"
 
 	case $2 in
@@ -55,6 +56,24 @@ function gxlimg_repack_fip_with_new_uboot() {
 				--bl2 "${gxlimg_extract_temp_dir}/bl2.sign" \
 				--bl30 "${gxlimg_extract_temp_dir}/bl30.enc" \
 				--bl301 "${gxlimg_extract_temp_dir}/bl301.enc" \
+				--bl31 "${gxlimg_extract_temp_dir}/bl31.enc" \
+				--bl33 "${gxlimg_extract_temp_dir}/bl33.enc" \
+				u-boot.bin
+			;;
+
+		gxm)
+			# same as gxl, but no bl301.
+			display_alert "${BOARD} gxlimg gxm" "Encrypting new bl33 from incoming u-boot" "info"
+			run_host_command_logged "${glximg_bin}" \
+				-t bl3x \
+				-c raw-u-boot.bin \
+				"${gxlimg_extract_temp_dir}/bl33.enc"
+
+			display_alert "${BOARD} gxlimg gxm" "Repacking FIP with new bl33" "info"
+			run_host_command_logged "${glximg_bin}" \
+				-t fip \
+				--bl2 "${gxlimg_extract_temp_dir}/bl2.sign" \
+				--bl30 "${gxlimg_extract_temp_dir}/bl30.enc" \
 				--bl31 "${gxlimg_extract_temp_dir}/bl31.enc" \
 				--bl33 "${gxlimg_extract_temp_dir}/bl33.enc" \
 				u-boot.bin
